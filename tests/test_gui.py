@@ -1015,3 +1015,23 @@ def test_odt_file(tmp_path):
     r = run_app(scenario)
     assert r["mode"] == "formatted" and r["outline"] == ["Report Title", "Introduction", "Details"]
     assert "1. First step" in r["text"]
+
+
+def test_doc_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from cfb import make_doc
+
+    path = str(make_doc(tmp_path / "old.doc", "Old title\rSome text.\r"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["text"] = buffer_text(doc)
+        r["banner"] = (doc.banner.get_revealed(), doc.banner.get_title().startswith("Plain text"))
+
+    r = run_app(scenario)
+    assert r["text"].startswith("Old title\nSome text.")
+    assert r["banner"] == (True, True)

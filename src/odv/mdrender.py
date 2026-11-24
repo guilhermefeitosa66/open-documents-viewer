@@ -48,6 +48,7 @@ class Doc:
     headings: dict[str, int] = field(default_factory=dict)  # slug -> offset
     outline: list[Heading] = field(default_factory=list)
     attachments: dict = field(default_factory=dict)  # "odv-attachment:N" -> (file name, bytes)
+    note: str = ""  # shown in the banner (e.g. "only the text could be read")
     length: int = 0
 
 

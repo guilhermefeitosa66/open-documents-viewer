@@ -819,3 +819,29 @@ def test_odt(tmp_path):
     assert [op[0] for op in doc.ops].count("image") == 1
     assert doc.links[0].href == "https://libre-apps.org"
     assert len(text) == doc.length
+
+
+DOC_TEXT = ("Report Title\rPlain paragraph with ação.\r"
+            "Name\x07Size\x07\x07merged\x07x\x07\x07"
+            "After \x13 PAGE \\* MERGEFORMAT \x147\x15 field.\rBefore\x0cafter the break\r")
+
+
+def test_doc_binary(tmp_path):
+    olefile = pytest.importorskip("olefile")
+    from cfb import make_doc
+    from odv.formats import doc as docfmt
+
+    path = make_doc(tmp_path / "old.doc", DOC_TEXT)
+    assert olefile.isOleFile(str(path))
+    d = docfmt.build(None, str(path))
+    text = _flat(d)
+    assert text.startswith("Report Title\nPlain paragraph with ação.\n")
+    assert "After 7 field." in text and "MERGEFORMAT" not in text
+    table = next(op[1] for op in d.ops if op[0] == "table")
+    assert table.header == ["Name", "Size"] and table.rows == [["merged", "x"]]
+    assert "hr" in [op[0] for op in d.ops] and "after the break" in text
+    assert d.note.startswith("Plain text")
+    with pytest.raises(docfmt.DocError, match="password"):
+        docfmt.build(None, str(make_doc(tmp_path / "locked.doc", "x\r", encrypted=True)))
+    with pytest.raises(docfmt.DocError):
+        docfmt.build(None, os.path.join(FIX, "sample.md"))

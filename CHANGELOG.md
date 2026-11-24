@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.23.0 (2026-11-24)
+
+- Added: Word 97–2003 documents (.doc): their text, with tables and page breaks, and a banner saying formatting is not shown; password-protected files say so.
+
 ## 0.22.0 (2026-11-24)
 
 - Added: OpenDocument text (.odt), read-only, with the same scope as Word documents: headings and outline, inline styles, alignment, lists, tables, images, links, header and footer, notes and page breaks.

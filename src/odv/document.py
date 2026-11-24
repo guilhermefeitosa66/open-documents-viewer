@@ -433,6 +433,8 @@ class DocumentPage(Gtk.Box):
                 return
             from odv.views.markdown import MarkdownView
 
+            if getattr(doc, "note", ""):
+                self._note = doc.note
             view = MarkdownView(self.path, self._open_path)
             self._add_view(mode, view)
             self._set_outline(doc.outline)

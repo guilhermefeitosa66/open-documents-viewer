@@ -9,6 +9,10 @@ def build(text, path: str = ""):
         from odv.formats import docx
 
         return docx.build(text, path)
+    if ext in (".doc", ".dot"):
+        from odv.formats import doc
+
+        return doc.build(text, path)
     if ext in (".odt", ".ott", ".fodt"):
         from odv.formats import odt
 

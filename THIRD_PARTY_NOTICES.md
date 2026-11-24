@@ -13,6 +13,7 @@ changes the license of the app.
 | [GtkSourceView 5](https://gitlab.gnome.org/GNOME/gtksourceview) | LGPL-2.1-or-later | Syntax highlighting |
 | [markdown-it-py](https://github.com/executablebooks/markdown-it-py) | MIT | Markdown parsing |
 | [PyYAML](https://github.com/yaml/pyyaml) | MIT | YAML tree view |
+| [olefile](https://github.com/decalage2/olefile) | BSD-2-Clause | Reading Word/Excel/PowerPoint 97–2003 containers |
 | GdkPixbuf loaders: [webp-pixbuf-loader](https://github.com/aruiz/webp-pixbuf-loader), libheif's, libavif's (optional) | LGPL-2.0-or-later, LGPL-3.0-or-later, BSD-2-Clause | WebP, HEIF and AVIF images |
 
 The AppImage also carries the Ubuntu 24.04 packages these depend on (GLib,

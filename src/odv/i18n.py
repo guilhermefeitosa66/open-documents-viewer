@@ -259,6 +259,9 @@ CATALOG: dict[str, dict[str, str]] = {
     "Location": {"pt": "Local", "es": "Lugar"},
     "Status": {"pt": "Situação", "es": "Estado"},
     "Organizer": {"pt": "Organizador", "es": "Organizador"},
+    "Plain text from a Word 97–2003 document: formatting is not shown.": {
+        "pt": "Texto simples de um documento do Word 97–2003: a formatação não é mostrada.",
+        "es": "Texto sin formato de un documento de Word 97–2003: no se muestra el formato."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

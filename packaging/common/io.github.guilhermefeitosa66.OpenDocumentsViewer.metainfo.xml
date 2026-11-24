@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.23.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: Word 97–2003 documents (.doc): their text, with tables and page breaks, and a banner saying formatting is not shown; password-protected files say so.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.22.0" date="2026-11-24">
       <description>
         <ul>
