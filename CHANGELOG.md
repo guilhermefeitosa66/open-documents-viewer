@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.26.0 (2026-11-24)
+
+- Added: Excel 97–2003 workbooks (.xls), read-only, in the sheet view: values with their number and date formats, styles, merges, widths and hidden rows, columns and sheets.
+
 ## 0.25.0 (2026-11-24)
 
 - Added: OpenDocument spreadsheets (.ods), read-only, in the same sheet view: the text exactly as the file shows it, formulas, styles, widths, merges, hidden rows, columns and sheets.

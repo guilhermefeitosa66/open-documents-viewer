@@ -14,7 +14,10 @@ changes the license of the app.
 | [markdown-it-py](https://github.com/executablebooks/markdown-it-py) | MIT | Markdown parsing |
 | [PyYAML](https://github.com/yaml/pyyaml) | MIT | YAML tree view |
 | [olefile](https://github.com/decalage2/olefile) | BSD-2-Clause | Reading Word/Excel/PowerPoint 97–2003 containers |
+| [xlrd](https://github.com/python-excel/xlrd) | BSD-3-Clause | Excel 97–2003 workbooks |
 | GdkPixbuf loaders: [webp-pixbuf-loader](https://github.com/aruiz/webp-pixbuf-loader), libheif's, libavif's (optional) | LGPL-2.0-or-later, LGPL-3.0-or-later, BSD-2-Clause | WebP, HEIF and AVIF images |
+
+Tests only (not shipped): [xlwt](https://github.com/python-excel/xlwt) (BSD-3-Clause) writes sample .xls files.
 
 The AppImage also carries the Ubuntu 24.04 packages these depend on (GLib,
 Pango, cairo, HarfBuzz, librsvg, the Adwaita icon theme and others), each

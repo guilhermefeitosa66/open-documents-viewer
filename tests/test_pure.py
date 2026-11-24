@@ -903,3 +903,22 @@ def test_ods_reader(tmp_path):
     assert style.bold and style.color == "B5502B" and style.fill == "F5D7A1"
     assert reader.read_sheet(1).rows[0][0].value == 7.0
     reader.close()
+
+
+def test_xls_reader(tmp_path):
+    pytest.importorskip("xlwt")
+    from office import make_xls
+    from odv.formats.xls import XlsReader
+
+    reader = XlsReader(str(make_xls(tmp_path / "s.xls")))
+    wb = reader.workbook
+    assert [(s.name, s.hidden) for s in wb.sheets] == [("Sales", False), ("Hidden", True)]
+    sh = reader.read_sheet(0)
+    show = lambda r, c: sheetfmt.display(wb, sh.rows[r][c])  # noqa: E731
+    assert [show(0, c) for c in range(3)] == ["Item", "Price", "Date"]
+    assert show(1, 1) == "1,234.50" and show(1, 2) == "15/03/2023"
+    assert show(3, 2) == "TRUE"
+    assert sh.hidden_rows == {2} and sh.hidden_cols == {3} and sh.merges == [(4, 1, 4, 2)]
+    assert sh.col_widths[0] == 20
+    assert wb.styles[sh.rows[0][0].style].bold
+    reader.close()

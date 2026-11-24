@@ -1105,3 +1105,23 @@ def test_ods_file(tmp_path):
     r = run_app(scenario)
     assert r["tabs"] == ["Sales"] and r["columns"] == ["", "A", "B", "C"] and r["rows"] == [0, 1, 3, 4]
     assert r["bar"] == "=SUM(B2:B2)   →   R$ 1.234,50"
+
+
+def test_xls_file(tmp_path):
+    import sys
+
+    pytest.importorskip("xlwt")
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_xls
+
+    path = str(make_xls(tmp_path / "old.xls"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        view = win.active_pane.current_doc().views["formatted"]
+        r["tabs"] = [b.get_label() for b in iter_children(view.tabs)]
+        r["rows"] = list(view.model.rows)
+
+    r = run_app(scenario)
+    assert r["tabs"] == ["Sales"] and r["rows"] == [0, 1, 3, 4]

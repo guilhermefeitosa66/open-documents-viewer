@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.26.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: Excel 97–2003 workbooks (.xls), read-only, in the sheet view: values with their number and date formats, styles, merges, widths and hidden rows, columns and sheets.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.25.0" date="2026-11-24">
       <description>
         <ul>

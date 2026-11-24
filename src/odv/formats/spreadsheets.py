@@ -10,6 +10,10 @@ def open_workbook(path: str):
         from odv.formats.sheet import XlsxReader
 
         return XlsxReader(path)
+    if ext in (".xls", ".xlt"):
+        from odv.formats.xls import XlsReader
+
+        return XlsReader(path)
     if ext in (".ods", ".ots", ".fods"):
         from odv.formats.ods import OdsReader
 

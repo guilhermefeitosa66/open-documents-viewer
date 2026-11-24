@@ -219,3 +219,35 @@ def make_ods(path):
         z.writestr("mimetype", "application/vnd.oasis.opendocument.spreadsheet")
         z.writestr("content.xml", content)
     return path
+
+
+def make_xls(path):
+    """An .xls written with xlwt (a test-only dependency)."""
+    import datetime
+
+    import xlwt
+
+    wb = xlwt.Workbook()
+    ws = wb.add_sheet("Sales")
+    hidden = wb.add_sheet("Hidden")
+    hidden.visibility = 1
+    hidden.write(0, 0, 7)
+    head = xlwt.easyxf("font: bold on, colour red; pattern: pattern solid, fore_colour light_yellow")
+    money = xlwt.easyxf(num_format_str="#,##0.00")
+    date = xlwt.easyxf(num_format_str="dd/mm/yyyy")
+    for c, title in enumerate(["Item", "Price", "Date"]):
+        ws.write(0, c, title, head)
+    ws.write(1, 0, "Rich")
+    ws.write(1, 1, 1234.5, money)
+    ws.write(1, 2, datetime.date(2023, 3, 15), date)
+    ws.write(2, 0, "hidden row")
+    ws.row(2).hidden = True
+    ws.write(3, 0, "Total")
+    ws.write(3, 1, xlwt.Formula("SUM(B2:B2)"), money)
+    ws.write(3, 2, True)
+    ws.write_merge(4, 4, 1, 2, "merged here")
+    ws.write(0, 3, "secret col")
+    ws.col(3).hidden = True
+    ws.col(0).width = 20 * 256
+    wb.save(str(path))
+    return path
