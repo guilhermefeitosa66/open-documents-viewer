@@ -6,7 +6,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python3 python3-gi python3-gi-cairo python3-markdown-it python3-pytest \
       gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-gtksource-5 \
-      adwaita-icon-theme librsvg2-common fonts-dejavu-core git xvfb xauth dbus-x11 locales \
+      adwaita-icon-theme librsvg2-common fonts-dejavu-core git webp-pixbuf-loader heif-gdk-pixbuf libavif-gdk-pixbuf xvfb xauth dbus-x11 locales \
  && rm -rf /var/lib/apt/lists/*
 ENV LANG=C.UTF-8
 WORKDIR /work

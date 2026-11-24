@@ -23,6 +23,8 @@ _COMMON = """
 .data-table { font-feature-settings: "tnum"; }
 .row-number { color: @odv_dim; }
 .welcome-hint { color: @odv_small_dim; }
+.image-info { padding: 4px 10px; border-radius: 8px; }
+.image-toolbar { padding: 2px; border-radius: 10px; }
 .document-area { background-color: @view_bg_color; }
 tabbar .box { background: @odv_tabbar; }
 .theme-card { padding: 6px; border-radius: 12px; }

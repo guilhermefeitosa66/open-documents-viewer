@@ -7,6 +7,8 @@ import importlib
 RICH = {
     "markdown": "odv.mdrender",
     "html": "odv.formats.htmlrender",
+    "rtf": "odv.formats.rtfrender",
+    "notebook": "odv.formats.ipynb",
 }
 
 

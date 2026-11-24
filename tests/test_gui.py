@@ -60,6 +60,17 @@ def run_app(scenario, timeout=20):
     return result
 
 
+def settle(win, timeout=10.0):
+    """Wait (as a scenario step) until every open document has loaded."""
+    start = time.monotonic()
+    while time.monotonic() - start < timeout:
+        docs = [d for pane in win.panes for d in pane.docs()]
+        if all(d._loaded_sent for d in docs):
+            break
+        yield 0.1
+    yield 0.3
+
+
 def buffer_text(doc):
     view = doc.views[doc.mode]
     buf = view.buffer
@@ -80,12 +91,12 @@ def state_dir(tmp_path, monkeypatch):
 def test_markdown_formatted_then_source():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "sample.md"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         r["mode0"] = doc.mode
         r["formatted"] = buffer_text(doc)
         win.toggle_mode()
-        yield 1.0
+        yield from settle(win)
         r["mode1"] = doc.mode
         r["source"] = buffer_text(doc)
         r["switch"] = win.active_pane.mode_switch.source.get_active()
@@ -117,14 +128,14 @@ def test_code_and_config_files_open_in_source():
 def test_csv_table():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "sample.csv"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         table = doc.views["formatted"]
         r["rows"] = table.model.get_n_items()
         r["cols"] = [c.get_title() for c in table.columnview.get_columns()]
         r["numeric"] = table._numeric
         doc.set_mode("source")
-        yield 1.0
+        yield from settle(win)
         r["source"] = buffer_text(doc)
 
     r = run_app(scenario)
@@ -139,7 +150,7 @@ def test_split_view_and_find():
         win.open_path(os.path.join(FIX, "sample.md"))
         yield 0.8
         win.toggle_split()
-        yield 1.0
+        yield from settle(win)
         r["panes"] = len(win.panes)
         right = win.panes[1].current_doc()
         r["right_mode"] = right.mode
@@ -169,7 +180,7 @@ def test_folder_tree_and_links():
             names.append(model.get_item(i).get_item().name)
         r["names"] = names
         win.tree._activate(None, names.index("sample.md"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         r["opened"] = doc.name
         doc.views["formatted"].follow("sample.py")
@@ -188,7 +199,7 @@ def test_binary_and_missing_files():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "binary.png"))
         win.open_path(os.path.join(FIX, "does-not-exist.txt"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         r["visible"] = type(doc.stack.get_visible_child()).__name__
         r["tabs"] = len(win.active_pane.docs())
@@ -248,7 +259,7 @@ def test_theme_background_rules(config_dir):
         r["dark"] = Adw.StyleManager.get_default().get_dark()
         r["picture"] = win.background.get_visible() and win.background.get_paintable() is not None
         win.open_path(os.path.join(FIX, "sample.md"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         r["solid"] = doc.has_css_class("document-area")
         theme.set_background(False)
@@ -256,7 +267,7 @@ def test_theme_background_rules(config_dir):
         r["picture_off"] = win.background.get_visible()
         theme.set_theme("pastel")
         theme.set_background(True)
-        yield 1.0
+        yield from settle(win)
         r["pastel_dark"] = Adw.StyleManager.get_default().get_dark()
         r["scheme"] = doc.views["formatted"].buffer.get_tag_table().lookup("h1").get_property("foreground-rgba").to_string()
         win.show_preferences()
@@ -301,7 +312,7 @@ def test_reload_when_the_file_changes(tmp_path):
 
     def scenario(win, r):
         win.open_path(str(path))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         adj = doc.views["source"].get_vadjustment()
         adj.set_value(2000)
@@ -339,7 +350,7 @@ def test_interface_in_portuguese():
             yield 0.5
             r["button"] = win.welcome.list.get_parent()  # built
             win.open_path(os.path.join(FIX, "sample.md"))
-            yield 1.0
+            yield from settle(win)
             r["switch"] = win.active_pane.mode_switch.formatted.get_label()
 
         r = run_app(scenario)
@@ -351,7 +362,7 @@ def test_interface_in_portuguese():
 def test_find_in_table():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "sample.csv"))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         win.find()
         doc.search_entry.set_text("recife")
@@ -392,7 +403,7 @@ def test_search_in_folder_opens_at_the_line(tmp_path):
             i += 1
         r["targets"] = rows
         win.search_panel._on_row(None, win.search_panel.list.get_row_at_index(1))
-        yield 1.0
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         buf = doc.views["source"].buffer
         b = buf.get_selection_bounds()
@@ -425,7 +436,7 @@ def test_quick_open_and_command_palette(tmp_path):
         first = dialog.list.get_row_at_index(0)
         r["first"] = first._item.label if first else None
         dialog.entry.emit("activate")
-        yield 1.0
+        yield from settle(win)
         r["opened"] = win.active_pane.current_doc().name
         palette = win.command_palette()
         palette.entry.set_text("theme drac")
@@ -453,7 +464,7 @@ def test_outline_panel(tmp_path):
 
     def scenario(win, r):
         win.open_path(str(md))
-        yield 1.2
+        yield from settle(win)
         win.show_outline()
         yield 0.3
         panel = win.outline_panel
@@ -488,7 +499,7 @@ def test_links_between_files_and_external(tmp_path):
 
     def scenario(win, r):
         win.open_path(str(main))
-        yield 1.0
+        yield from settle(win)
         view = win.active_pane.current_doc().views["formatted"]
         view.follow("other.md#part-4")
         yield 1.5
@@ -524,9 +535,9 @@ def test_session_round_trip(tmp_path):
         win.open_folder(str(folder))
         win.open_path(str(a))
         win.open_path(str(b))
-        yield 1.0
+        yield from settle(win)
         win.toggle_split()
-        yield 1.0
+        yield from settle(win)
         left = win.panes[0].current_doc()
         left.views["source"].get_vadjustment().set_value(900)
         yield 0.3
@@ -585,7 +596,7 @@ def test_reading_comfort():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "sample.py"))
         win.open_path(os.path.join(FIX, "sample.md"))
-        yield 1.2
+        yield from settle(win)
         md = win.active_pane.current_doc()
         win._zoom(1)
         win._zoom(1)
@@ -630,7 +641,7 @@ def test_file_actions(tmp_path):
     def scenario(win, r):
         win.open_path(original)
         win.open_path(os.path.join(FIX, "sample.md"))
-        yield 1.2
+        yield from settle(win)
         md = win.active_pane.current_doc()
         res = fileactions.print_doc(win, md, export_to=str(tmp_path / "md.pdf"))
         r["md_print"] = (res, (tmp_path / "md.pdf").read_bytes()[:4])
@@ -662,7 +673,7 @@ def test_file_actions(tmp_path):
 def test_html_file():
     def scenario(win, r):
         win.open_path(os.path.join(FIX, "sample.html"))
-        yield 1.2
+        yield from settle(win)
         doc = win.active_pane.current_doc()
         r["mode"] = doc.mode
         r["text"] = buffer_text(doc)
@@ -678,3 +689,96 @@ def test_html_file():
     assert "Sample & page" in r["text"] and "never shown" not in r["text"]
     assert r["outline"] == ["Sample & page", "Details", "Last part"]
     assert r["source"].startswith("<!doctype html>")
+
+
+IMG = os.path.join(FIX, "images")
+
+
+def test_images():
+    def scenario(win, r):
+        win.open_path(os.path.join(IMG, "a-red.png"))
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        view = doc.views["formatted"]
+        r["switch"] = win.active_pane.mode_switch.get_visible()
+        r["size"] = (view.width, view.height, view.format_name)
+        r["zoom"] = [doc.zoom(1), doc.zoom(1), doc.zoom(0)]
+        r["info"] = view.info.get_label()
+        view.step(1)  # next image, same tab
+        yield from settle(win)
+        r["next"] = (win.active_pane.current_doc().name, len(win.active_pane.docs()))
+        win.active_pane.current_doc().views["formatted"].step(1)
+        yield from settle(win)
+        anim = win.active_pane.current_doc().views["formatted"]
+        r["animated"] = anim._anim_iter is not None
+        win.open_path(os.path.join(IMG, "d-shape.svg"))
+        yield from settle(win)
+        svg = win.active_pane.current_doc()
+        r["svg_switch"] = win.active_pane.mode_switch.get_visible()
+        svg.views["formatted"].set_scale(3.0)
+        yield 0.8
+        r["svg_texture"] = svg.views["formatted"].picture.get_paintable().get_width()
+        svg.set_mode("source")
+        yield 0.6
+        r["svg_source"] = buffer_text(svg).startswith("<svg")
+        win.open_path(os.path.join(IMG, "e-broken.png"))
+        yield from settle(win)
+        r["broken"] = type(win.active_pane.current_doc().stack.get_visible_child()).__name__
+
+    r = run_app(scenario)
+    assert r["switch"] is False
+    assert r["size"] == (40, 30, "PNG")
+    assert r["zoom"][0] > 100 and r["zoom"][1] > r["zoom"][0]
+    assert "40 × 30" in r["info"] and "PNG" in r["info"]
+    assert r["next"] == ("b-blue.png", 1)
+    assert r["animated"] is True
+    assert r["svg_switch"] is True and r["svg_texture"] == 360 and r["svg_source"]
+    assert r["broken"] == "StatusPage"
+
+
+def test_rtf_file():
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.rtf"))
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["mode"] = doc.mode
+        r["text"] = buffer_text(doc)
+        table = doc.views["formatted"].buffer.get_tag_table()
+        r["tags"] = all(table.lookup(t) is not None for t in ("fg-B5502B", "scale-150"))
+        doc.set_mode("source")
+        yield 0.6
+        r["source"] = buffer_text(doc)[:6]
+
+    r = run_app(scenario)
+    assert r["mode"] == "formatted" and "Accents: olá, coração, € euro." in r["text"]
+    assert r["tags"] and r["source"] == "{\\rtf1"
+
+
+def test_notebook_file():
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.ipynb"))
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["mode"] = doc.mode
+        r["text"] = buffer_text(doc)
+        r["outline"] = [e.title for e in doc.outline()]
+        view = doc.views["formatted"].view
+        pictures = []
+        child = view.get_first_child()
+        while child is not None:
+            if isinstance(child, Gtk.Picture):
+                pictures.append(child)
+            child = child.get_next_sibling()
+        r["pictures"] = len(pictures)
+        doc.set_mode("source")
+        yield 0.6
+        r["source"] = buffer_text(doc).lstrip()[:1]
+
+    from gi.repository import Gtk  # noqa: F401 - used in the scenario
+
+    globals()["Gtk"] = Gtk
+    r = run_app(scenario)
+    assert r["mode"] == "formatted" and "In [1]:" in r["text"]
+    assert r["outline"] == ["Notebook title", "Results"]
+    assert r["pictures"] == 1
+    assert r["source"] == "{"

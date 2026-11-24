@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.13.0 (2026-11-24)
+
+- Added: images open in the viewer: PNG, JPEG, animated GIF, WebP, BMP, ICO, TIFF, AVIF/HEIC when their loader is installed, and SVG (with its XML one click away); fit, zoom, drag to pan, an info strip, and Left/Right through the images of the folder.
+- Added: RTF documents, formatted (bold, italic, underline, strike, sizes, colours, lists, simple tables) with the source one click away.
+- Added: Jupyter notebooks (.ipynb): Markdown cells formatted, code cells with their outputs, images included; nothing is executed.
+- Fixed: errors while reading a table or an image now show a message instead of a spinner that never stops.
+
 ## 0.10.0 (2026-11-24)
 
 - Added: HTML files (.html, .htm, .xhtml) open formatted, rendered natively and safely: no web engine, no scripts, nothing loaded from the network; the source is one click away.

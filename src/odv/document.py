@@ -36,6 +36,7 @@ class DocumentPage(Gtk.Box):
         "changed-on-disk": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "outline-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "position-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "navigate": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
     def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None,
@@ -46,6 +47,7 @@ class DocumentPage(Gtk.Box):
         self.name = os.path.basename(self.path)
         self.kind = classify(self.path)
         self.has_formatted = self.kind.has_formatted
+        self.has_source = self.kind.has_source
         self.mode = mode if (mode and self.has_formatted) else ("formatted" if self.has_formatted else "source")
         self._open_path = open_path
         self.started = time.perf_counter()
@@ -163,6 +165,9 @@ class DocumentPage(Gtk.Box):
         return "code"
 
     def zoom(self, direction: int) -> int:
+        view = self.views.get(self.mode)
+        if view is not None and hasattr(view, "zoom") and hasattr(view, "fit"):
+            return view.zoom(direction)  # images zoom themselves
         from odv import comfort
 
         return comfort.step_zoom(self.zoom_kind(), direction)
@@ -305,14 +310,15 @@ class DocumentPage(Gtk.Box):
 
     # -- views ----------------------------------------------------------------
     def set_mode(self, mode: str) -> None:
-        if mode == self.mode or (mode == "formatted" and not self.has_formatted):
+        if mode == self.mode or (mode == "formatted" and not self.has_formatted) \
+                or (mode == "source" and not self.has_source):
             return
         self.mode = mode
         self._show(mode)
         self.emit("mode-changed")
 
     def toggle_mode(self) -> None:
-        if self.has_formatted:
+        if self.has_formatted and self.has_source:
             self.set_mode("source" if self.mode == "formatted" else "formatted")
 
     def _show(self, mode: str) -> None:
@@ -323,6 +329,8 @@ class DocumentPage(Gtk.Box):
         self.stack.set_visible_child_name("loading")
         if mode == "formatted" and self.kind.kind == "delimited":
             self._build_table()
+        elif mode == "formatted" and self.kind.kind == "image":
+            self._build_image()
         elif self._text is not None:
             self._build_text_view(mode)
         else:
@@ -407,6 +415,17 @@ class DocumentPage(Gtk.Box):
         if self.mode == mode:
             self.stack.set_visible_child(view)
         self._update_banner()
+
+    def _build_image(self):
+        from odv.views.image import ImageView
+
+        view = ImageView(self.path)
+        view.connect("loaded", lambda v: (self._first_content(), self._loaded()))
+        view.connect("failed", lambda v, msg: self._status(_("Could not show this image"), msg,
+                                                            "image-missing-symbolic"))
+        view.connect("navigate", lambda v, path: self.emit("navigate", path))
+        self._add_view("formatted", view)
+        GLib.idle_add(lambda: (view.grab_focus(), False)[1])
 
     def _build_table(self):
         from odv.views.table import TableView

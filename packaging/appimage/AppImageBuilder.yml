@@ -23,7 +23,7 @@ AppDir:
     name: Open Documents Viewer
     icon: io.github.guilhermefeitosa66.OpenDocumentsViewer
     # Kept in step with src/odv/__init__.py; build.sh refuses a mismatch.
-    version: "0.10.0"
+    version: "0.13.0"
     exec: usr/bin/odv-launcher
   runtime:
     env:
@@ -59,6 +59,9 @@ AppDir:
       - adwaita-icon-theme
       - librsvg2-2
       - librsvg2-common
+      - webp-pixbuf-loader
+      - heif-gdk-pixbuf
+      - libavif-gdk-pixbuf
 
 AppImage:
   arch: x86_64

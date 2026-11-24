@@ -509,3 +509,66 @@ def test_html_styles_and_broken_markup():
     assert "bold" not in tags.get("after", ()) and "italic" not in tags.get("after", ())
     assert htmlrender.build("").ops == []
     assert htmlrender.build("plain &lt;text&gt;").ops[0][1] == "plain <text>"
+
+
+def test_image_kinds():
+    png, svg = filetypes.classify("photo.JPG"), filetypes.classify("logo.svg")
+    assert png.kind == "image" and png.has_formatted and not png.has_source
+    assert svg.kind == "image" and svg.has_source and svg.lang == "xml"
+    assert filetypes.classify("a.md").has_source
+
+
+# -- RTF --------------------------------------------------------------------------
+
+from odv.formats import rtfrender  # noqa: E402
+
+
+def test_rtf_render():
+    doc = rtfrender.build(open(os.path.join(FIX, "sample.rtf"), "rb").read())
+    text = _flat(doc)
+    assert "Hidden title" not in text and "Some Writer" not in text and "Arial" not in text
+    assert text.startswith("Sample RTF\nPlain, bold, italic, underline, gone and terracotta.\n")
+    assert "Accents: olá, coração, € euro." in text
+    assert "•\tOne item\n•\tTwo items\n" in text
+    styles = {op[1]: op[2] for op in doc.ops if op[0] == "text"}
+    assert {"bold", "scale-150"} <= set(styles["Sample RTF"])
+    assert "fg-B5502B" in styles["terracotta"] and "strike" in styles["gone"]
+    table = next(op[1] for op in doc.ops if op[0] == "table")
+    assert table.header == ["Name", "Size"] and table.rows == [["a.md", "12"]]
+    assert text.rstrip().endswith("After the table.")
+    assert len(text) == doc.length
+
+
+def test_rtf_edge_cases():
+    assert _flat(rtfrender.build(b"{\\rtf1 a\\{b\\}c\\\\d}")) == "a{b}c\\d"
+    assert _flat(rtfrender.build(b"{\\rtf1\\uc2 x\\u233\\'e9\\'e9y}")) == "xéy"
+    assert _flat(rtfrender.build(b"{\\rtf1 {\\*\\unknowndest secret}shown}")) == "shown"
+    assert rtfrender.build(b"").ops == []
+
+
+# -- notebooks --------------------------------------------------------------------
+
+from odv.formats import ipynb  # noqa: E402
+
+
+def test_notebook_render():
+    doc = ipynb.build(open(os.path.join(FIX, "sample.ipynb")).read())
+    text = _flat(doc)
+    assert text.startswith("Notebook title\nSome bold text and a link.\nIn [1]:\nx = 2 + 2\nprint(x)\n")
+    assert "\n4\n" in text and "\n40\n" in text
+    assert "ZeroDivisionError: division by zero" in text and "\x1b" not in text
+    assert "<Figure>" not in text  # the image replaces its text alternative
+    assert [op[0] for op in doc.ops].count("image") == 1
+    assert [(h.level, h.title) for h in doc.outline] == [(1, "Notebook title"), (2, "Results")]
+    link = doc.links[0]
+    assert text[link.start:link.end] == "link" and doc.headings["results"] == doc.outline[1].offset
+    assert len(text) == doc.length
+
+
+def test_notebook_v3_and_empty():
+    v3 = {"nbformat": 3, "worksheets": [{"cells": [{"cell_type": "code", "input": "1+1", "prompt_number": 4,
+                                                     "outputs": []}]}]}
+    import json
+
+    assert _flat(ipynb.build(json.dumps(v3))).startswith("In [4]:\n1+1\n")
+    assert ipynb.build('{"cells": []}').ops == []

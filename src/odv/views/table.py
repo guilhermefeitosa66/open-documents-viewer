@@ -78,7 +78,8 @@ class TableView(Gtk.ScrolledWindow):
         try:
             self.index = CsvIndex(path, delimiter)
         except OSError as e:
-            GLib.idle_add(lambda: (self.emit("failed", e.strerror or str(e)), False)[1])
+            message = e.strerror or str(e)  # `e` is unbound once the except block ends
+            GLib.idle_add(lambda: (self.emit("failed", message), False)[1])
             return
         self._build_columns()
         threading.Thread(target=self.index.build, daemon=True).start()

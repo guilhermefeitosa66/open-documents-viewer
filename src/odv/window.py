@@ -32,7 +32,7 @@ class ModeSwitch(Gtk.Box):
             self._on_mode(mode)
 
     def show_doc(self, doc):
-        visible = doc is not None and doc.has_formatted
+        visible = doc is not None and doc.has_formatted and doc.has_source
         self.set_visible(visible)
         if not visible:
             return
@@ -119,7 +119,16 @@ class Pane(Gtk.Box):
         # the document lives now instead of assuming this pane.
         doc.connect("mode-changed", lambda d: self.window.pane_of(d) and self.window.pane_of(d)._sync_switch())
         doc.connect("changed-on-disk", lambda d: self.window.pane_of(d) and self.window.pane_of(d).reload_doc(d))
+        doc.connect("navigate", lambda d, path: self.window.pane_of(d) and self.window.pane_of(d).navigate(d, path))
         return page
+
+    def navigate(self, doc, path):
+        """Show ``path`` in the tab of ``doc`` (next/previous image)."""
+        page = self.find_page(doc.path)
+        if page is not None and self.find_page(path) is None:
+            self.replace(page, DocumentPage(path, self.window.open_path))
+        elif self.find_page(path) is not None:
+            self.view.set_selected_page(self.find_page(path))
 
     def reload_doc(self, doc):
         page = self.view.get_page(doc)

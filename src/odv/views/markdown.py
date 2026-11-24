@@ -103,11 +103,15 @@ class MarkdownView(Gtk.ScrolledWindow):
                 state["i"] += 1
                 end = b.get_end_iter()
                 if op[0] == "text":
+                    for tag in op[2]:
+                        self._ensure_tag(tag)
                     b.insert_with_tags_by_name(end, op[1], *op[2])
                 elif op[0] == "hr":
                     self._add_child(end, self._hr())
                 elif op[0] == "table":
                     self._add_child(end, self._table(op[1]))
+                elif op[0] == "image":
+                    self._add_child(end, self._image(op[1]))
                 if GLib.get_monotonic_time() > deadline_us:
                     break
             return state["i"] >= len(ops)
@@ -127,6 +131,20 @@ class MarkdownView(Gtk.ScrolledWindow):
         else:
             GLib.idle_add(step, priority=GLib.PRIORITY_LOW)
 
+    def _ensure_tag(self, name: str) -> None:
+        """Tags made on demand by richer formats: fg-RRGGBB, bg-RRGGBB, scale-N."""
+        table = self.buffer.get_tag_table()
+        if table.lookup(name) is not None:
+            return
+        if name.startswith("fg-"):
+            self.buffer.create_tag(name, foreground="#" + name[3:])
+        elif name.startswith("bg-"):
+            self.buffer.create_tag(name, background="#" + name[3:])
+        elif name.startswith("scale-"):
+            self.buffer.create_tag(name, scale=int(name[6:]) / 100)
+        else:
+            self.buffer.create_tag(name)
+
     def _add_child(self, it, widget):
         anchor = self.buffer.create_child_anchor(it)
         self.view.add_child_at_anchor(widget, anchor)
@@ -135,6 +153,31 @@ class MarkdownView(Gtk.ScrolledWindow):
         sep = Gtk.Box(width_request=MAX_WIDTH - 96, height_request=1)
         sep.add_css_class("md-hr")
         return sep
+
+    def _image(self, source):
+        """An image from bytes (notebook outputs) or a local path."""
+        from gi.repository import GdkPixbuf
+
+        try:
+            if isinstance(source, (bytes, bytearray)):
+                loader = GdkPixbuf.PixbufLoader()
+                loader.write(bytes(source))
+                loader.close()
+                pixbuf = loader.get_pixbuf()
+            else:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(source)
+        except GLib.Error:
+            label = Gtk.Label(label="[image]")
+            label.add_css_class("dim-label")
+            return label
+        width, height = pixbuf.get_width(), pixbuf.get_height()
+        limit = MAX_WIDTH - 96
+        if width > limit:
+            width, height = limit, round(height * limit / width)
+        picture = Gtk.Picture(paintable=Gdk.Texture.new_for_pixbuf(pixbuf), can_shrink=True,
+                              width_request=width, height_request=height, margin_top=4, margin_bottom=4)
+        picture.add_css_class("md-image")
+        return picture
 
     def _table(self, table):
         grid = Gtk.Grid(column_spacing=0, row_spacing=0, margin_top=4, margin_bottom=12)

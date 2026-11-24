@@ -209,6 +209,15 @@ CATALOG: dict[str, dict[str, str]] = {
     "Permissions": {"pt": "Permissões", "es": "Permisos"},
     "Encoding": {"pt": "Codificação", "es": "Codificación"},
     "Lines": {"pt": "Linhas", "es": "Líneas"},
+    # images
+    "Image": {"pt": "Imagem", "es": "Imagen"},
+    "Could not show this image": {"pt": "Não foi possível mostrar esta imagem",
+                                  "es": "No se pudo mostrar esta imagen"},
+    "Previous image (Left)": {"pt": "Imagem anterior (←)", "es": "Imagen anterior (←)"},
+    "Next image (Right)": {"pt": "Próxima imagem (→)", "es": "Imagen siguiente (→)"},
+    "Fit to window (F)": {"pt": "Ajustar à janela (F)", "es": "Ajustar a la ventana (F)"},
+    "Actual size (1)": {"pt": "Tamanho real (1)", "es": "Tamaño real (1)"},
+    "Fit": {"pt": "Ajustada", "es": "Ajustada"},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

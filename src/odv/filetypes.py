@@ -5,6 +5,10 @@ import os
 MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
+# What GdkPixbuf can usually decode; the image view reports a missing loader.
+IMAGE_EXT = {".png", ".jpg", ".jpeg", ".jpe", ".gif", ".webp", ".bmp", ".ico", ".cur", ".tif", ".tiff",
+             ".avif", ".heic", ".heif", ".jxl", ".svg", ".svgz", ".tga", ".pnm", ".pbm", ".pgm", ".ppm",
+             ".xpm", ".xbm", ".icns", ".qoi", ".ani"}
 
 # Language ids understood by GtkSourceView 5, for names its own guess misses.
 LANG_BY_EXT = {
@@ -73,15 +77,20 @@ class Kind:
     @property
     def rich(self) -> bool:
         """Shown formatted by the rich-text view (odv.formats.RICH)."""
-        return self.kind in ("markdown", "html")
+        return self.kind in ("markdown", "html", "rtf", "notebook")
 
     @property
     def has_formatted(self) -> bool:
-        return self.rich or self.kind == "delimited"
+        return self.rich or self.kind in ("delimited", "image")
+
+    @property
+    def has_source(self) -> bool:
+        """Raster images have no text to show; SVG does (its XML)."""
+        return self.kind != "image" or self.lang == "xml"
 
     @property
     def formatted_label(self) -> str:
-        return "Table" if self.kind == "delimited" else "Formatted"
+        return {"delimited": "Table", "image": "Image"}.get(self.kind, "Formatted")
 
 
 def is_env_file(name: str) -> bool:
@@ -103,6 +112,12 @@ def classify(path: str) -> Kind:
         return Kind("delimited", None, DELIMITED_EXT[ext])
     if ext in HTML_EXT:
         return Kind("html", "html", wrap=True)
+    if ext == ".rtf":
+        return Kind("rtf", None, wrap=True)
+    if ext == ".ipynb":
+        return Kind("notebook", "json")
+    if ext in IMAGE_EXT:
+        return Kind("image", "xml" if ext in (".svg", ".svgz") else None)
     if is_env_file(name):
         return Kind("text", "sh")
     if lower in LANG_BY_NAME:
@@ -116,9 +131,9 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
-    if ext in MARKDOWN_EXT or ext in HTML_EXT:
+    if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb"):
         return "markdown"
-    if ext in DELIMITED_EXT:
+    if ext in DELIMITED_EXT or ext in IMAGE_EXT:
         return "data"
     if is_env_file(name) or ext in CONFIG_EXT:
         return "config"
