@@ -970,3 +970,27 @@ def test_email_contacts_calendar():
     assert r["eml"] == "Relatório de março"
     assert r["outline"] == ["First meeting", "Second", "Entregar"]
     assert r["vcf_source"]
+
+
+def test_docx_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_docx
+
+    path = str(make_docx(tmp_path / "report.docx"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["state"] = (doc.mode, doc.has_source, win.active_pane.mode_switch.get_visible())
+        r["text"] = buffer_text(doc)
+        r["outline"] = [e.title for e in doc.outline()]
+        table = doc.views["formatted"].buffer.get_tag_table()
+        r["align"] = table.lookup("align-center") is not None
+
+    r = run_app(scenario)
+    assert r["state"] == ("formatted", False, False)
+    assert "Plain bold, red italic and a link." in r["text"]
+    assert r["outline"] == ["Report Title", "Introduction", "Details"] and r["align"]

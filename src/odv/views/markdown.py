@@ -142,6 +142,11 @@ class MarkdownView(Gtk.ScrolledWindow):
             self.buffer.create_tag(name, background="#" + name[3:])
         elif name.startswith("scale-"):
             self.buffer.create_tag(name, scale=int(name[6:]) / 100)
+        elif name.startswith("align-"):
+            self.buffer.create_tag(name, justification={"align-center": Gtk.Justification.CENTER,
+                                                        "align-right": Gtk.Justification.RIGHT,
+                                                        "align-fill": Gtk.Justification.FILL}.get(name,
+                                                                                                  Gtk.Justification.LEFT))
         else:
             self.buffer.create_tag(name)
 

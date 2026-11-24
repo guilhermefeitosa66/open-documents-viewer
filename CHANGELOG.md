@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.21.0 (2026-11-24)
+
+- Added: Word documents (.docx), read-only and fluid: headings and outline, bold, italic, underline, strike, colours, sizes, alignment, numbered and bulleted lists, tables, images, links, header and footer, footnotes and page breaks.
+
 ## 0.20.0 (2026-11-24)
 
 - Added: e-mail messages (.eml): headers, the body (HTML rendered safely, inline images shown, remote ones and scripts never loaded) and attachments you can save.

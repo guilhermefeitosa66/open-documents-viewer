@@ -764,3 +764,37 @@ def test_vcf_and_ics():
     assert [h.title for h in ics.outline] == ["First meeting", "Second", "Entregar"]  # by date
     first = next(op[1] for op in ics.ops if op[0] == "table").rows
     assert first[0] == ["Starts", "2026-12-01 09:00 (America/Fortaleza)"] and ["Organizer", "Ana"] in first
+
+
+# -- office -----------------------------------------------------------------------------
+
+from odv.formats import docx  # noqa: E402
+from office import make_docx  # noqa: E402
+
+
+def test_docx(tmp_path):
+    doc = docx.build(None, str(make_docx(tmp_path / "r.docx")))
+    text = _flat(doc)
+    assert text.startswith("Company header\n")
+    assert "Plain bold, red italic and a link.[1]7\n" in text  # field result kept, instruction dropped
+    assert "PAGE" not in text and "hidden text" not in text
+    assert "1. First step\n2. Second step\n• A bullet\n" in text
+    assert text.rstrip().endswith("Page footer") and "[1] A footnote." in text
+    assert [(h.level, h.title) for h in doc.outline] == [(1, "Report Title"), (1, "Introduction"), (2, "Details")]
+    styles = {op[1]: op[2] for op in doc.ops if op[0] == "text"}
+    assert "bold" in styles["bold"] and {"italic", "fg-B5502B"} <= set(styles["red italic"])
+    assert "align-center" in styles["Centered line\n"]
+    table = next(op[1] for op in doc.ops if op[0] == "table")
+    assert table.header == ["Name", "Size"] and table.rows == [["merged", ""]]
+    kinds = [op[0] for op in doc.ops]
+    assert kinds.count("image") == 1 and kinds.count("hr") >= 3  # header, page break, notes, footer
+    link = doc.links[0]
+    assert link.href == "https://libre-apps.org" and text[link.start:link.end] == "a link"
+    assert len(text) == doc.length
+
+
+def test_docx_errors(tmp_path):
+    bad = tmp_path / "bad.docx"
+    bad.write_bytes(b"not a zip")
+    with pytest.raises(docx.DocxError):
+        docx.build(None, str(bad))

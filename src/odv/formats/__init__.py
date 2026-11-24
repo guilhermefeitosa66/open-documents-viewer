@@ -11,6 +11,7 @@ RICH = {
     "notebook": "odv.formats.ipynb",
     "ebook": "odv.formats.epub",
     "message": "odv.formats.messages",
+    "document": "odv.formats.office",
 }
 
 

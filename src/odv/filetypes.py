@@ -5,6 +5,8 @@ import os
 MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
+# Word-processing documents read from their package (odv.formats.office).
+DOCUMENT_EXT = {".docx"}
 # Structured data with a tree view: extension -> (parser kind, source language).
 TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
             ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),
@@ -167,7 +169,7 @@ class Kind:
     @property
     def rich(self) -> bool:
         """Shown formatted by the rich-text view (odv.formats.RICH)."""
-        return self.kind in ("markdown", "html", "rtf", "notebook", "ebook", "message")
+        return self.kind in ("markdown", "html", "rtf", "notebook", "ebook", "message", "document")
 
     @property
     def has_formatted(self) -> bool:
@@ -181,7 +183,7 @@ class Kind:
     @property
     def binary(self) -> bool:
         """Read from the file itself, not as text (EPUB is a zip)."""
-        return self.kind == "ebook" and self.lang is None
+        return self.kind in ("ebook", "document") and self.lang is None
 
     @property
     def formatted_label(self) -> str:
@@ -213,6 +215,8 @@ def classify(path: str) -> Kind:
         return Kind("notebook", "json")
     if ext in (".eml", ".vcf", ".vcard", ".ics", ".ical", ".ifb"):
         return Kind("message", None, wrap=True)
+    if ext in DOCUMENT_EXT:
+        return Kind("document", None)
     if ext == ".epub":
         return Kind("ebook", None)
     if ext == ".fb2":
@@ -234,6 +238,8 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
+    if ext in DOCUMENT_EXT:
+        return "markdown"
     if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2", ".eml", ".vcf", ".ics"):
         return "markdown"
     if ext in DELIMITED_EXT or ext in IMAGE_EXT:

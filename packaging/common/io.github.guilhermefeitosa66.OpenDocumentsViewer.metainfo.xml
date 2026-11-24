@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.21.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: Word documents (.docx), read-only and fluid: headings and outline, bold, italic, underline, strike, colours, sizes, alignment, numbered and bulleted lists, tables, images, links, header and footer, footnotes and page breaks.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.20.0" date="2026-11-24">
       <description>
         <ul>
