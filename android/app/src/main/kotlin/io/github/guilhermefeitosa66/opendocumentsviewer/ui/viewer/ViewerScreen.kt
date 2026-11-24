@@ -219,7 +219,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     FastScroller(session.formattedList, f.content.index.rowCount, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
                 is Formatted.Table -> {
-                    TableView(f.table, session.formattedList, fontSize, matches, current, padding)
+                    TableView(f.table, session, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
                 is Formatted.Tree -> {

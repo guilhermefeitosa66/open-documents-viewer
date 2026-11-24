@@ -363,11 +363,60 @@ class DocumentSession(
         if (f is Formatted.Tree && (formatted as? Formatted.Tree)?.doc !== f.doc) {
             treeExpanded = io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.initialExpanded(f.doc)
         }
+        val oldTable = (formatted as? Formatted.Table)?.table
         formatted = f
+        // A reload brings a new table: keep the chosen order, sorted again from the new rows.
+        if (f is Formatted.Table && oldTable != null && f.table !== oldTable) {
+            tableRows = null
+            tableSort?.let { applySort(f.table, it) }
+        }
     }
 
     fun toggleNode(id: Int) {
         treeExpanded = if (id in treeExpanded) treeExpanded - id else treeExpanded + id
+    }
+
+    // ---- Table (CSV/TSV) -----------------------------------------------------------------
+
+    data class TableSort(val column: Int, val ascending: Boolean)
+
+    var tableSort by mutableStateOf<TableSort?>(null)
+        private set
+    /** Rows as displayed (header first), sorted when [tableSort] is set; the file is never changed. */
+    var tableRows by mutableStateOf<List<List<String>>?>(null)
+        private set
+    /** Column widths the user dragged, in dp. */
+    val columnWidths = mutableStateMapOf<Int, Float>()
+
+    /** Tap on a header: ascending, then descending, then the file's order. */
+    fun sortTable(column: Int) {
+        val t = (formatted as? Formatted.Table)?.table ?: return
+        val now = tableSort
+        val next = when {
+            now == null || now.column != column -> TableSort(column, true)
+            now.ascending -> TableSort(column, false)
+            else -> null
+        }
+        tableSort = next
+        if (next == null) {
+            tableRows = null
+            if (searchOpen) runSearch()
+            return
+        }
+        applySort(t, next)
+    }
+
+    private fun applySort(t: io.github.guilhermefeitosa66.opendocumentsviewer.formats.DelimitedTable, next: TableSort) {
+        scope.launch {
+            val sorted = withContext(Dispatchers.Default) {
+                val header = t.rows.take(1)
+                header + t.rows.drop(1).sortedWith(io.github.guilhermefeitosa66.opendocumentsviewer.formats.CellSort.comparator(next.column, next.ascending))
+            }
+            if (tableSort == next && (formatted as? Formatted.Table)?.table === t) {
+                tableRows = sorted
+                if (searchOpen) runSearch()
+            }
+        }
     }
 
     /** JSON shown as indented text instead of a tree (menu). */
@@ -465,6 +514,7 @@ class DocumentSession(
         val viewMode = mode
         val firstVisible = activeList.firstVisibleItemIndex
         val treeLinesSnapshot = treeLines
+        val shownRows = tableRows ?: (formatted as? Formatted.Table)?.table?.rows.orEmpty()
         searchJob = scope.launch {
             if (debounce) delay(150)
             searching = true
@@ -476,7 +526,7 @@ class DocumentSession(
                     else -> when (val f = formatted) {
                         is Formatted.Json -> searchText(f.content, q, opts, active)
                         is Formatted.Markdown -> TextSearch.search(f.blocks.map { it.plainText }, q, opts, active)
-                        is Formatted.Table -> TextSearch.search(f.table.rows.map { it.joinToString("  ") }, q, opts, active)
+                        is Formatted.Table -> TextSearch.search(shownRows.map { it.joinToString("  ") }, q, opts, active)
                         is Formatted.Env -> TextSearch.search(f.lines.map(::envText), q, opts, active)
                         is Formatted.Tree -> TextSearch.search(treeLinesSnapshot.map { (it.node.key ?: "") + " " + (it.node.value ?: "") }, q, opts, active)
                         else -> null

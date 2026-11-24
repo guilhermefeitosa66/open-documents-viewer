@@ -2,6 +2,8 @@ package io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.combinedClickable
 import io.github.guilhermefeitosa66.opendocumentsviewer.formats.NodeKind
 import androidx.compose.ui.text.withStyle
@@ -48,10 +50,11 @@ import io.github.guilhermefeitosa66.opendocumentsviewer.search.Match
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.theme.MonoFamily
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.theme.Odv
 
-/** CSV/TSV as a table: first row as a sticky header, row numbers, sideways scroll. */
+/** CSV/TSV as a table: sticky header (tap to sort, drag its edge to resize), row numbers, sideways scroll. */
 @Composable
 fun TableView(
     table: DelimitedTable,
+    session: DocumentSession,
     state: LazyListState,
     fontSize: TextUnit,
     matchesByItem: Map<Int, List<Match>>,
@@ -61,12 +64,15 @@ fun TableView(
     val colors = Odv.colors
     val density = LocalDensity.current
     val charWidth = rememberMonoCharWidth(fontSize)
-    val widths: List<Dp> = remember(table, charWidth) {
+    val auto: List<Dp> = remember(table, charWidth) {
         table.columnChars.map { with(density) { ((it + 1) * charWidth).toDp() } + 24.dp }
     }
+    val widths = auto.mapIndexed { i, w -> session.columnWidths[i]?.dp ?: w }
     val numberWidth = with(density) { (table.rows.size.toString().length * charWidth).toDp() } + 20.dp
     val total = widths.fold(numberWidth) { a, b -> a + b } + 16.dp
-    val header = table.rows.firstOrNull()
+    val rows = session.tableRows ?: table.rows
+    val header = rows.firstOrNull()
+    val sort = session.tableSort
     val hScroll = rememberScrollState()
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -77,17 +83,68 @@ fun TableView(
                     if (header != null) {
                         stickyHeader {
                             Column(Modifier.background(colors.paper2)) {
-                                CsvRow(null, header, widths, numberWidth, fontSize, header = true, highlight = false)
+                                HeaderRow(header, widths, numberWidth, fontSize, sort, onSort = session::sortTable) { col, deltaPx ->
+                                    val now = session.columnWidths[col] ?: with(density) { widths[col].toPx() / density.density }
+                                    session.columnWidths[col] = (now + deltaPx / density.density).coerceIn(40f, 900f)
+                                }
                                 HorizontalDivider(color = colors.line, thickness = 2.dp)
                             }
                         }
                     }
-                    itemsIndexed(table.rows.drop(1)) { i, row ->
+                    itemsIndexed(rows.drop(1)) { i, row ->
                         val item = i + 1
                         val hit = matchesByItem.containsKey(item)
                         CsvRow(item, row, widths, numberWidth, fontSize, header = false, highlight = hit, current = current?.item == item)
                         HorizontalDivider(color = colors.line)
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeaderRow(
+    cells: List<String>,
+    widths: List<Dp>,
+    numberWidth: Dp,
+    fontSize: TextUnit,
+    sort: DocumentSession.TableSort?,
+    onSort: (Int) -> Unit,
+    onResize: (Int, Float) -> Unit,
+) {
+    val colors = Odv.colors
+    Row(Modifier.heightIn(min = 40.dp).padding(horizontal = 8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Box(Modifier.width(numberWidth))
+        widths.forEachIndexed { c, w ->
+            val arrow = when {
+                sort?.column != c -> ""
+                sort.ascending -> " ▲"
+                else -> " ▼"
+            }
+            Box(Modifier.width(w)) {
+                Text(
+                    cells.getOrNull(c).orEmpty() + arrow,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClickLabel = stringResource(R.string.sort_column)) { onSort(c) }
+                        .padding(start = 10.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
+                    fontFamily = MonoFamily, fontSize = fontSize, fontWeight = FontWeight.SemiBold,
+                    color = if (arrow.isEmpty()) colors.ink else colors.accentInk,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+                // Drag the right edge to change the column width.
+                Box(
+                    Modifier
+                        .align(androidx.compose.ui.Alignment.CenterEnd)
+                        .width(14.dp)
+                        .fillMaxHeight()
+                        .pointerInput(c) {
+                            detectHorizontalDragGestures { change, dx -> change.consume(); onResize(c, dx) }
+                        },
+                    contentAlignment = androidx.compose.ui.Alignment.Center,
+                ) {
+                    Box(Modifier.width(2.dp).heightIn(min = 18.dp).background(colors.line))
                 }
             }
         }

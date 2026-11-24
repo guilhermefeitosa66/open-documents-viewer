@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.17.0] - 2026-11-24
+
+### Added
+- CSV/TSV table: tap a column header to sort (ascending, descending, back to the file's order). Numbers sort by value
+  (`1.234,56`, `1,234.56`, currency and percent signs), text sorts naturally (`item 2` before `item 10`), blanks stay
+  last. Only the display changes; the file is never touched. Search follows the order shown.
+- Drag the edge of a column header to make that column wider or narrower.
+
 ## [0.16.0] - 2026-11-24
 
 ### Changed

@@ -136,4 +136,5 @@
     <string name="path_copied">Caminho copiado</string>
     <string name="show_as_text">Ver como texto indentado</string>
     <string name="show_as_tree">Ver como árvore</string>
+    <string name="sort_column">Ordenar por esta coluna</string>
 </resources>

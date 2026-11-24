@@ -73,3 +73,68 @@ object Delimited {
         return DelimitedTable(rows, delimiter, widths)
     }
 }
+
+/** Sorting table rows for display only: numbers by value (1.234,56 or 1,234.56), text naturally, blanks last. */
+object CellSort {
+    fun comparator(column: Int, ascending: Boolean): Comparator<List<String>> {
+        val base = Comparator<List<String>> { a, b -> compareCells(a.getOrNull(column).orEmpty(), b.getOrNull(column).orEmpty()) }
+        return if (ascending) base else Comparator { a, b ->
+            val x = a.getOrNull(column).orEmpty().isBlank()
+            val y = b.getOrNull(column).orEmpty().isBlank()
+            // Blanks stay last in both directions.
+            if (x != y) (if (x) 1 else -1) else base.compare(b, a)
+        }
+    }
+
+    fun compareCells(a: String, b: String): Int {
+        val ta = a.trim()
+        val tb = b.trim()
+        if (ta.isEmpty() != tb.isEmpty()) return if (ta.isEmpty()) 1 else -1
+        val na = number(ta)
+        val nb = number(tb)
+        if (na != null && nb != null) return na.compareTo(nb)
+        if (na != null) return -1
+        if (nb != null) return 1
+        return natural(ta, tb)
+    }
+
+    /** "R$ 1.234,56", "1,234.56", "12%", "-3e2" → a number; null for text. */
+    fun number(s: String): Double? {
+        var t = s.replace(Regex("[\\s\\u00A0%$€£¥]|R\\$"), "")
+        if (t.isEmpty() || t.count { it.isDigit() } == 0) return null
+        if (!t.all { it.isDigit() || it in ".,-+eE" }) return null
+        val lastDot = t.lastIndexOf('.')
+        val lastComma = t.lastIndexOf(',')
+        t = when {
+            lastDot >= 0 && lastComma >= 0 -> if (lastComma > lastDot) t.replace(".", "").replace(',', '.') else t.replace(",", "")
+            lastComma >= 0 -> if (t.count { it == ',' } == 1 && t.length - lastComma - 1 != 3) t.replace(',', '.') else t.replace(",", "")
+            else -> t
+        }
+        return t.toDoubleOrNull()
+    }
+
+    /** Text with digit runs compared by value ("item 2" before "item 10"), ignoring case. */
+    fun natural(a: String, b: String): Int {
+        var i = 0
+        var j = 0
+        while (i < a.length && j < b.length) {
+            val ca = a[i]
+            val cb = b[j]
+            if (ca.isDigit() && cb.isDigit()) {
+                var ei = i; while (ei < a.length && a[ei].isDigit()) ei++
+                var ej = j; while (ej < b.length && b[ej].isDigit()) ej++
+                val da = a.substring(i, ei).trimStart('0')
+                val db = b.substring(j, ej).trimStart('0')
+                if (da.length != db.length) return da.length - db.length
+                val c = da.compareTo(db)
+                if (c != 0) return c
+                i = ei; j = ej
+            } else {
+                val c = ca.lowercaseChar().compareTo(cb.lowercaseChar())
+                if (c != 0) return c
+                i++; j++
+            }
+        }
+        return (a.length - i) - (b.length - j)
+    }
+}
