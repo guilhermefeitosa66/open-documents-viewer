@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.19.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: Markdown shows local images (remote ones are never loaded).</li>
+        <li>Added: a name filter above the folder tree lists the matching files of the whole folder.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.18.0" date="2026-11-24">
       <description>
         <ul>

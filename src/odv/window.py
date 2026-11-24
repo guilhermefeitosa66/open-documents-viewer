@@ -185,7 +185,10 @@ class Window(Adw.ApplicationWindow):
         self.search_panel = SearchPanel(self.open_at)
         self.outline_panel = OutlinePanel()
         self.sidebar_stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-        self.sidebar_stack.add_named(self.tree, "files")
+        from odv.sidebar import FolderPanel
+
+        self.folder_panel = FolderPanel(self.tree, self.open_path)
+        self.sidebar_stack.add_named(self.folder_panel, "files")
         self.sidebar_stack.add_named(self.search_panel, "search")
         self.sidebar_stack.add_named(self.outline_panel, "outline")
         self.sidebar_title = Adw.WindowTitle(title="")
@@ -678,7 +681,7 @@ class Window(Adw.ApplicationWindow):
 
     def open_folder(self, path):
         self.folder = path
-        self.tree.set_root(path)
+        self.folder_panel.set_root(path)
         self.search_panel.set_root(path)
         self.files_toggle.set_active(True)
         self._sync_sidebar_buttons()

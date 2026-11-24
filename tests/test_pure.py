@@ -719,3 +719,18 @@ def test_positions(tmp_path, monkeypatch):
     assert positions.get("/x/book.epub") is None
     positions.put("/x/book.epub", 1234)
     assert positions.get("/x/book.epub") == 1234
+
+
+def test_markdown_local_images(tmp_path):
+    import shutil
+
+    shutil.copy(os.path.join(FIX, "images", "a-red.png"), tmp_path / "pic.png")
+    md = tmp_path / "doc.md"
+    md.write_text("![local](pic.png) ![remote](https://example.org/x.png) ![missing](nope.png)\n")
+    doc = mdrender.build(md.read_text(), str(md))
+    images = [op for op in doc.ops if op[0] == "image"]
+    assert len(images) == 1 and images[0][1][:4] == b"\x89PNG"
+    text = _flat(doc)
+    assert "[image: remote]" in text and "[image: missing]" in text
+    assert len(text) == doc.length
+    assert all(op[0] != "image" for op in mdrender.build(md.read_text()).ops)  # no path, no files read

@@ -916,3 +916,37 @@ def test_epub_file(tmp_path):
     assert r["first"] == ("formatted", False, False)
     assert r["outline"] == ["One (from the nav)", "Two (from the nav)", "Scene"]
     assert r["section"] == "Scene" and r["reopened"] == "Scene"
+
+
+def test_sidebar_filter(tmp_path):
+    root = tmp_path / "proj"
+    (root / "docs" / "deep").mkdir(parents=True)
+    (root / "docs" / "deep" / "install-guide.md").write_text("# hi\n")
+    (root / "readme.md").write_text("# readme\n")
+    (root / "main.py").write_text("x = 1\n")
+
+    def scenario(win, r):
+        win.open_folder(str(root))
+        yield 0.3
+        panel = win.folder_panel
+        panel.entry.set_text("guide")
+        for _ in range(30):
+            yield 0.1
+            if panel.stack.get_visible_child_name() == "results":
+                break
+        rows = []
+        i = 0
+        while (row := panel.results.get_row_at_index(i)) is not None:
+            rows.append(os.path.relpath(row._path, root))
+            i += 1
+        r["rows"] = rows
+        panel.entry.emit("activate")
+        yield from settle(win)
+        r["opened"] = win.active_pane.current_doc().name
+        panel.entry.set_text("")
+        yield 0.4
+        r["back"] = panel.stack.get_visible_child_name()
+
+    r = run_app(scenario)
+    assert r["rows"] == [os.path.join("docs", "deep", "install-guide.md")]
+    assert r["opened"] == "install-guide.md" and r["back"] == "tree"

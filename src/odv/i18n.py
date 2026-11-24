@@ -232,6 +232,7 @@ CATALOG: dict[str, dict[str, str]] = {
     "Line endings": {"pt": "Finais de linha", "es": "Finales de línea"},
     "None (one line)": {"pt": "Nenhum (uma linha)", "es": "Ninguno (una línea)"},
     "Mixed": {"pt": "Misturados", "es": "Mezclados"},
+    "Filter files": {"pt": "Filtrar arquivos", "es": "Filtrar archivos"},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

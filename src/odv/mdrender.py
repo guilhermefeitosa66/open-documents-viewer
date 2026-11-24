@@ -74,7 +74,8 @@ def _parser():
 
 
 class _Builder:
-    def __init__(self):
+    def __init__(self, resolve_image=None):
+        self.resolve_image = resolve_image  # src -> bytes or None (local files only)
         self.doc = Doc()
         self.block: list[str] = []  # block-level tags in effect
         self.lists: list[dict] = []
@@ -141,7 +142,12 @@ class _Builder:
                     self.doc.links.append(Link(start, self.doc.length, href))
             elif t == "image":
                 alt = "".join(c.content for c in (tok.children or [])) or tok.content
-                self.text(f"[image: {alt}]" if alt else "[image]", tuple(style) + ("dim",))
+                data = self.resolve_image(tok.attrGet("src") or "") if self.resolve_image else None
+                if data:
+                    self.doc.ops.append(("image", data))
+                    self.doc.length += 1
+                else:
+                    self.text(f"[image: {alt}]" if alt else "[image]", tuple(style) + ("dim",))
             elif t == "html_inline":
                 self.text(tok.content, tuple(style) + ("dim",))
             else:
@@ -267,4 +273,9 @@ class _Builder:
 
 
 def build(text: str, path: str = "") -> Doc:
-    return _Builder().build(_parser().parse(text))
+    resolve = None
+    if path:
+        from odv.formats.htmlrender import local_images
+
+        resolve = local_images(path)
+    return _Builder(resolve).build(_parser().parse(text))

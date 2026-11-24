@@ -1,8 +1,9 @@
 """The folder tree in the sidebar. Folders are listed when first expanded."""
 
 import os
+import threading
 
-from gi.repository import Gio, GObject, Gtk, Pango
+from gi.repository import Gio, GLib, GObject, Gtk, Pango
 
 from odv.filetypes import sidebar_class
 
@@ -101,3 +102,105 @@ class FolderTree(Gtk.ScrolledWindow):
             row.set_expanded(not row.get_expanded())
         else:
             self._on_open_file(node.path)
+
+
+class FolderPanel(Gtk.Box):
+    """The folder tree with a name filter on top. While the filter has text,
+    the tree gives way to a flat list of the matching files of the whole
+    folder (listed once in a thread, the same set as find in folder)."""
+
+    LIMIT = 500
+
+    def __init__(self, tree: FolderTree, on_open_file):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, vexpand=True)
+        from odv.i18n import _
+
+        self.tree = tree
+        self._on_open_file = on_open_file
+        self._files = None  # (root, [paths]) once listed
+        self._timer = 0
+        self.entry = Gtk.SearchEntry(placeholder_text=_("Filter files"), margin_start=8, margin_end=8,
+                                     margin_top=6, margin_bottom=4)
+        self.entry.connect("search-changed", self._queue)
+        self.entry.connect("activate", lambda e: self._open_first())
+        self.append(self.entry)
+        self.results = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.results.add_css_class("navigation-sidebar")
+        self.results.connect("row-activated", lambda lb, row: self._on_open_file(row._path))
+        self.stack = Gtk.Stack(vexpand=True)
+        self.stack.add_named(tree, "tree")
+        self.stack.add_named(Gtk.ScrolledWindow(child=self.results, hscrollbar_policy=Gtk.PolicyType.NEVER),
+                             "results")
+        self.append(self.stack)
+
+    def set_root(self, path: str) -> int:
+        self._files = None
+        self.entry.set_text("")
+        self.stack.set_visible_child_name("tree")
+        return self.tree.set_root(path)
+
+    def _queue(self, _entry):
+        if self._timer:
+            GLib.source_remove(self._timer)
+        self._timer = GLib.timeout_add(150, self._refresh)
+
+    def _refresh(self):
+        self._timer = 0
+        text = self.entry.get_text().strip().casefold()
+        if not text or self.tree.root is None:
+            self.stack.set_visible_child_name("tree")
+            return False
+        root = self.tree.root
+        if self._files is None or self._files[0] != root:
+            self._files = (root, None)
+
+            def work():
+                from odv import foldersearch
+
+                files = foldersearch.list_files(root)
+                GLib.idle_add(lambda: (self._listed(root, files), False)[1])
+
+            threading.Thread(target=work, daemon=True).start()
+            return False
+        if self._files[1] is None:
+            return False  # still listing; _listed refreshes
+        self._show(text)
+        return False
+
+    def _listed(self, root, files):
+        if self._files and self._files[0] == root:
+            self._files = (root, files)
+            self._refresh()
+
+    def _show(self, text):
+        root, files = self._files
+        self.results.remove_all()
+        shown = 0
+        for path in files:
+            rel = os.path.relpath(path, root)
+            if text not in rel.casefold():
+                continue
+            row = Gtk.ListBoxRow()
+            box = Gtk.Box(spacing=6)
+            dot = Gtk.Box(valign=Gtk.Align.CENTER, css_classes=["kind-dot", f"kind-{sidebar_class(path)}"])
+            name = Gtk.Label(label=os.path.basename(path), xalign=0.0)
+            folder = Gtk.Label(label=os.path.dirname(rel), xalign=0.0, hexpand=True,
+                               ellipsize=Pango.EllipsizeMode.START)
+            folder.add_css_class("dim-label")
+            folder.add_css_class("caption")
+            box.append(dot)
+            box.append(name)
+            box.append(folder)
+            row.set_child(box)
+            row.set_tooltip_text(path)
+            row._path = path
+            self.results.append(row)
+            shown += 1
+            if shown >= self.LIMIT:
+                break
+        self.stack.set_visible_child_name("results")
+
+    def _open_first(self):
+        row = self.results.get_row_at_index(0)
+        if row is not None and self.stack.get_visible_child_name() == "results":
+            self._on_open_file(row._path)

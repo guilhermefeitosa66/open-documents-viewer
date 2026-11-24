@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.19.0 (2026-11-24)
+
+- Added: Markdown shows local images (remote ones are never loaded).
+- Added: a name filter above the folder tree lists the matching files of the whole folder.
+
 ## 0.18.0 (2026-11-24)
 
 - Added: EPUB 2 and 3 books (without DRM): chapters in reading order, images, links between chapters and the book's own table of contents as the outline; the reading position is remembered.
