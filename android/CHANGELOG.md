@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.19.0] - 2026-11-24
+
+### Added
+- E-books: EPUB 2 and 3 (without DRM) open as one continuous, reflowed text: the chapters of the spine in order, the
+  book's own table of contents in "Contents" (nav.xhtml or toc.ncx), pictures from inside the book, links between
+  chapters. The source view shows the chapters' XHTML. A book locked with DRM gets a clear message.
+- FictionBook (.fb2): title, author, cover, sections as headings, epigraphs, poems and embedded pictures.
+- Text size follows pinch zoom and the reading position is remembered, as for other documents.
+
 ## [0.18.0] - 2026-11-24
 
 ### Added

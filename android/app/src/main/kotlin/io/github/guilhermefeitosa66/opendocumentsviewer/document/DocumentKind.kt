@@ -22,6 +22,10 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     /** YAML and XML: tree as the formatted view. */
     YAML(hasFormattedView = true, prose = false),
     XML(hasFormattedView = true, prose = false),
+    /** EPUB e-book: kept as bytes (zip); chapters' XHTML is the source. */
+    EPUB(hasFormattedView = true, prose = true),
+    /** FictionBook 2: XML, formatted as a book. */
+    FB2(hasFormattedView = true, prose = true),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -47,6 +51,8 @@ object DocumentTypes {
         if (ext in jsonExt || lower == ".babelrc" || lower == ".eslintrc" || lower == "composer.lock") {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
+        if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
+        if (ext == "fb2") return DocumentType(DocumentKind.FB2, Languages.XML, "FB2")
         if (ext == "ipynb") return DocumentType(DocumentKind.NOTEBOOK, Languages.JSON, "IPYNB")
         if (ext == "rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
         if (ext == "svg") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
@@ -65,6 +71,8 @@ object DocumentTypes {
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
         val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
+        if (m == "application/epub+zip") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
+        if (m == "application/x-fictionbook+xml" || m == "application/x-fictionbook") return DocumentType(DocumentKind.FB2, Languages.XML, "FB2")
         if (m == "application/rtf" || m == "text/rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
         if (m == "image/svg+xml") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
         if (m != null && m.startsWith("image/")) return DocumentType(DocumentKind.IMAGE, null, m.removePrefix("image/").uppercase().take(4))

@@ -142,4 +142,6 @@
     <string name="encoding_auto">Detectar automaticamente</string>
     <string name="info_line_endings">Fim de linha</string>
     <string name="line_endings_mixed">Misto</string>
+    <string name="error_drm_title">Este e-book está bloqueado</string>
+    <string name="error_drm_body">Ele é protegido com DRM, que este app não abre. Abra no app da loja de onde ele veio.</string>
 </resources>

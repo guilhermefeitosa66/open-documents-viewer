@@ -390,6 +390,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (src.isBlank()) return ImageResult.Unavailable
         if (dec.isRemote(src)) return ImageResult.Remote
         return withContext(Dispatchers.IO) {
+            if (src.startsWith(io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.IMAGE_SCHEME)) {
+                val book = s.doc?.bytes
+                val path = src.removePrefix(io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.IMAGE_SCHEME)
+                val data = book?.let { io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.resource(it, path) }
+                val bmp = data?.let { d -> dec.decode("epub:" + System.identityHashCode(book) + ":" + path, maxWidth) { d.inputStream() } }
+                return@withContext if (bmp != null) ImageResult.Loaded(bmp) else ImageResult.Unavailable
+            }
             val bytes = dec.dataUriBytes(src)
             val bmp = if (bytes != null) {
                 dec.decode("data:" + src.hashCode() + ":" + bytes.size, maxWidth) { bytes.inputStream() }

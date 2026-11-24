@@ -25,6 +25,8 @@ class LoadedDocument(
     val modified: Long = 0,
     /** Raw bytes for binary formats (images); null for text documents. */
     val bytes: ByteArray? = null,
+    /** The parsed e-book, for EPUB files (its chapters' XHTML is [text]). */
+    val epub: io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.Book? = null,
 )
 
 sealed interface LoadFailure {
@@ -32,6 +34,8 @@ sealed interface LoadFailure {
     /** The permission given by the other app is gone (typical for old "open with" recents). */
     data object PermissionLost : LoadFailure
     data object Binary : LoadFailure
+    /** An e-book locked with DRM. */
+    data object Encrypted : LoadFailure
     data class Other(val message: String) : LoadFailure
 }
 
@@ -141,6 +145,28 @@ class DocumentLoader(private val context: Context) {
                     uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else read.length.toLong(),
                     text = "", charset = "", type = earlyType, truncated = false, location = meta.location,
                     modified = stamp(uri).second, bytes = read.bytes.copyOf(read.length),
+                )
+            )
+        }
+        if (earlyType.kind == DocumentKind.EPUB) {
+            val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
+                return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
+            }
+            if (read.truncated) return failure(LoadFailure.Other("e-book larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
+            val bytes = read.bytes.copyOf(read.length)
+            val book = try {
+                io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.open(bytes)
+            } catch (_: io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.Encrypted) {
+                return failure(LoadFailure.Encrypted)
+            } catch (e: Exception) {
+                return failure(LoadFailure.Other("EPUB: " + (e.message ?: e.javaClass.simpleName)))
+            }
+            return Result.success(
+                LoadedDocument(
+                    uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
+                    text = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.sourceText(book), charset = "",
+                    type = earlyType, truncated = false, location = meta.location, modified = stamp(uri).second,
+                    bytes = bytes, epub = book,
                 )
             )
         }

@@ -399,7 +399,8 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
 private fun subtitle(session: DocumentSession): String {
     val doc = session.doc ?: return ""
     val parts = ArrayList<String>()
-    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF) doc.type.label
+    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF ||
+        doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
         else if (doc.type.kind == DocumentKind.NOTEBOOK) "Jupyter" else doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
         DocumentKind.HTML -> "HTML"
@@ -411,7 +412,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else {
+    } else if (doc.type.kind != DocumentKind.EPUB) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }
@@ -566,6 +567,7 @@ private fun Failure(failure: LoadFailure) {
     val colors = Odv.colors
     val (title, body) = when (failure) {
         LoadFailure.Binary -> R.string.error_binary_title to R.string.error_binary_body
+        LoadFailure.Encrypted -> R.string.error_drm_title to R.string.error_drm_body
         LoadFailure.NotFound -> R.string.error_not_found_title to R.string.error_not_found_body
         LoadFailure.PermissionLost -> R.string.error_permission_title to R.string.error_permission_body
         is LoadFailure.Other -> R.string.error_other_title to R.string.error_other_body

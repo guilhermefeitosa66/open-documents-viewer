@@ -65,7 +65,13 @@ data class OutlineItem(val level: Int, val title: String, val item: Int)
 
 sealed interface Formatted {
     /** [partial]: some content of the original could not be shown (a discreet notice says so). */
-    data class Markdown(val blocks: List<MdBlock>, val anchors: Map<String, Int>, val partial: Boolean = false) : Formatted
+    data class Markdown(
+        val blocks: List<MdBlock>,
+        val anchors: Map<String, Int>,
+        val partial: Boolean = false,
+        /** A table of contents of its own (e-books); otherwise the outline is built from the headings. */
+        val toc: List<OutlineItem>? = null,
+    ) : Formatted
     data class Json(val content: TextContent) : Formatted
     data class Table(val table: DelimitedTable) : Formatted
     data class Env(val lines: List<EnvLine>) : Formatted
@@ -128,7 +134,7 @@ class DocumentSession(
     /** Headings of the formatted view (markdown now; other formats add theirs). */
     val outline: List<OutlineItem> by derivedStateOf {
         when (val f = formatted) {
-            is Formatted.Markdown -> f.blocks.mapIndexedNotNull { i, b ->
+            is Formatted.Markdown -> f.toc?.takeIf { it.isNotEmpty() } ?: f.blocks.mapIndexedNotNull { i, b ->
                 (b as? MdBlock.Heading)?.let { OutlineItem(it.level, it.content.text, i) }
             }
             else -> emptyList()
@@ -287,6 +293,21 @@ class DocumentSession(
                 val anchors = HashMap<String, Int>()
                 nb.blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
                 Formatted.Markdown(nb.blocks, anchors, nb.partial)
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
+            DocumentKind.EPUB -> doc.epub?.let { book ->
+                val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
+                Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
+            } ?: Formatted.Unavailable
+            DocumentKind.FB2 -> try {
+                val html = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.Fb2Model.toHtml(doc.text)
+                job.ensureActive()
+                val parsed = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.HtmlModel.parse(org.jsoup.Jsoup.parse(html), useTitle = false)
+                val anchors = HashMap<String, Int>()
+                parsed.blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
+                anchors.putAll(parsed.ids)
+                Formatted.Markdown(parsed.blocks, anchors)
             } catch (_: Exception) {
                 Formatted.Unavailable
             }

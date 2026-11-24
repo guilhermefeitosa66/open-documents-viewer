@@ -13,13 +13,15 @@ import org.jsoup.nodes.TextNode
 object HtmlModel {
     class Result(val blocks: List<MdBlock>, val ids: Map<String, Int>)
 
-    fun parse(html: String): Result {
-        val doc = Jsoup.parse(html)
+    fun parse(html: String): Result = parse(Jsoup.parse(html), useTitle = true)
+
+    /** [useTitle]: the page title becomes a heading when the body has none (off for book chapters). */
+    fun parse(doc: org.jsoup.nodes.Document, useTitle: Boolean): Result {
         val out = ArrayList<MdBlock>()
         val ids = HashMap<String, Int>()
         Walker(out, ids).children(doc.body(), 0, 0)
         val title = doc.title().trim()
-        if (title.isNotEmpty() && out.none { it is MdBlock.Heading && it.level == 1 }) {
+        if (useTitle && title.isNotEmpty() && out.none { it is MdBlock.Heading && it.level == 1 }) {
             out.add(0, MdBlock.Heading(1, InlineText(title), 0, 0))
             val shifted = ids.mapValues { it.value + 1 }
             ids.clear(); ids.putAll(shifted)

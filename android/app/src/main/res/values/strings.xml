@@ -143,4 +143,6 @@
     <string name="encoding_auto">Detect automatically</string>
     <string name="info_line_endings">Line endings</string>
     <string name="line_endings_mixed">Mixed</string>
+    <string name="error_drm_title">This e-book is locked</string>
+    <string name="error_drm_body">It is protected with DRM, which this app cannot open. Open it in the app of the store it came from.</string>
 </resources>

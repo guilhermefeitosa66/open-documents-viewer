@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><author><first-name>Ada</first-name><last-name>Gardener</last-name></author><book-title>Small Plots</book-title><coverpage><image l:href="#cover"/></coverpage></title-info></description>
+<body><section><title><p>Chapter 1</p></title><epigraph><p>Grow slowly.</p></epigraph><p>Some <emphasis>soft</emphasis> and <strong>strong</strong> words.</p><empty-line/><poem><stanza><v>Line one</v><v>Line two</v></stanza></poem>
+<section><title><p>Part A</p></title><p>Nested.</p></section></section></body>
+<binary id="cover" content-type="image/png">iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDasKb6QAAAABJRU5ErkJggg==</binary>
+</FictionBook>
