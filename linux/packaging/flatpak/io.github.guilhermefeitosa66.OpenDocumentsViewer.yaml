@@ -1,0 +1,106 @@
+# Flatpak manifest for Open Documents Viewer (x86_64).
+#
+# Built by `make flatpak` (packaging/flatpak/build.sh in a container). For a
+# local test outside Docker:
+#   flatpak install -y flathub org.gnome.Platform//50 org.gnome.Sdk//50 org.flatpak.Builder
+#   flatpak run org.flatpak.Builder --force-clean --user --install build-dir \
+#     packaging/flatpak/io.github.guilhermefeitosa66.OpenDocumentsViewer.yaml
+#
+# Publishing to Flathub needs Guilherme's OK; it would pin the app source to
+# a release tag instead of the working tree.
+app-id: io.github.guilhermefeitosa66.OpenDocumentsViewer
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: open-documents-viewer
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # A read-only viewer: it browses folders and opens files anywhere, and
+  # never writes to them ("Save a Copy" goes through the file chooser
+  # portal). No --share=network: the app is offline by design.
+  - --filesystem=host:ro
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/man
+
+modules:
+  # Pure-Python libraries and the PDFium build, as wheels pinned by sha256
+  # (the sandbox builds with --no-index). Licenses: THIRD_PARTY_NOTICES.md.
+  - name: python3-libraries
+    buildsystem: simple
+    build-commands:
+      - pip3 install --verbose --exists-action=i --no-index --no-deps --find-links="file://${PWD}"
+        --prefix=${FLATPAK_DEST} --no-build-isolation markdown-it-py mdurl olefile xlrd pycparser cffi
+        cryptography msoffcrypto-tool pypdfium2
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/c9/31/5f0ac2f1a1c67423c995c731a11cd4ad05d081a2be969d74f868bdb9cc70/markdown_it_py-4.3.0-py3-none-any.whl
+        sha256: 7aa1511a46c39138de78d9eba92ce47e63124d8003fc98b3a351909e04239efa
+      - type: file
+        url: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
+        sha256: 84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8
+      - type: file
+        url: https://files.pythonhosted.org/packages/17/d3/b64c356a907242d719fc668b71befd73324e47ab46c8ebbbede252c154b2/olefile-0.47-py2.py3-none-any.whl
+        sha256: 543c7da2a7adadf21214938bb79c83ea12b473a4b6ee4ad4bf854e7715e13d1f
+      - type: file
+        url: https://files.pythonhosted.org/packages/1a/62/c8d562e7766786ba6587d09c5a8ba9f718ed3fa8af7f4553e8f91c36f302/xlrd-2.0.2-py2.py3-none-any.whl
+        sha256: ea762c3d29f4cca48d82df517b6d89fbce4db3107f9d78713e48cd321d5c9aa9
+      - type: file
+        url: https://files.pythonhosted.org/packages/90/11/0e6f11117525ff0eec40ebac3d313376f102df93ca44ad9e893ee85e4f89/pycparser-3.11-py3-none-any.whl
+        sha256: 51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80
+      # cffi is built for the runtime's interpreter (GNOME 50: CPython 3.13); cryptography is abi3.
+      - type: file
+        url: https://files.pythonhosted.org/packages/95/95/86342356ff5953b3fb06f7ef7c5bee212d45e770abc7218d451b9148313c/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+        sha256: a931079504ecc49efed7744c476a5c343a92fabf66dec2db95edb1b2fdc770e2
+      - type: file
+        url: https://files.pythonhosted.org/packages/d3/69/2c833a049475e0a3444e94c7d0aca0aa51d166374a449b09e92ac98138de/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
+        sha256: 9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079
+      - type: file
+        url: https://files.pythonhosted.org/packages/95/9e/d6a7b1e343d8cea4ac63a1b672ca7eed491ef5fce1813308942d96fca8e1/msoffcrypto_tool-6.1.0-py3-none-any.whl
+        sha256: 32ced1299858018e6c1ca3d0007127335dbcff90e777a77eb52f92d5112869f8
+      - type: file
+        url: https://files.pythonhosted.org/packages/c8/e5/2e668bc1bc6fe22f9006694b5571a2dd2c9b874d6a21d16ee839c8f7f6ea/pypdfium2-5.15.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+        sha256: dc31aea5b0fb9fefc9b537a65f4113980b2c40798445736a7e6565bc85161e37
+
+  - name: python3-pyyaml
+    buildsystem: simple
+    build-commands:
+      - pip3 install --verbose --exists-action=i --no-index --find-links="file://${PWD}"
+        --prefix=${FLATPAK_DEST} --no-build-isolation pyyaml
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz
+        sha256: d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f
+
+  - name: open-documents-viewer
+    buildsystem: simple
+    build-commands:
+      # The same tree every native format installs, moved from /usr to /app.
+      - sh packaging/common/stage.sh odv-root
+      - cp -a odv-root/usr/. ${FLATPAK_DEST}/
+      - sed -i "s|/usr/lib/open-documents-viewer|${FLATPAK_DEST}/lib/open-documents-viewer|"
+        ${FLATPAK_DEST}/bin/open-documents-viewer
+      # /app is read-only at run time: compile the bytecode now (start-up time).
+      - python3 -m compileall -q ${FLATPAK_DEST}/lib/open-documents-viewer
+      - install -Dm644 LICENSE ${FLATPAK_DEST}/share/licenses/io.github.guilhermefeitosa66.OpenDocumentsViewer/LICENSE
+      - install -Dm644 THIRD_PARTY_NOTICES.md
+        ${FLATPAK_DEST}/share/licenses/io.github.guilhermefeitosa66.OpenDocumentsViewer/THIRD_PARTY_NOTICES.md
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - _local
+          - build
+          - dist
+          - AppDir
+          - appimage-builder-cache
+          - .flatpak-builder
+          - .flatpak-build-dir
+          - flatpak-repo

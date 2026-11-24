@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.35.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: a Flatpak build (GNOME 50 runtime): offline, read-only access to your files, PDF and every format included; the faithful view (LibreOffice) is not offered inside the sandbox.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.34.0" date="2026-11-24">
       <description>
         <ul>

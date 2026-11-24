@@ -48,7 +48,9 @@ class DocumentPage(Gtk.Box):
         self.kind = classify(self.path)
         self.has_formatted = self.kind.has_formatted
         self.has_source = self.kind.has_source
-        self.has_faithful = os.path.splitext(self.path)[1].lower() in FAITHFUL_EXT
+        # Inside the Flatpak sandbox LibreOffice cannot be started: no faithful view there.
+        self.has_faithful = (os.path.splitext(self.path)[1].lower() in FAITHFUL_EXT
+                             and not os.path.exists("/.flatpak-info"))
         if mode == "faithful":  # restored from a session: never start LibreOffice by itself
             mode = "formatted"
         self.mode = mode if (mode and self.has_formatted) else ("formatted" if self.has_formatted else "source")

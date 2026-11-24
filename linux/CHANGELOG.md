@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.35.0 (2026-11-24)
+
+- Added: a Flatpak build (GNOME 50 runtime): offline, read-only access to your files, PDF and every format included; the faithful view (LibreOffice) is not offered inside the sandbox.
+
 ## 0.34.0 (2026-11-24)
 
 - Added: "Open With" offers the app for every type it opens (PDF, all office families, more image and data types); the menu entry now describes documents, PDF and office files.

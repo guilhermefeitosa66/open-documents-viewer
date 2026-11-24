@@ -3,7 +3,7 @@ ARGS ?=
 TEST_IMAGE = odv-test
 DOCKER_X = docker run --rm -e GTK_A11Y=none -e PYTHONDONTWRITEBYTECODE=1 -v $(CURDIR):/work $(TEST_IMAGE) bash -c
 
-.PHONY: run test bench screenshots deb appimage packages clean test-image
+.PHONY: run test bench screenshots deb appimage flatpak packages clean test-image
 
 run:
 	PYTHONPATH=src $(PY) -m odv $(ARGS)
@@ -23,9 +23,12 @@ deb:
 appimage:
 	./packaging/build.sh appimage
 
+flatpak:
+	./packaging/build.sh flatpak
+
 packages: deb appimage
 	cd dist && sha256sum *.deb *.AppImage > SHA256SUMS
 
 clean:
-	rm -rf build AppDir appimage-builder-cache .bundle.yml dist
+	rm -rf build AppDir appimage-builder-cache .bundle.yml dist .flatpak-builder .flatpak-build-dir flatpak-repo
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

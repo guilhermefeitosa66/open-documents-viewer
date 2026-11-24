@@ -11,3 +11,6 @@ __pycache__/
 .pytest_cache/
 /appimage-build/
 /BRIEFING.md
+/.flatpak-builder/
+/.flatpak-build-dir/
+/flatpak-repo/

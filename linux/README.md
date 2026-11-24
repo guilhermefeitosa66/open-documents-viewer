@@ -32,6 +32,9 @@ Download the latest `linux-v*` release from the [releases page](https://github.c
 
 - **AppImage** (any x86_64 distribution): `chmod +x OpenDocumentsViewer-*.AppImage` and run it.
 - **.deb** (Ubuntu 24.04+, Debian 13+, Linux Mint 22+): `sudo apt install ./open-documents-viewer_*_amd64.deb`.
+- **Flatpak** (any distribution with Flatpak and Flathub): `flatpak install ./OpenDocumentsViewer-*.flatpak`.
+  It runs without network access and sees your files read-only; the faithful view (LibreOffice) is not
+  available inside the sandbox.
 
 Then open files from the file manager ("Open With"), or from a terminal:
 
@@ -47,8 +50,8 @@ make run ARGS="README.md"
 ```
 
 Development needs only Docker beyond that: `make test` runs the unit and GUI
-tests under Xvfb, `make bench` prints the start-up timings, `make deb` and
-`make appimage` build the packages into `dist/`.
+tests under Xvfb, `make bench` prints the start-up timings, `make deb`,
+`make appimage` and `make flatpak` build the packages into `dist/`.
 
 ## Keyboard
 
