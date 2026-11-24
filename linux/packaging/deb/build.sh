@@ -66,6 +66,13 @@ GTK_A11Y=none timeout 60 xvfb-run -a dbus-run-session -- open-documents-viewer -
   tests/fixtures/sample.md tests/fixtures/sample.py tests/fixtures/sample.csv /tmp/sample.pdf > "$LOG" 2>&1 || true
 cat "$LOG" | grep -v '^$' | grep -v 'a11y' || true
 test "$(grep -c '^odv-bench loaded' "$LOG")" = 4 || { echo "ERROR: the installed app did not open the files" >&2; exit 1; }
+echo "==> \"Open With\" check (the desktop database Nemo and Nautilus read)"
+for mime in text/markdown application/pdf application/vnd.openxmlformats-officedocument.wordprocessingml.document \
+    application/vnd.oasis.opendocument.spreadsheet application/vnd.ms-powerpoint application/epub+zip \
+    image/png text/csv application/json message/rfc822; do
+  gio mime "$mime" 2>/dev/null | grep -q "$ID.desktop" || { echo "ERROR: not offered for $mime" >&2; exit 1; }
+done
+echo "open-with check OK"
 echo "==> theme check (Neon, with its background picture)"
 mkdir -p /tmp/cfg/open-documents-viewer
 echo '{"theme": "neon"}' > /tmp/cfg/open-documents-viewer/settings.json

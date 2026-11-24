@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.34.0 (2026-11-24)
+
+- Added: "Open With" offers the app for every type it opens (PDF, all office families, more image and data types); the menu entry now describes documents, PDF and office files.
+
 ## 0.33.0 (2026-11-24)
 
 - Added: a faithful view for office files (Word, Excel, PowerPoint and OpenDocument, old and new, and RTF): a third button next to Formatted/Source converts the file to PDF with LibreOffice, when installed, in a temporary folder with a throw-away profile, and shows it in the PDF view (zoom, find, outline, print). Without LibreOffice it explains how to install it. The text-only Word 97–2003 and PowerPoint 97–2003 views offer it in their banner.

@@ -1203,3 +1203,26 @@ def test_faithful_convert(tmp_path, monkeypatch):
     with pytest.raises(faithful.FaithfulError, match="could not be loaded"):
         faithful.convert(doc)
     assert faithful.supported("a.PPTX") and not faithful.supported("a.pdf") and not faithful.supported("a.pages")
+
+
+def test_desktop_entry_lists_every_supported_type():
+    """Each extension the app opens maps (through shared-mime-info) to a type
+    the .desktop file declares, so "Open With" offers the app for it."""
+    gio = pytest.importorskip("gi.repository.Gio")
+    from odv import filetypes as ft
+
+    path = os.path.join(os.path.dirname(__file__), "..", "packaging", "common",
+                        "io.github.guilhermefeitosa66.OpenDocumentsViewer.desktop")
+    line = next(l for l in open(path, encoding="utf-8").read().splitlines() if l.startswith("MimeType="))
+    listed = set(line.split("=", 1)[1].strip(";").split(";"))
+    exts = (set(ft.MARKDOWN_EXT) | set(ft.DELIMITED_EXT) | ft.HTML_EXT | ft.DOCUMENT_EXT | ft.SHEET_EXT
+            | ft.SLIDES_EXT | set(ft.TREE_EXT) | ft.IMAGE_EXT
+            | {".pdf", ".epub", ".fb2", ".ipynb", ".eml", ".vcf", ".ics", ".rtf", ".txt", ".py", ".sh", ".toml"})
+    missing = []
+    for ext in sorted(exts):
+        mime, _uncertain = gio.content_type_guess("x" + ext, None)
+        if mime == "application/octet-stream" or mime in listed:
+            continue  # unknown to this mime database, or declared
+        if not any(gio.content_type_is_a(mime, m) for m in listed if m not in ("text/plain", "application/xml")):
+            missing.append(f"{ext} → {mime}")
+    assert not missing, "not in the .desktop MimeType list:\n" + "\n".join(missing)

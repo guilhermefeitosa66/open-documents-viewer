@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.34.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: "Open With" offers the app for every type it opens (PDF, all office families, more image and data types); the menu entry now describes documents, PDF and office files.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.33.0" date="2026-11-24">
       <description>
         <ul>
