@@ -133,4 +133,5 @@
     <string name="image_unavailable">Image not available. Open the folder that holds it to see local images.</string>
     <string name="image_cannot_decode">This image format is not supported on this Android version.</string>
     <string name="info_dimensions">Size (px)</string>
+    <string name="partial_render">Some content (images, embedded objects) could not be shown.</string>
 </resources>

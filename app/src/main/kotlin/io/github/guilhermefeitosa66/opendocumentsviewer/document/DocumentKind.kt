@@ -17,6 +17,7 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     IMAGE(hasFormattedView = false, prose = false),
     /** SVG: rendered as the formatted view, XML as the source. */
     SVG(hasFormattedView = true, prose = false),
+    RTF(hasFormattedView = true, prose = true),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -42,6 +43,7 @@ object DocumentTypes {
         if (ext in jsonExt || lower == ".babelrc" || lower == ".eslintrc" || lower == "composer.lock") {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
+        if (ext == "rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
         if (ext == "svg") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
         if (ext in imageExt) return DocumentType(DocumentKind.IMAGE, null, ext.uppercase().take(4))
         if (ext == "html" || ext == "htm" || ext == "xhtml" || ext == "shtml") return DocumentType(DocumentKind.HTML, Languages.HTML, "HTML")
@@ -53,6 +55,7 @@ object DocumentTypes {
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
         val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
+        if (m == "application/rtf" || m == "text/rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
         if (m == "image/svg+xml") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
         if (m != null && m.startsWith("image/")) return DocumentType(DocumentKind.IMAGE, null, m.removePrefix("image/").uppercase().take(4))
         return when (m) {

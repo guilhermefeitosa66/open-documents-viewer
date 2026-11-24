@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.graphics.luminance
 import io.github.guilhermefeitosa66.opendocumentsviewer.markdown.InlineStyle
 import io.github.guilhermefeitosa66.opendocumentsviewer.markdown.InlineText
 import io.github.guilhermefeitosa66.opendocumentsviewer.search.Match
@@ -80,6 +81,9 @@ fun inlineAnnotated(
             InlineStyle.ITALIC -> addStyle(SpanStyle(fontStyle = FontStyle.Italic), s, e)
             InlineStyle.STRIKE -> addStyle(SpanStyle(textDecoration = TextDecoration.LineThrough, color = colors.ink2), s, e)
             InlineStyle.CODE -> addStyle(SpanStyle(fontFamily = MonoFamily, fontSize = codeSize, background = colors.inlineCode), s, e)
+            InlineStyle.UNDERLINE -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), s, e)
+            InlineStyle.COLOR -> addStyle(SpanStyle(color = readableColor(span.color, colors)), s, e)
+            InlineStyle.SIZE -> addStyle(SpanStyle(fontSize = codeSize * (span.scale.coerceIn(0.6f, 2.4f) / 0.86f)), s, e)
             InlineStyle.LINK -> {
                 val url = span.url.orEmpty()
                 addLink(
@@ -94,4 +98,16 @@ fun inlineAnnotated(
         }
     }
     addMatches(this, len, colors, matches, current)
+}
+
+/**
+ * A document's own text color, unless it would vanish on the current theme (black text in a dark
+ * theme, white in a light one): then the theme's text color wins.
+ */
+fun readableColor(argb: Int, colors: OdvColors): androidx.compose.ui.graphics.Color {
+    val c = androidx.compose.ui.graphics.Color(argb)
+    val l = c.luminance()
+    val bg = colors.paper.luminance()
+    val contrast = (maxOf(l, bg) + 0.05f) / (minOf(l, bg) + 0.05f)
+    return if (contrast < 3f) colors.ink else c
 }

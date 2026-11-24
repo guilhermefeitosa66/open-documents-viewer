@@ -126,7 +126,7 @@ fun ViewerScreen(
     val colors = Odv.colors
     var showInfo by remember { mutableStateOf(false) }
     val doc = session.doc
-    val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML) ||
+    val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML || session.kind == DocumentKind.RTF) ||
         session.mode == ViewMode.SOURCE && session.kind == DocumentKind.PLAIN && session.wrap
     val fontSize = if (prose) proseSize else codeSize
 
@@ -195,7 +195,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
     }
     Box(Modifier.fillMaxSize()) {
         if (doc.truncated) TruncatedBanner(Modifier.align(Alignment.TopCenter))
-        ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
+
         when (session.mode) {
             ViewMode.SOURCE -> {
                 val src = session.source
@@ -239,6 +239,12 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     )
                 }
             }
+        }
+
+        // Notices last, so they sit above the document.
+        ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
+        if (session.mode == ViewMode.FORMATTED && (session.formatted as? Formatted.Markdown)?.partial == true) {
+            PartialNotice(Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp))
         }
 
         if (session.hasToggle && !session.searchOpen) {
@@ -370,7 +376,7 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
 private fun subtitle(session: DocumentSession): String {
     val doc = session.doc ?: return ""
     val parts = ArrayList<String>()
-    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML) doc.type.label else doc.type.language?.name ?: when (doc.type.kind) {
+    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF) doc.type.label else doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
         DocumentKind.HTML -> "HTML"
         DocumentKind.IMAGE -> doc.type.label
@@ -651,5 +657,21 @@ private fun RasterContent(session: DocumentSession, doc: LoadedDocument) {
         decoded != null -> ZoomableDrawable(decoded!!.drawable, Modifier.background(colors.paper2))
         failed -> Failure(LoadFailure.Other(stringResource(R.string.image_cannot_decode)))
         else -> Loading()
+    }
+}
+
+/** Some of the original (pictures, embedded objects...) could not be shown: say so once, briefly. */
+@Composable
+private fun PartialNotice(modifier: Modifier) {
+    var visible by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(4000)
+        visible = false
+    }
+    androidx.compose.animation.AnimatedVisibility(visible, modifier.padding(top = 8.dp)) {
+        val colors = Odv.colors
+        Surface(color = colors.paper2, contentColor = colors.ink, shape = RoundedCornerShape(12.dp), shadowElevation = 2.dp) {
+            Text(stringResource(R.string.partial_render), Modifier.padding(horizontal = 14.dp, vertical = 8.dp), fontSize = 13.sp)
+        }
     }
 }

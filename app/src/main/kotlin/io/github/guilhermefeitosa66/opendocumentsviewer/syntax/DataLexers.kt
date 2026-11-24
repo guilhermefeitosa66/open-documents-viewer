@@ -483,3 +483,31 @@ class DelimitedLexer(private val delimiter: Char) : Lexer {
         return if (inQuotes) 1 else 0
     }
 }
+
+/** RTF source: control words, braces and escapes stand out from the text. */
+object RtfLexer : Lexer {
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        val n = line.length
+        var i = 0
+        while (i < n) {
+            val c = line[i]
+            when {
+                c == '{' || c == '}' -> { out.add(i, i + 1, TokenType.PUNCTUATION); i++ }
+                c == '\\' && i + 1 < n && line[i + 1].isLetter() -> {
+                    var j = i + 1
+                    while (j < n && line[j].isLetter()) j++
+                    if (j < n && (line[j] == '-' || line[j].isDigit())) { j++; while (j < n && line[j].isDigit()) j++ }
+                    out.add(i, j, TokenType.KEYWORD)
+                    i = j
+                }
+                c == '\\' && i + 1 < n -> {
+                    val end = if (line[i + 1] == '\'' ) minOf(i + 4, n) else i + 2
+                    out.add(i, end, TokenType.LITERAL)
+                    i = end
+                }
+                else -> i++
+            }
+        }
+        return 0
+    }
+}

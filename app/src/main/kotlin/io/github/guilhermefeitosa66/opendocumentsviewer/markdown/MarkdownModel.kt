@@ -33,9 +33,18 @@ import org.commonmark.node.Text
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 
-enum class InlineStyle { BOLD, ITALIC, CODE, STRIKE, LINK }
+enum class InlineStyle { BOLD, ITALIC, CODE, STRIKE, LINK, UNDERLINE, COLOR, SIZE }
 
-data class InlineSpan(val start: Int, val end: Int, val style: InlineStyle, val url: String? = null)
+data class InlineSpan(
+    val start: Int,
+    val end: Int,
+    val style: InlineStyle,
+    val url: String? = null,
+    /** ARGB, for [InlineStyle.COLOR] (documents from word processors). */
+    val color: Int = 0,
+    /** Relative text size, for [InlineStyle.SIZE]. */
+    val scale: Float = 1f,
+)
 
 /** Text with styled ranges; turned into an AnnotatedString by the UI. */
 data class InlineText(val text: String, val spans: List<InlineSpan> = emptyList()) {

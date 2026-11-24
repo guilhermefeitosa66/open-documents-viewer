@@ -423,6 +423,7 @@ object Languages {
     val XML = Language("xml", "XML", "XML", setOf("xml", "svg", "plist", "xsd", "xsl", "xslt", "xaml", "csproj", "fxml", "rss", "atom", "kml", "gpx", "wsdl", "pom"), lexerFactory = { MarkupLexer })
     val HTML = Language("html", "HTML", "HTML", setOf("html", "htm", "xhtml", "vue", "svelte", "jsp", "erb", "hbs"), lexerFactory = { MarkupLexer })
     val MARKDOWN = Language("markdown", "Markdown", "MD", lexerFactory = { MarkdownLexer })
+    val RTF = Language("rtf", "RTF", "RTF", lexerFactory = { RtfLexer })
     val DOTENV = Language("dotenv", "dotenv", "ENV", lexerFactory = { DotenvLexer })
     val CSV = Language("csv", "CSV", "CSV", lexerFactory = { DelimitedLexer(',') })
     val TSV = Language("tsv", "TSV", "TSV", lexerFactory = { DelimitedLexer('\t') })

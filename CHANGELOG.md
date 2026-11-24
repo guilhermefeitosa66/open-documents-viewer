@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.12.0] - 2026-11-24
+
+### Added
+- RTF: formatted view with bold, italic, underline, strike, sizes (large lines become headings, so the outline works),
+  document colors (replaced by the theme's text color when they would be unreadable), Windows code pages and Unicode
+  escapes, bullet/numbered lines as lists, simple tables. The RTF source is highlighted.
+- A short notice when part of a document (pictures, embedded objects) could not be shown.
+
 ## [0.11.0] - 2026-11-24
 
 ### Added

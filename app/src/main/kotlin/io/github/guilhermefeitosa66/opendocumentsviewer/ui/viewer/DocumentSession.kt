@@ -64,7 +64,8 @@ class TextContent(val text: String, val index: LineIndex, val highlighter: RowHi
 data class OutlineItem(val level: Int, val title: String, val item: Int)
 
 sealed interface Formatted {
-    data class Markdown(val blocks: List<MdBlock>, val anchors: Map<String, Int>) : Formatted
+    /** [partial]: some content of the original could not be shown (a discreet notice says so). */
+    data class Markdown(val blocks: List<MdBlock>, val anchors: Map<String, Int>, val partial: Boolean = false) : Formatted
     data class Json(val content: TextContent) : Formatted
     data class Table(val table: DelimitedTable) : Formatted
     data class Env(val lines: List<EnvLine>) : Formatted
@@ -266,6 +267,12 @@ class DocumentSession(
                 }
                 anchors.putAll(parsed.ids)
                 Formatted.Markdown(parsed.blocks, anchors)
+            }
+            DocumentKind.RTF -> {
+                val (blocks, partial) = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.RtfModel.parseWithInfo(doc.text)
+                val anchors = HashMap<String, Int>()
+                blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
+                Formatted.Markdown(blocks, anchors, partial)
             }
             DocumentKind.JSON -> {
                 val lower = doc.name.lowercase()

@@ -280,8 +280,10 @@ private fun TableBlockView(block: MdBlock.Table, colors: OdvColors, body: TextUn
     }
     val smaller = (body.value * 0.92f).sp
     Column(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-        TableRowView(block.header, widths, block.align, colors, smaller, codeSize, linkListener, header = true)
-        HorizontalDivider(Modifier.width(widths.fold(0.dp) { a, b -> a + b }), thickness = 2.dp, color = colors.line)
+        if (block.header.isNotEmpty()) {
+            TableRowView(block.header, widths, block.align, colors, smaller, codeSize, linkListener, header = true)
+            HorizontalDivider(Modifier.width(widths.fold(0.dp) { a, b -> a + b }), thickness = 2.dp, color = colors.line)
+        }
         block.rows.forEachIndexed { r, row ->
             TableRowView(row, widths, block.align, colors, smaller, codeSize, linkListener, header = false)
             if (r < block.rows.size - 1) HorizontalDivider(Modifier.width(widths.fold(0.dp) { a, b -> a + b }), color = colors.line)
