@@ -9,6 +9,7 @@ from odv import APP_NAME, recents, theme
 from odv.document import DocumentPage
 from odv.sidebar import FolderTree
 from odv.welcome import WelcomePage, tilde
+from odv.i18n import _
 
 
 class ModeSwitch(Gtk.Box):
@@ -20,8 +21,8 @@ class ModeSwitch(Gtk.Box):
         self.add_css_class("mode-switch")
         self._on_mode = on_mode
         self._sync = False
-        self.formatted = Gtk.ToggleButton(label="Formatted", tooltip_text="Formatted view (Ctrl+E)")
-        self.source = Gtk.ToggleButton(label="Source", group=self.formatted, tooltip_text="Source view (Ctrl+E)")
+        self.formatted = Gtk.ToggleButton(label=_("Formatted"), tooltip_text=_("Formatted view (Ctrl+E)"))
+        self.source = Gtk.ToggleButton(label=_("Source"), group=self.formatted, tooltip_text=_("Source view (Ctrl+E)"))
         for mode, btn in (("formatted", self.formatted), ("source", self.source)):
             btn.connect("toggled", self._toggled, mode)
             self.append(btn)
@@ -36,7 +37,7 @@ class ModeSwitch(Gtk.Box):
         if not visible:
             return
         self._sync = True
-        self.formatted.set_label(doc.kind.formatted_label)
+        self.formatted.set_label(_(doc.kind.formatted_label))
         (self.formatted if doc.mode == "formatted" else self.source).set_active(True)
         self._sync = False
 
@@ -101,12 +102,22 @@ class Pane(Gtk.Box):
                                                 self.window.bench.file_first_content(d.name, started)))
         doc.connect("loaded", lambda d: self.window.bench.file_loaded(d.name, started))
         doc.connect("mode-changed", lambda d: self._sync_switch())
+        doc.connect("changed-on-disk", self._on_changed_on_disk)
         return page
 
-    def replace(self, page, new_doc):
+    def _on_changed_on_disk(self, doc):
+        page = self.view.get_page(doc)
+        if page is None:
+            return
+        selected = self.view.get_selected_page() is page
+        self.replace(page, doc.reload(keep_scroll=True), select=selected)
+        self.window.toast(_("Reloaded: the file changed on disk."), timeout=2)
+
+    def replace(self, page, new_doc, select=True):
         pos = self.view.get_page_position(page)
         new_page = self._append(new_doc, pos)
-        self.view.set_selected_page(new_page)
+        if select:
+            self.view.set_selected_page(new_page)
         self.view.close_page(page)
 
     def _set_mode(self, mode):
@@ -150,38 +161,38 @@ class Window(Adw.ApplicationWindow):
         self.title = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.title)
         self.sidebar_button = Gtk.ToggleButton(icon_name="sidebar-show-symbolic", visible=False,
-                                               tooltip_text="Show folder (F9)")
+                                               tooltip_text=_("Show folder (F9)"))
         header.pack_start(self.sidebar_button)
-        open_button = Adw.SplitButton(label="Open", action_name="win.open-file", tooltip_text="Open a file (Ctrl+O)")
+        open_button = Adw.SplitButton(label=_("Open"), action_name="win.open-file", tooltip_text=_("Open a file (Ctrl+O)"))
         open_menu = Gio.Menu()
-        open_menu.append("Open File…", "win.open-file")
-        open_menu.append("Open Folder…", "win.open-folder")
+        open_menu.append(_("Open File…"), "win.open-file")
+        open_menu.append(_("Open Folder…"), "win.open-folder")
         open_button.set_menu_model(open_menu)
         header.pack_start(open_button)
         menu = Gio.Menu()
         section = Gio.Menu()
-        section.append("Find", "win.find")
-        section.append("Reload", "win.reload")
-        section.append("Split View", "win.split")
+        section.append(_("Find"), "win.find")
+        section.append(_("Reload"), "win.reload")
+        section.append(_("Split View"), "win.split")
         menu.append_section(None, section)
         prefs = Gio.Menu()
-        prefs.append("Preferences", "win.preferences")
+        prefs.append(_("Preferences"), "win.preferences")
         menu.append_section(None, prefs)
         about = Gio.Menu()
-        about.append("Keyboard Shortcuts", "win.show-help-overlay")
-        about.append(f"About {APP_NAME}", "app.about")
+        about.append(_("Keyboard Shortcuts"), "win.show-help-overlay")
+        about.append(_("About {app}").format(app=APP_NAME), "app.about")
         menu.append_section(None, about)
-        header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu, tooltip_text="Main menu",
+        header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu, tooltip_text=_("Main menu"),
                                        primary=True))
-        self.split_button = Gtk.ToggleButton(icon_name="view-dual-symbolic", tooltip_text="Split view (Ctrl+\\)",
+        self.split_button = Gtk.ToggleButton(icon_name="view-dual-symbolic", tooltip_text=_("Split view (Ctrl+\\)"),
                                              action_name="win.split")
         header.pack_end(self.split_button)
 
         self.paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL, shrink_start_child=False,
                                shrink_end_child=False, wide_handle=False)
         self.welcome = WelcomePage(self.open_path)
-        empty_status = Adw.StatusPage(icon_name="folder-open-symbolic", title="No file open",
-                                      description="Pick a file in the sidebar.")
+        empty_status = Adw.StatusPage(icon_name="folder-open-symbolic", title=_("No file open"),
+                                      description=_("Pick a file in the sidebar."))
         empty_card = Gtk.Box(halign=Gtk.Align.CENTER, valign=Gtk.Align.CENTER)
         empty_card.add_css_class("empty-panel")
         empty_card.append(empty_status)
@@ -384,7 +395,7 @@ class Window(Adw.ApplicationWindow):
             self.open_folder(path)
             return
         if not os.path.exists(path):
-            toast = Adw.Toast(title=f"Not found: {GLib.markup_escape_text(tilde(path))}")
+            toast = Adw.Toast(title=_("Not found: {path}").format(path=GLib.markup_escape_text(tilde(path))))
             self._toast(toast)
             return
         (pane or self.active_pane).open(path)
@@ -404,6 +415,9 @@ class Window(Adw.ApplicationWindow):
 
     def _toast(self, toast):
         self._toaster.add_toast(toast)
+
+    def toast(self, text: str, timeout: int = 3):
+        self._toaster.add_toast(Adw.Toast(title=GLib.markup_escape_text(text), timeout=timeout))
 
     def _update_stack(self):
         has_docs = any(p.view.get_n_pages() for p in self.panes)
@@ -438,7 +452,7 @@ class Window(Adw.ApplicationWindow):
 
     # -- actions ----------------------------------------------------------------
     def choose_files(self):
-        dialog = Gtk.FileDialog(title="Open File", modal=True)
+        dialog = Gtk.FileDialog(title=_("Open File"), modal=True)
         if self.folder:
             dialog.set_initial_folder(Gio.File.new_for_path(self.folder))
 
@@ -455,7 +469,7 @@ class Window(Adw.ApplicationWindow):
         dialog.open_multiple(self, None, done)
 
     def choose_folder(self):
-        dialog = Gtk.FileDialog(title="Open Folder", modal=True)
+        dialog = Gtk.FileDialog(title=_("Open Folder"), modal=True)
 
         def done(dlg, result):
             try:
@@ -510,12 +524,12 @@ def _shortcuts_window():
     win = Gtk.ShortcutsWindow(modal=True)
     section = Gtk.ShortcutsSection(section_name="main", visible=True)
     groups = {
-        "Files": [("<Control>o", "Open file"), ("<Control><Shift>o", "Open folder"), ("<Control>w", "Close tab"),
-                  ("<Control>r", "Reload")],
-        "View": [("<Control>e", "Formatted / source"), ("<Control>f", "Find"),
-                 ("<Control>backslash", "Split view"), ("<Control>k", "Other pane"), ("F9", "Show folder"),
-                 ("<Control>comma", "Preferences"),
-                 ("<Control>Page_Down", "Next tab"), ("<Control>Page_Up", "Previous tab")],
+        _("Files"): [("<Control>o", _("Open file")), ("<Control><Shift>o", _("Open folder")),
+                     ("<Control>w", _("Close tab")), ("<Control>r", _("Reload"))],
+        _("View"): [("<Control>e", _("Formatted / source")), ("<Control>f", _("Find")),
+                    ("<Control>backslash", _("Split View")), ("<Control>k", _("Other pane")),
+                    ("F9", _("Show folder")), ("<Control>comma", _("Preferences")),
+                    ("<Control>Page_Down", _("Next tab")), ("<Control>Page_Up", _("Previous tab"))],
     }
     for title, items in groups.items():
         group = Gtk.ShortcutsGroup(title=title, visible=True)

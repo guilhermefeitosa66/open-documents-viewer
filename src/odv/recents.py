@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from odv.i18n import _
 
 MAX = 12
 
@@ -48,9 +49,9 @@ def when(ts: float, now: float | None = None) -> str:
     now = time.time() if now is None else now
     days = int((now - ts) // 86400)
     if days <= 0:
-        return "Today"
+        return _("Today")
     if days == 1:
-        return "Yesterday"
+        return _("Yesterday")
     if days < 30:
-        return f"{days} days ago"
+        return _("{n} days ago").format(n=days)
     return time.strftime("%Y-%m-%d", time.localtime(ts))

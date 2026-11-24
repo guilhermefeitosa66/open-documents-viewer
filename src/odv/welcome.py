@@ -6,6 +6,7 @@ from gi.repository import Adw, Gtk, Pango
 
 from odv import APP_ID, APP_NAME, recents
 from odv.filetypes import sidebar_class
+from odv.i18n import _
 
 
 def tilde(path: str) -> str:
@@ -18,27 +19,27 @@ class WelcomePage(Adw.Bin):
         super().__init__()
         self._open_path = open_path
         status = Adw.StatusPage(icon_name=APP_ID, title=APP_NAME,
-                                description="Open a file or a folder. Nothing is edited, nothing leaves this computer.")
+                                description=_("Open a file or a folder. Nothing is edited, nothing leaves this computer."))
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18, halign=Gtk.Align.CENTER)
         buttons = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
-        open_file = Gtk.Button(label="Open File…", action_name="win.open-file", tooltip_text="Ctrl+O")
+        open_file = Gtk.Button(label=_("Open File…"), action_name="win.open-file", tooltip_text="Ctrl+O")
         open_file.add_css_class("pill")
         open_file.add_css_class("suggested-action")
-        open_folder = Gtk.Button(label="Open Folder…", action_name="win.open-folder", tooltip_text="Ctrl+Shift+O")
+        open_folder = Gtk.Button(label=_("Open Folder…"), action_name="win.open-folder", tooltip_text="Ctrl+Shift+O")
         open_folder.add_css_class("pill")
         buttons.append(open_file)
         buttons.append(open_folder)
         box.append(buttons)
-        hint = Gtk.Label(label="or drop files and folders anywhere in this window")
+        hint = Gtk.Label(label=_("or drop files and folders anywhere in this window"))
         hint.add_css_class("welcome-hint")
         hint.add_css_class("caption")
         box.append(hint)
 
         self.recent_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, margin_top=12)
         head = Gtk.Box()
-        title = Gtk.Label(label="Recent", xalign=0.0, hexpand=True)
+        title = Gtk.Label(label=_("Recent"), xalign=0.0, hexpand=True)
         title.add_css_class("heading")
-        clear = Gtk.Button(label="Clear")
+        clear = Gtk.Button(label=_("Clear"))
         clear.add_css_class("flat")
         clear.connect("clicked", self._clear)
         head.append(title)

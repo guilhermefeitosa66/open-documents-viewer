@@ -4,11 +4,13 @@ import os
 import threading
 import time
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 
+from odv import settings
 from odv.bench import after_next_paint
 from odv.filetypes import classify
 from odv.textio import MAX_TEXT_BYTES, BinaryFile, human_size, read_text
+from odv.i18n import _
 
 BIG_FILE = 16 * 1024 * 1024
 
@@ -31,9 +33,10 @@ class DocumentPage(Gtk.Box):
         "first-content": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "loaded": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "mode-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "changed-on-disk": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self, path: str, open_path, mode: str | None = None):
+    def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("document-area")  # always solid, never the background picture
         self.path = os.path.abspath(path)
@@ -49,20 +52,24 @@ class DocumentPage(Gtk.Box):
         self._loaded_sent = False
         self.views: dict[str, Gtk.Widget] = {}
         self.closed = False
+        self._restore_scroll = scroll
+        self._monitor = None
+        self._change_timer = 0
+        self.deleted = False
 
         self.banner = Adw.Banner(revealed=False)
         self.banner.connect("button-clicked", self._on_banner_button)
         self.append(self.banner)
 
-        self.search_entry = Gtk.SearchEntry(placeholder_text="Find", width_chars=28)
+        self.search_entry = Gtk.SearchEntry(placeholder_text=_("Find"), width_chars=28)
         self.search_entry.connect("search-changed", lambda e: self.find(True, from_selection_start=True))
         self.search_entry.connect("activate", lambda e: self.find(True))
         self.search_entry.connect("next-match", lambda e: self.find(True))
         self.search_entry.connect("previous-match", lambda e: self.find(False))
         self.search_entry.connect("stop-search", lambda e: self.search_bar.set_search_mode(False))
-        prev_btn = Gtk.Button(icon_name="go-up-symbolic", tooltip_text="Previous match (Shift+Enter)")
+        prev_btn = Gtk.Button(icon_name="go-up-symbolic", tooltip_text=_("Previous match (Shift+Enter)"))
         prev_btn.connect("clicked", lambda b: self.find(False))
-        next_btn = Gtk.Button(icon_name="go-down-symbolic", tooltip_text="Next match (Enter)")
+        next_btn = Gtk.Button(icon_name="go-down-symbolic", tooltip_text=_("Next match (Enter)"))
         next_btn.connect("clicked", lambda b: self.find(True))
         box = Gtk.Box(spacing=6)
         box.append(self.search_entry)
@@ -96,6 +103,63 @@ class DocumentPage(Gtk.Box):
         if not self._loaded_sent:
             self._loaded_sent = True
             after_next_paint(self, lambda: self.emit("loaded"))
+            self._watch()
+            if self._restore_scroll:
+                self._scroll_to(self._restore_scroll, tries=40)
+
+    # -- watching the file ----------------------------------------------------
+    def _watch(self):
+        if self._monitor is not None or self.closed:
+            return
+        try:
+            self._monitor = Gio.File.new_for_path(self.path).monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, None)
+        except GLib.Error:
+            return
+        self._monitor.set_rate_limit(400)
+        self._monitor.connect("changed", self._on_file_event)
+
+    def _on_file_event(self, _monitor, _file, _other, _event):
+        # Editors save in many ways (write in place, write and rename, delete
+        # and create): wait for things to settle, then look at the file.
+        if self._change_timer:
+            GLib.source_remove(self._change_timer)
+        self._change_timer = GLib.timeout_add(300, self._settle)
+
+    def _settle(self):
+        self._change_timer = 0
+        if self.closed or not settings.get("watch"):
+            return False
+        if not os.path.exists(self.path):
+            self.deleted = True
+            self.banner.set_title(_("This file was deleted or moved. What you see is the last version read."))
+            self.banner.set_button_label(None)
+            self.banner.set_revealed(True)
+            return False
+        self.deleted = False
+        self.emit("changed-on-disk")
+        return False
+
+    def scroll_position(self) -> float:
+        view = self.views.get(self.mode)
+        if view is None or not hasattr(view, "get_vadjustment"):
+            return 0.0
+        return view.get_vadjustment().get_value()
+
+    def _scroll_to(self, value: float, tries: int):
+        view = self.views.get(self.mode)
+        if view is None or not hasattr(view, "get_vadjustment"):
+            return
+        adj = view.get_vadjustment()
+
+        def attempt(left=[tries]):  # noqa: B006 - a counter shared by the retries
+            if self.closed:
+                return False
+            # Text views measure lines lazily: wait until the range reaches it.
+            adj.set_value(min(value, max(0.0, adj.get_upper() - adj.get_page_size())))
+            left[0] -= 1
+            return adj.get_value() + 1 < value and left[0] > 0
+
+        GLib.timeout_add(50, attempt)
 
     # -- views ----------------------------------------------------------------
     def set_mode(self, mode: str) -> None:
@@ -146,10 +210,10 @@ class DocumentPage(Gtk.Box):
         def failed(err):
             self._reading = False
             if isinstance(err, BinaryFile):
-                self._status("This is a binary file", "Office documents and PDF are planned for later versions.",
+                self._status(_("This is a binary file"), _("This file type cannot be shown yet."),
                              "dialog-information-symbolic")
             else:
-                self._status("Could not open this file", getattr(err, "strerror", None) or str(err),
+                self._status(_("Could not open this file"), getattr(err, "strerror", None) or str(err),
                              "dialog-warning-symbolic")
 
         run_in_thread(work, done, failed)
@@ -202,7 +266,7 @@ class DocumentPage(Gtk.Box):
         view.connect("first-rows", lambda v: self._first_content())
         view.connect("progress", self._on_table_progress, big)
         view.connect("complete", self._on_table_complete)
-        view.connect("failed", lambda v, msg: self._status("Could not open this file", msg, "dialog-warning-symbolic"))
+        view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg, "dialog-warning-symbolic"))
         self._add_view("formatted", view)
 
     def _on_table_progress(self, view, fraction, big):
@@ -210,10 +274,10 @@ class DocumentPage(Gtk.Box):
             self.progress.set_visible(True)
             self.progress.set_fraction(fraction)
             if big and self.mode == "formatted":
-                self.banner.set_title(
-                    f"Large file ({human_size(view.index.size)}): rows appear as they load "
-                    f"({fraction * 100:.0f}%). Scrolling and selecting already work.")
-                self.banner.set_button_label("Stop loading")
+                self.banner.set_title(_(
+                    "Large file ({size}): rows appear as they load ({percent}%). Scrolling and selecting "
+                    "already work.").format(size=human_size(view.index.size), percent=f"{fraction * 100:.0f}"))
+                self.banner.set_button_label(_("Stop loading"))
                 self.banner.set_revealed(True)
 
     def _on_table_complete(self, view):
@@ -226,7 +290,8 @@ class DocumentPage(Gtk.Box):
         view = self.views.get(self.mode)
         tf = self._text
         if self.mode == "source" and tf is not None and tf.truncated:
-            self.banner.set_title(f"Showing the first {human_size(MAX_TEXT_BYTES)} of {human_size(tf.size)}.")
+            self.banner.set_title(_("Showing the first {shown} of {total}.").format(
+                shown=human_size(MAX_TEXT_BYTES), total=human_size(tf.size)))
             self.banner.set_button_label(None)
             self.banner.set_revealed(True)
         elif self.mode == "formatted" and view is not None and getattr(view, "index", None) is not None \
@@ -276,11 +341,18 @@ class DocumentPage(Gtk.Box):
         return False
 
     # -- lifecycle ------------------------------------------------------------
-    def reload(self) -> "DocumentPage":
-        return DocumentPage(self.path, self._open_path, self.mode)
+    def reload(self, keep_scroll: bool = False) -> "DocumentPage":
+        return DocumentPage(self.path, self._open_path, self.mode,
+                            scroll=self.scroll_position() if keep_scroll else None)
 
     def shutdown(self) -> None:
         self.closed = True
+        if self._monitor is not None:
+            self._monitor.cancel()
+            self._monitor = None
+        if self._change_timer:
+            GLib.source_remove(self._change_timer)
+            self._change_timer = 0
         for view in self.views.values():
             if hasattr(view, "shutdown"):
                 view.shutdown()

@@ -126,13 +126,13 @@ def _apply(*_args) -> None:
 
 def set_theme(theme_id: str) -> None:
     _state["theme"] = theme_id if themes.get(theme_id) else themes.DEFAULT_ID
-    settings.save({"theme": _state["theme"], "background": _state["background"]})
+    settings.set("theme", _state["theme"])
     _apply()
 
 
 def set_background(enabled: bool) -> None:
     _state["background"] = bool(enabled)
-    settings.save({"theme": _state["theme"], "background": _state["background"]})
+    settings.set("background", _state["background"])
     _apply()
 
 
@@ -140,9 +140,8 @@ def install() -> None:
     global _provider
     if _provider is not None:
         return
-    values = settings.load()
-    _state["theme"] = values["theme"] if themes.get(values["theme"]) else themes.DEFAULT_ID
-    _state["background"] = values["background"]
+    _state["theme"] = settings.get("theme") if themes.get(settings.get("theme")) else themes.DEFAULT_ID
+    _state["background"] = settings.get("background")
     _provider = Gtk.CssProvider()
     Gtk.StyleContext.add_provider_for_display(
         Gdk.Display.get_default(), _provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION

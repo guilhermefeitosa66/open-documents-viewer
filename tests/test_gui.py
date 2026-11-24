@@ -68,7 +68,13 @@ def buffer_text(doc):
 
 @pytest.fixture(autouse=True)
 def state_dir(tmp_path, monkeypatch):
+    from odv import settings
+
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    settings.reset_cache()
+    yield
+    settings.reset_cache()
 
 
 def test_markdown_formatted_then_source():
@@ -269,7 +275,7 @@ def test_theme_background_rules(config_dir):
     import json
 
     saved = json.loads((config_dir / "open-documents-viewer" / "settings.json").read_text())
-    assert saved == {"theme": "libre-apps", "background": True}
+    assert saved == {"theme": "libre-apps", "background": True, "watch": True}
 
 
 def test_background_waits_for_first_frame(config_dir):
@@ -283,3 +289,58 @@ def test_background_waits_for_first_frame(config_dir):
     assert events[0] == "startup", out
     if "background" in events:
         assert events.index("background") > events.index("startup")
+
+
+def test_reload_when_the_file_changes(tmp_path):
+    from odv import settings
+
+    path = tmp_path / "notes.txt"
+    path.write_text("".join(f"line {i}\n" for i in range(3000)))
+
+    def scenario(win, r):
+        win.open_path(str(path))
+        yield 1.0
+        doc = win.active_pane.current_doc()
+        adj = doc.views["source"].get_vadjustment()
+        adj.set_value(2000)
+        yield 0.3
+        r["before"] = adj.get_value()
+        path.write_text("changed\n" + "".join(f"line {i}\n" for i in range(3000)))
+        yield 2.0
+        doc2 = win.active_pane.current_doc()
+        r["replaced"] = doc2 is not doc
+        r["text"] = buffer_text(doc2).split("\n", 1)[0]
+        r["after"] = doc2.views["source"].get_vadjustment().get_value()
+        r["tabs"] = len(win.active_pane.docs())
+        settings.set("watch", False)
+        path.write_text("ignored\n")
+        yield 1.5
+        r["ignored"] = win.active_pane.current_doc() is doc2
+        settings.set("watch", True)
+        path.unlink()
+        yield 1.5
+        r["deleted"] = doc2.deleted and doc2.banner.get_revealed()
+
+    r = run_app(scenario)
+    assert r["replaced"] and r["text"] == "changed" and r["tabs"] == 1
+    assert r["before"] > 1000 and abs(r["after"] - r["before"]) < 60, r
+    assert r["ignored"]
+    assert r["deleted"]
+
+
+def test_interface_in_portuguese():
+    from odv import i18n
+
+    i18n.set_language("pt")
+    try:
+        def scenario(win, r):
+            yield 0.5
+            r["button"] = win.welcome.list.get_parent()  # built
+            win.open_path(os.path.join(FIX, "sample.md"))
+            yield 1.0
+            r["switch"] = win.active_pane.mode_switch.formatted.get_label()
+
+        r = run_app(scenario)
+        assert r["switch"] == "Formatado"
+    finally:
+        i18n.set_language("en")

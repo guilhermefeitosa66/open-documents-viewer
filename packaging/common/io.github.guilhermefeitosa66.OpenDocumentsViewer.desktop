@@ -1,8 +1,14 @@
 [Desktop Entry]
 Type=Application
 Name=Open Documents Viewer
+Name[pt_BR]=Open Documents Viewer
+Name[es]=Open Documents Viewer
 GenericName=Document Viewer
+GenericName[pt_BR]=Visualizador de documentos
+GenericName[es]=Visor de documentos
 Comment=View Markdown, text, code and data files. Fast, offline, read-only.
+Comment[pt_BR]=Veja arquivos Markdown, texto, código e dados. Rápido, offline, só leitura.
+Comment[es]=Mira archivos Markdown, texto, código y datos. Rápido, sin conexión, solo lectura.
 Exec=open-documents-viewer %F
 Icon=io.github.guilhermefeitosa66.OpenDocumentsViewer
 Terminal=false

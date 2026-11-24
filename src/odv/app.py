@@ -6,6 +6,7 @@ from gi.repository import Adw, Gio, GLib, Gtk
 
 from odv import APP_ID, APP_NAME, __version__, theme
 from odv.bench import Bench
+from odv.i18n import _
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -15,7 +16,7 @@ class Application(Adw.Application):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
         self.bench = Bench(t0)
         self.set_option_context_parameter_string("[FILE|FOLDER…]")
-        self.set_option_context_summary("A fast, read-only viewer for Markdown, text, code and data files.")
+        self.set_option_context_summary(_("A fast, read-only viewer for Markdown, text, code and data files."))
         self.add_main_option("version", ord("v"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              "Show the version and quit", None)
         self.add_main_option("new-window", ord("n"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
@@ -76,7 +77,7 @@ class Application(Adw.Application):
                       developer_name="Guilherme Feitosa", license_type=Gtk.License.APACHE_2_0,
                       website="https://libre-apps.org",
                       issue_url="https://github.com/guilhermefeitosa66/open-documents-viewer-desktop/issues",
-                      comments="Fast, offline, read-only. No ads, no account, no tracking.")
+                      comments=_("Fast, offline, read-only. No ads, no account, no tracking."))
         if hasattr(Adw, "AboutDialog"):
             Adw.AboutDialog(**kwargs).present(self.get_active_window())
         else:

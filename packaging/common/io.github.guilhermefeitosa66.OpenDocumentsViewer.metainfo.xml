@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.2.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: files reload when they change on disk, keeping the scroll position; a banner says when a file was deleted (Preferences can turn it off).</li>
+        <li>Added: the interface in Brazilian Portuguese and Spanish, following the system language.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-11-24">
       <description>
         <p>First release: Markdown, text, code, config and CSV files; folder tree, tabs and split view.</p>

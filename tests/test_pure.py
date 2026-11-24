@@ -221,8 +221,78 @@ def test_small_text_colour_passes_contrast():
 
 def test_settings_round_trip(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    assert settings.load() == {"theme": "libre-apps", "background": True}
+    settings.reset_cache()
+    assert settings.load() == {"theme": "libre-apps", "background": True, "watch": True}
     settings.save({"theme": "kitty", "background": False})
-    assert settings.load() == {"theme": "kitty", "background": False}
+    assert settings.load() == {"theme": "kitty", "background": False, "watch": True}
     (tmp_path / "open-documents-viewer" / "settings.json").write_text('{"theme": 3, "x": 1}')
-    assert settings.load() == {"theme": "libre-apps", "background": True}
+    assert settings.load() == {"theme": "libre-apps", "background": True, "watch": True}
+    # set() keeps every other key.
+    settings.reset_cache()
+    settings.set("watch", False)
+    settings.set("theme", "neon")
+    assert settings.load() == {"theme": "neon", "background": True, "watch": False}
+    settings.reset_cache()
+
+
+# -- languages ----------------------------------------------------------------
+
+import ast  # noqa: E402
+
+from odv import i18n  # noqa: E402
+
+SRC_DIR = os.path.join(os.path.dirname(__file__), "..", "src", "odv")
+
+
+def ui_strings():
+    found = {}
+    for root, _dirs, files in os.walk(SRC_DIR):
+        for name in files:
+            if not name.endswith(".py"):
+                continue
+            path = os.path.join(root, name)
+            tree = ast.parse(open(path).read())
+            for node in ast.walk(tree):
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_"
+                        and node.args and isinstance(node.args[0], ast.Constant)
+                        and isinstance(node.args[0].value, str)):
+                    found[node.args[0].value] = os.path.relpath(path, SRC_DIR)
+    return found
+
+
+def test_every_ui_string_is_translated():
+    strings = ui_strings()
+    assert len(strings) > 40
+    missing = [f"{where}: {text!r}" for text, where in strings.items()
+               if not all(lang in i18n.CATALOG.get(text, {}) for lang in ("pt", "es"))]
+    assert not missing, "untranslated:\n" + "\n".join(missing)
+
+
+def test_translations_keep_placeholders():
+    import re
+
+    for text, entry in i18n.CATALOG.items():
+        want = sorted(re.findall(r"{\w+}", text))
+        for lang, translated in entry.items():
+            assert sorted(re.findall(r"{\w+}", translated)) == want, (lang, text)
+
+
+@pytest.mark.parametrize("env,lang", [
+    ({"LANG": "pt_BR.UTF-8"}, "pt"),
+    ({"LANG": "es_ES.UTF-8"}, "es"),
+    ({"LANG": "de_DE.UTF-8"}, "en"),
+    ({"LANGUAGE": "pt_BR:en", "LANG": "en_US.UTF-8"}, "pt"),
+    ({"LC_ALL": "C"}, "en"),
+    ({"ODV_LANG": "es", "LANG": "pt_BR.UTF-8"}, "es"),
+])
+def test_language_detection(env, lang):
+    assert i18n.detect(env) == lang
+
+
+def test_translate():
+    i18n.set_language("pt")
+    try:
+        assert i18n._("Open File…") == "Abrir arquivo…"
+        assert i18n._("not in the catalogue") == "not in the catalogue"
+    finally:
+        i18n.set_language("en")

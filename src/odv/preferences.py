@@ -4,7 +4,8 @@ import threading
 
 from gi.repository import Adw, Gdk, GLib, Gtk
 
-from odv import theme, themes
+from odv import settings, theme, themes
+from odv.i18n import _
 
 THUMB_W, THUMB_H = 176, 99
 
@@ -78,16 +79,16 @@ class ThemeThumb(Gtk.Overlay):
 
 class PreferencesDialog(Adw.PreferencesDialog if hasattr(Adw, "PreferencesDialog") else Adw.PreferencesWindow):
     def __init__(self):
-        super().__init__(title="Preferences")
-        page = Adw.PreferencesPage(title="Appearance", icon_name="applications-graphics-symbolic")
+        super().__init__(title=_("Preferences"))
+        page = Adw.PreferencesPage(title=_("Appearance"), icon_name="applications-graphics-symbolic")
         self.add(page)
 
-        group = Adw.PreferencesGroup(title="Theme")
+        group = Adw.PreferencesGroup(title=_("Theme"))
         flow = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, column_spacing=12, row_spacing=12,
                            min_children_per_line=2, max_children_per_line=3, homogeneous=True)
         self.cards = {}
-        entries = [(themes.DEFAULT_ID, "libre-apps", "Follows the system")]
-        entries += [(t["id"], t["name"], "Dark" if t["scheme"] == "dark" else "Light") for t in themes.catalogue()]
+        entries = [(themes.DEFAULT_ID, "libre-apps", _("Follows the system"))]
+        entries += [(t["id"], t["name"], _("Dark") if t["scheme"] == "dark" else _("Light")) for t in themes.catalogue()]
         for tid, name, sub in entries:
             card = Gtk.Button(tooltip_text=name)
             card.add_css_class("flat")
@@ -102,21 +103,30 @@ class PreferencesDialog(Adw.PreferencesDialog if hasattr(Adw, "PreferencesDialog
             box.append(caption)
             card.set_child(box)
             card.connect("clicked", self._pick, tid)
-            card.update_property([Gtk.AccessibleProperty.LABEL], [f"{name} theme"])
+            card.update_property([Gtk.AccessibleProperty.LABEL], [_("{name} theme").format(name=name)])
             flow.append(card)
             self.cards[tid] = card
         group.add(flow)
         page.add(group)
 
-        bg_group = Adw.PreferencesGroup(title="Background")
+        bg_group = Adw.PreferencesGroup(title=_("Background"))
         self.bg_row = Adw.SwitchRow(
-            title="Background picture",
-            subtitle="Shown on the start screen and behind the sidebar and tabs. "
-                     "Documents always sit on a solid colour.")
+            title=_("Background picture"),
+            subtitle=_("Shown on the start screen and behind the sidebar and tabs. "
+                       "Documents always sit on a solid colour."))
         self.bg_row.set_active(theme.background_enabled())
         self.bg_row.connect("notify::active", lambda row, _p: theme.set_background(row.get_active()))
         bg_group.add(self.bg_row)
         page.add(bg_group)
+
+        files_group = Adw.PreferencesGroup(title=_("Files and folders"))
+        watch_row = Adw.SwitchRow(
+            title=_("Reload files when they change"),
+            subtitle=_("Keeps the scroll position. Turn off for files that change all the time."))
+        watch_row.set_active(settings.get("watch"))
+        watch_row.connect("notify::active", lambda row, _p: settings.set("watch", row.get_active()))
+        files_group.add(watch_row)
+        page.add(files_group)
         self._sync()
 
     def _pick(self, _btn, tid):
