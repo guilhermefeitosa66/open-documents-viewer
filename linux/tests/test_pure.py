@@ -1111,3 +1111,73 @@ def test_encrypted_ooxml_unlock(tmp_path):
     reader = open_workbook(path)
     assert reader.workbook.sheets[0].name == "Sales"
     reader.close()
+
+
+# -- pdf ----------------------------------------------------------------------------------------
+def _engine_call(engine, fn):
+    import threading
+
+    out = {}
+    done = threading.Event()
+    engine.submit(fn, lambda r: (out.setdefault("r", r), done.set()),
+                  lambda e: (out.setdefault("e", e), done.set()))
+    assert done.wait(10)
+    if "e" in out:
+        raise out["e"]
+    return out["r"]
+
+
+def test_pdf_engine(tmp_path):
+    pytest.importorskip("pypdfium2")
+    from pdfgen import make_pdf
+    from odv.filetypes import classify
+    from odv.formats import pdf
+
+    kind = classify("a.PDF")
+    assert kind.kind == "pdf" and kind.has_formatted and kind.has_source and kind.binary
+    path = str(make_pdf(tmp_path / "r.pdf"))
+    engine = pdf.Engine(path, lambda fn: fn())
+    try:
+        info = _engine_call(engine, engine.open)
+        assert info.pages == 3 and info.sizes[0] == (612, 792) and info.sizes[2] == (792, 612)  # /Rotate 90
+        assert info.toc == [(1, "Introduction", 0), (1, "Results", 1), (2, "Backup", 2)]
+        w, h, stride, data, fmt, channels = _engine_call(engine, lambda: engine.render(0, 0.5))
+        assert (w, h) == (306, 396) and len(data) == stride * h
+        assert "North 42" in _engine_call(engine, lambda: engine.text(1))
+        page, char, rects = _engine_call(engine, lambda: engine.search("north", 0, True))
+        assert page == 1 and rects and 95 < rects[0][1] < 110  # y measured from the top
+        assert _engine_call(engine, lambda: engine.search("north", 1, True, char))[0] == 1  # wraps to itself
+        assert _engine_call(engine, lambda: engine.search("nowhere", 0, True)) is None
+        text, rects = _engine_call(engine, lambda: engine.select(1, 70, 100, 140, 108))
+        assert text.startswith("North") and rects
+        assert _engine_call(engine, lambda: engine.link_at(0, 100, 147)) == ("page", 1)
+        assert _engine_call(engine, lambda: engine.link_at(0, 100, 187)) == ("uri", "https://libre-apps.org/")
+        assert _engine_call(engine, lambda: engine.link_at(0, 400, 600)) is None
+    finally:
+        engine.close()
+    text = pdf.extract_text(path)
+    assert "Quarterly Review" in text and "Backup slide" in text and text.index("Results") > text.index("welcome")
+
+
+def test_pdf_password(tmp_path):
+    pytest.importorskip("pypdfium2")
+    import shutil
+    import subprocess
+
+    if not shutil.which("qpdf"):
+        pytest.skip("qpdf is needed to encrypt the sample")
+    from pdfgen import make_pdf
+    from odv.formats import pdf
+
+    plain = str(make_pdf(tmp_path / "plain.pdf"))
+    locked = str(tmp_path / "locked.pdf")
+    subprocess.run(["qpdf", "--encrypt", "s3cret", "owner", "256", "--", plain, locked], check=True)
+    engine = pdf.Engine(locked, lambda fn: fn())
+    try:
+        with pytest.raises(pdf.PasswordNeeded):
+            _engine_call(engine, engine.open)
+        with pytest.raises(pdf.PasswordNeeded):
+            _engine_call(engine, lambda: engine.open("nope"))
+        assert _engine_call(engine, lambda: engine.open("s3cret")).pages == 3
+    finally:
+        engine.close()

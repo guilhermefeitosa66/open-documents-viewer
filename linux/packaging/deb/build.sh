@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds dist/open-documents-viewer_<version>_all.deb and install-tests it.
+# Builds dist/open-documents-viewer_<version>_amd64.deb and install-tests it.
 # Runs inside packaging/docker/deb.Dockerfile: use `packaging/build.sh deb`.
 set -euo pipefail
 trap 'sh packaging/common/hand_back.sh || true' EXIT
@@ -7,10 +7,11 @@ trap 'sh packaging/common/hand_back.sh || true' EXIT
 VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/odv/__init__.py)"
 PKG=open-documents-viewer
 ID=io.github.guilhermefeitosa66.OpenDocumentsViewer
-ROOT="build/deb/${PKG}_${VERSION}_all"
+ROOT="build/deb/${PKG}_${VERSION}_amd64"
 rm -rf build/deb && mkdir -p "$ROOT/DEBIAN" dist
 
 sh packaging/common/stage.sh "$ROOT"
+sh packaging/common/vendor.sh "$ROOT/usr/lib/open-documents-viewer"
 desktop-file-validate "$ROOT/usr/share/applications/$ID.desktop"
 appstreamcli validate --no-net --explain "$ROOT/usr/share/metainfo/$ID.metainfo.xml"
 
@@ -20,7 +21,7 @@ Package: $PKG
 Version: $VERSION
 Section: utils
 Priority: optional
-Architecture: all
+Architecture: amd64
 Installed-Size: $SIZE
 Depends: python3 (>= 3.10), python3-gi (>= 3.42), python3-gi-cairo, python3-yaml, python3-olefile, python3-xlrd, gir1.2-gtk-4.0 (>= 4.12), gir1.2-adw-1 (>= 1.4), gir1.2-gtksource-5, python3-markdown-it
 Recommends: python3-msoffcrypto-tool, adwaita-icon-theme, librsvg2-common, webp-pixbuf-loader, heif-gdk-pixbuf, libavif-gdk-pixbuf
@@ -50,7 +51,7 @@ find /usr/lib/open-documents-viewer -name __pycache__ -type d -prune -exec rm -r
 SH
 chmod 755 "$ROOT/DEBIAN/postinst" "$ROOT/DEBIAN/prerm"
 
-DEB="dist/${PKG}_${VERSION}_all.deb"
+DEB="dist/${PKG}_${VERSION}_amd64.deb"
 fakeroot dpkg-deb --root-owner-group -Zxz --build "$ROOT" "$DEB"
 echo "built $DEB ($(stat -c %s "$DEB") bytes)"
 
@@ -60,10 +61,11 @@ apt-get install -y -qq --no-install-recommends "./$DEB" librsvg2-common fonts-de
 test -f /usr/lib/open-documents-viewer/odv/__pycache__/main.cpython-312.pyc || { echo "ERROR: postinst did not compile" >&2; exit 1; }
 open-documents-viewer --version
 LOG="$(mktemp)"
+python3 -c 'import sys; sys.path.insert(0, "tests"); from pdfgen import make_pdf; make_pdf("/tmp/sample.pdf")'
 GTK_A11Y=none timeout 60 xvfb-run -a dbus-run-session -- open-documents-viewer --bench \
-  tests/fixtures/sample.md tests/fixtures/sample.py tests/fixtures/sample.csv > "$LOG" 2>&1 || true
+  tests/fixtures/sample.md tests/fixtures/sample.py tests/fixtures/sample.csv /tmp/sample.pdf > "$LOG" 2>&1 || true
 cat "$LOG" | grep -v '^$' | grep -v 'a11y' || true
-test "$(grep -c '^odv-bench loaded' "$LOG")" = 3 || { echo "ERROR: the installed app did not open the files" >&2; exit 1; }
+test "$(grep -c '^odv-bench loaded' "$LOG")" = 4 || { echo "ERROR: the installed app did not open the files" >&2; exit 1; }
 echo "==> theme check (Neon, with its background picture)"
 mkdir -p /tmp/cfg/open-documents-viewer
 echo '{"theme": "neon"}' > /tmp/cfg/open-documents-viewer/settings.json

@@ -9,6 +9,7 @@ script:
   - ln -sfn runtime/compat/usr/lib64 AppDir/lib64
   - ln -sfn usr/lib64 AppDir/runtime/compat/lib64
   - sh packaging/common/stage.sh AppDir
+  - sh packaging/common/vendor.sh AppDir/usr/lib/open-documents-viewer
   - rm AppDir/usr/bin/open-documents-viewer
   - gcc -static packaging/appimage/odv-launcher.c -O2 -s -o AppDir/usr/bin/odv-launcher
   - install -Dm755 packaging/appimage/odv-run.sh AppDir/usr/bin/odv-run
@@ -23,7 +24,7 @@ AppDir:
     name: Open Documents Viewer
     icon: io.github.guilhermefeitosa66.OpenDocumentsViewer
     # Kept in step with src/odv/__init__.py; build.sh refuses a mismatch.
-    version: "0.31.0"
+    version: "0.32.0"
     exec: usr/bin/odv-launcher
   runtime:
     env:

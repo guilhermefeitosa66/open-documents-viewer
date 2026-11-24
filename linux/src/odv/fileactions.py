@@ -90,6 +90,8 @@ def print_doc(window, doc, export_to: str | None = None):
     """Show the print dialog (or, for tests, export straight to a PDF)."""
     from odv.views.source import gtksource
 
+    if doc.kind.kind == "pdf":
+        return print_pdf(window, doc, export_to)
     if doc.mode == "formatted" and doc.kind.kind == "delimited":
         doc.set_mode("source")
     buf, is_code = printable_buffer(doc)
@@ -114,6 +116,58 @@ def print_doc(window, doc, export_to: str | None = None):
 
     op.connect("begin-print", begin)
     op.connect("draw-page", lambda operation, context, n: comp.draw_page(context, n))
+    if export_to:
+        op.set_export_filename(export_to)
+        return op.run(Gtk.PrintOperationAction.EXPORT, window)
+    return op.run(Gtk.PrintOperationAction.PRINT_DIALOG, window)
+
+
+def print_pdf(window, doc, export_to: str | None = None):
+    """Print a PDF's pages as images rendered at the printer's resolution."""
+    import cairo
+
+    from odv.formats.pdf import PDFIUM_LOCK, load
+
+    view = doc.views.get("formatted")
+    password = getattr(view, "password", None)
+    if view is None or getattr(view, "info", None) is None:
+        window.toast(_("Open the file once in this view before printing."))
+        return None
+    pdfium = load()
+    with PDFIUM_LOCK:
+        pdf = pdfium.PdfDocument(doc.path, password=password)
+    op = Gtk.PrintOperation(job_name=doc.name, n_pages=view.info.pages, use_full_page=False)
+
+    def draw(_operation, context, n):
+        width, height = context.get_width(), context.get_height()
+        dpi = min(300.0, max(72.0, context.get_dpi_x() or 150.0))
+        with PDFIUM_LOCK:
+            page = pdf[n]
+            pw, ph = page.get_size()
+            fit = min(width / pw, height / ph)
+            scale = fit * dpi / 72
+            bitmap = page.render(scale=scale, may_draw_forms=False, prefer_bgrx=True)
+            w, h, stride = bitmap.width, bitmap.height, bitmap.stride
+            import ctypes
+
+            data = bytearray(ctypes.string_at(ctypes.addressof(bitmap.buffer), stride * h))
+            bitmap.close()
+            page.close()
+        surface = cairo.ImageSurface.create_for_data(data, cairo.FORMAT_RGB24, w, h, stride)
+        cr = context.get_cairo_context()
+        cr.save()
+        cr.translate((width - pw * fit) / 2, (height - ph * fit) / 2)
+        cr.scale(pw * fit / w, ph * fit / h)
+        cr.set_source_surface(surface, 0, 0)
+        cr.paint()
+        cr.restore()
+
+    def done(_operation, _result):
+        with PDFIUM_LOCK:
+            pdf.close()
+
+    op.connect("draw-page", draw)
+    op.connect("done", done)
     if export_to:
         op.set_export_filename(export_to)
         return op.run(Gtk.PrintOperationAction.EXPORT, window)

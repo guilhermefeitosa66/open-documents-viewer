@@ -179,22 +179,24 @@ class Kind:
 
     @property
     def has_formatted(self) -> bool:
-        return self.rich or self.kind in ("delimited", "image", "tree", "spreadsheet", "presentation")
+        return self.rich or self.kind in ("delimited", "image", "tree", "spreadsheet", "presentation", "pdf")
 
     @property
     def has_source(self) -> bool:
         """Raster images have no text to show; SVG does (its XML)."""
+        if self.kind == "pdf":  # the extracted text
+            return True
         return (self.kind != "image" or self.lang == "xml") and not self.binary
 
     @property
     def binary(self) -> bool:
         """Read from the file itself, not as text (EPUB is a zip)."""
-        return self.kind in ("ebook", "document", "spreadsheet", "presentation") and self.lang is None
+        return self.kind in ("ebook", "document", "spreadsheet", "presentation", "pdf") and self.lang is None
 
     @property
     def formatted_label(self) -> str:
         return {"delimited": "Table", "image": "Image", "tree": "Tree", "spreadsheet": "Sheet",
-                "presentation": "Slides"}.get(self.kind,
+                "presentation": "Slides", "pdf": "Pages"}.get(self.kind,
                                                                                                    "Formatted")
 
 
@@ -229,6 +231,8 @@ def classify(path: str) -> Kind:
         return Kind("spreadsheet", None)
     if ext in SLIDES_EXT:
         return Kind("presentation", None)
+    if ext == ".pdf":
+        return Kind("pdf", None)
     if ext == ".epub":
         return Kind("ebook", None)
     if ext == ".fb2":
@@ -250,7 +254,7 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
-    if ext in DOCUMENT_EXT:
+    if ext in DOCUMENT_EXT or ext == ".pdf":
         return "markdown"
     if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2", ".eml", ".vcf", ".ics"):
         return "markdown"

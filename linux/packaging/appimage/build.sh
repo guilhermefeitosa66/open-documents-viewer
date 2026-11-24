@@ -57,11 +57,12 @@ echo "packaged $BUNDLE ($(stat -c %s "$BUNDLE") bytes)"
 echo "==> launch test (extract-and-run, under Xvfb)"
 LOG="$(mktemp)"
 cp -r tests/fixtures /tmp/fixtures
+python3 -c 'import sys; sys.path.insert(0, "tests"); from pdfgen import make_pdf; make_pdf("/tmp/fixtures/sample.pdf")'
 (cd /tmp/fixtures && APPIMAGE_EXTRACT_AND_RUN=1 GTK_A11Y=none timeout 90 xvfb-run -a dbus-run-session -- \
-  "/work/$BUNDLE" --bench sample.md sample.py sample.json .env sample.csv > "$LOG" 2>&1) || true
+  "/work/$BUNDLE" --bench sample.md sample.py sample.json .env sample.csv sample.pdf > "$LOG" 2>&1) || true
 grep -v '^$' "$LOG" | grep -v a11y || true
 if grep -qE "not found|No module named|ModuleNotFoundError|Traceback" "$LOG"; then
   echo "ERROR: the bundle failed to start." >&2; exit 1
 fi
-test "$(grep -c '^odv-bench loaded' "$LOG")" = 5 || { echo "ERROR: the bundle did not open the 5 files." >&2; exit 1; }
+test "$(grep -c '^odv-bench loaded' "$LOG")" = 6 || { echo "ERROR: the bundle did not open the 6 files." >&2; exit 1; }
 echo "==> APPIMAGE OK"

@@ -263,6 +263,23 @@ CATALOG: dict[str, dict[str, str]] = {
         "pt": "Texto simples de um documento do Word 97–2003: a formatação não é mostrada.",
         "es": "Texto sin formato de un documento de Word 97–2003: no se muestra el formato."},
     "Sheet": {"pt": "Planilha", "es": "Hoja"},
+    # pdf
+    "Pages": {"pt": "Páginas", "es": "Páginas"},
+    "Thumbnails": {"pt": "Miniaturas", "es": "Miniaturas"},
+    "Previous page": {"pt": "Página anterior", "es": "Página anterior"},
+    "Next page": {"pt": "Próxima página", "es": "Página siguiente"},
+    "Go to page": {"pt": "Ir para a página", "es": "Ir a la página"},
+    "of {n}": {"pt": "de {n}", "es": "de {n}"},
+    "Zoom out (Ctrl+−)": {"pt": "Diminuir (Ctrl+−)", "es": "Alejar (Ctrl+−)"},
+    "Zoom in (Ctrl++)": {"pt": "Aumentar (Ctrl++)", "es": "Acercar (Ctrl++)"},
+    "Fit width": {"pt": "Ajustar à largura", "es": "Ajustar al ancho"},
+    "Fit page": {"pt": "Ajustar à página", "es": "Ajustar a la página"},
+    "This PDF has no pages.": {"pt": "Este PDF não tem páginas.", "es": "Este PDF no tiene páginas."},
+    "Showing PDF files needs pypdfium2, which is missing from this installation.": {
+        "pt": "Mostrar arquivos PDF precisa da pypdfium2, que não está nesta instalação.",
+        "es": "Mostrar archivos PDF requiere pypdfium2, que no está en esta instalación."},
+    "Unlock it in the Pages view first.": {"pt": "Desbloqueie primeiro na visão Páginas.",
+                                           "es": "Desbloquéalo primero en la vista Páginas."},
     "This workbook has no visible sheets.": {"pt": "Esta pasta de trabalho não tem planilhas visíveis.",
                                              "es": "Este libro no tiene hojas visibles."},
     # presentations

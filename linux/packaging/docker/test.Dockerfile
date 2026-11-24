@@ -6,7 +6,10 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python3 python3-gi python3-gi-cairo python3-markdown-it python3-pytest \
       gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-gtksource-5 \
-      adwaita-icon-theme librsvg2-common fonts-dejavu-core git python3-yaml python3-olefile python3-msoffcrypto-tool python3-xlrd python3-xlwt webp-pixbuf-loader heif-gdk-pixbuf libavif-gdk-pixbuf xvfb xauth dbus-x11 locales \
+      adwaita-icon-theme librsvg2-common fonts-dejavu-core git python3-yaml python3-olefile python3-msoffcrypto-tool python3-xlrd python3-xlwt webp-pixbuf-loader heif-gdk-pixbuf libavif-gdk-pixbuf xvfb xauth dbus-x11 locales python3-pip qpdf \
  && rm -rf /var/lib/apt/lists/*
+COPY vendor-requirements.txt /tmp/vendor-requirements.txt
+RUN python3 -m pip install --break-system-packages --no-cache-dir --no-deps --only-binary :all: \
+      --require-hashes -r /tmp/vendor-requirements.txt
 ENV LANG=C.UTF-8
 WORKDIR /work

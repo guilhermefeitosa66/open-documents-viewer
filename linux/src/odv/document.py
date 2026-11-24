@@ -373,6 +373,8 @@ class DocumentPage(Gtk.Box):
             self._build_sheet()
         elif mode == "formatted" and self.kind.kind == "presentation":
             self._build_slides()
+        elif self.kind.kind == "pdf":
+            self._build_pdf() if mode == "formatted" else self._build_pdf_source()
         elif mode == "formatted" and self.kind.kind == "tree" and self._text is not None:
             self._build_tree()
         elif self._text is not None:
@@ -562,6 +564,47 @@ class DocumentPage(Gtk.Box):
         self._add_view("formatted", view)
         GLib.idle_add(lambda: (view.grab_focus(), False)[1])
 
+    def _build_pdf(self):
+        from odv.views.pdf import PdfView
+
+        view = PdfView(self.path)
+
+        def loaded(v):
+            self._set_outline(v.outline())
+            self._first_content()
+            self._loaded()
+
+        view.connect("loaded", loaded)
+        view.connect("position-changed", lambda v: self._on_scrolled(None))
+        view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg,
+                                                            "dialog-warning-symbolic"))
+        self._add_view("formatted", view)
+
+    def _build_pdf_source(self):
+        """The source view of a PDF: its text, extracted in a thread."""
+        from odv.textio import TextFile
+
+        pdf_view = self.views.get("formatted")
+        password = getattr(pdf_view, "password", None)
+        if pdf_view is not None and pdf_view.info is None and pdf_view.stack.get_child_by_name("password"):
+            self._status(_("This file is password-protected"), _("Unlock it in the Pages view first."),
+                         "dialog-password-symbolic")
+            return
+
+        def work():
+            from odv.formats.pdf import extract_text
+
+            return extract_text(self.path, password)
+
+        def done(text):
+            if self.closed:
+                return
+            self._text = TextFile(self.path, text, "utf-8", len(text), False)
+            self._build_text_view("source")
+
+        run_in_thread(work, done, lambda e: self._status(_("Could not open this file"), str(e),
+                                                         "dialog-warning-symbolic"))
+
     def present(self) -> bool:
         view = self.views.get("formatted")
         if view is not None and hasattr(view, "present"):
@@ -665,7 +708,7 @@ class DocumentPage(Gtk.Box):
         needle = self.search_entry.get_text()
         view = self.views.get(self.mode)
         if view is not None and (hasattr(view, "reveal") or hasattr(view, "set_current")
-                                 or hasattr(view, "present")):  # tree, sheet, slides
+                                 or hasattr(view, "present") or hasattr(view, "engine")):  # tree, sheet, slides, pdf
             if not needle:
                 self._set_found(True)
                 return False

@@ -31,7 +31,7 @@ Office documents and PDF come in later versions.
 Download the latest `linux-v*` release from the [releases page](https://github.com/guilhermefeitosa66/open-documents-viewer/releases):
 
 - **AppImage** (any x86_64 distribution): `chmod +x OpenDocumentsViewer-*.AppImage` and run it.
-- **.deb** (Ubuntu 24.04+, Debian 13+, Linux Mint 22+): `sudo apt install ./open-documents-viewer_*_all.deb`.
+- **.deb** (Ubuntu 24.04+, Debian 13+, Linux Mint 22+): `sudo apt install ./open-documents-viewer_*_amd64.deb`.
 
 Then open files from the file manager ("Open With"), or from a terminal:
 

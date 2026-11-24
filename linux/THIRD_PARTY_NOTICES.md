@@ -15,10 +15,11 @@ changes the license of the app.
 | [PyYAML](https://github.com/yaml/pyyaml) | MIT | YAML tree view |
 | [olefile](https://github.com/decalage2/olefile) | BSD-2-Clause | Reading Word/Excel/PowerPoint 97–2003 containers |
 | [xlrd](https://github.com/python-excel/xlrd) | BSD-3-Clause | Excel 97–2003 workbooks |
+| [pypdfium2](https://github.com/pypdfium2-team/pypdfium2), bundled with its [PDFium](https://pdfium.googlesource.com/pdfium/) build | Apache-2.0 OR BSD-3-Clause; PDFium BSD-3-Clause, its parts (FreeType, libjpeg-turbo, OpenJPEG, lcms2, libpng, zlib, ICU, HarfBuzz…) under their own permissive licenses, shipped in `vendor/pypdfium2-*.dist-info/licenses/` | Showing and printing PDF files |
 | [msoffcrypto-tool](https://github.com/nolze/msoffcrypto-tool) and its dependency [cryptography](https://github.com/pyca/cryptography) (optional) | MIT; Apache-2.0 OR BSD-3-Clause | Opening password-protected Word/Excel/PowerPoint files, in memory |
 | GdkPixbuf loaders: [webp-pixbuf-loader](https://github.com/aruiz/webp-pixbuf-loader), libheif's, libavif's (optional) | LGPL-2.0-or-later, LGPL-3.0-or-later, BSD-2-Clause | WebP, HEIF and AVIF images |
 
-Tests only (not shipped): [xlwt](https://github.com/python-excel/xlwt) (BSD-3-Clause) writes sample .xls files.
+Tests only (not shipped): [xlwt](https://github.com/python-excel/xlwt) (BSD-3-Clause) writes sample .xls files; [qpdf](https://github.com/qpdf/qpdf) (Apache-2.0) encrypts a sample PDF.
 
 The AppImage also carries the Ubuntu 24.04 packages these depend on (GLib,
 Pango, cairo, HarfBuzz, librsvg, the Adwaita icon theme and others), each

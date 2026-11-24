@@ -1206,3 +1206,84 @@ def test_password_and_macro_files(tmp_path):
     assert r["macro"][0] and "macros" in r["macro"][1]
     assert r["asked"] and r["still_asking"]
     assert r["tabs"] == ["Sales"]
+
+
+def test_pdf_file(tmp_path):
+    import shutil
+    import subprocess
+    import sys
+
+    pytest.importorskip("pypdfium2")
+    sys.path.insert(0, os.path.dirname(__file__))
+    from pdfgen import make_pdf
+
+    path = str(make_pdf(tmp_path / "report.pdf"))
+    locked = None
+    if shutil.which("qpdf"):
+        locked = str(tmp_path / "locked.pdf")
+        subprocess.run(["qpdf", "--encrypt", "s3cret", "owner", "256", "--", path, locked], check=True)
+    printed = str(tmp_path / "printed.pdf")
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        view = doc.views["formatted"]
+        yield 0.5
+        r["state"] = (doc.mode, doc.has_source, len(view.pages), view.page_total.get_label())
+        r["outline"] = [(h.level, h.title, h.offset) for h in doc.outline()]
+        r["rendered"] = view.pages[0].texture is not None
+        before = view.z
+        r["zoom"] = doc.zoom(1)
+        r["zoomed"] = view.z > before and view.fit_mode is None
+        view.fit("width")
+        yield 0.3
+        doc.jump_to(doc.outline()[2])
+        yield 0.5
+        r["jumped"] = view.current_page()
+        doc.start_search()
+        doc.search_entry.set_text("north")
+        yield 0.8
+        r["found"] = (view.current_page(), bool(view.pages[1].search_rects))
+        view._follow(("page", 0))
+        yield 0.3
+        r["followed"] = view.current_page()
+        view._request_selection(1, 70, 100, 140, 108)
+        yield 0.5
+        r["copied"] = view.copy_selection()
+        from odv import fileactions
+
+        fileactions.print_doc(win, doc, export_to=printed)
+        yield 0.5
+        doc.set_mode("source")
+        for _i in range(30):
+            yield 0.2
+            if "source" in doc.views:
+                break
+        r["source"] = buffer_text(doc)
+        if locked:
+            win.open_path(locked)
+            yield from settle(win)
+            ldoc = win.active_pane.current_doc()
+            lview = ldoc.views["formatted"]
+            r["asked"] = lview.stack.get_visible_child_name()
+            lview.password_entry.set_text("s3cret")
+            lview.password_entry.emit("entry-activated")
+            for _i in range(30):
+                yield 0.2
+                if lview.info is not None:
+                    break
+            r["unlocked"] = (lview.stack.get_visible_child_name(), len(lview.pages))
+
+    r = run_app(scenario, timeout=40)
+    assert r["state"] == ("formatted", True, 3, "of 3")
+    assert r["outline"] == [(1, "Introduction", 0), (1, "Results", 1), (2, "Backup", 2)]
+    assert r["rendered"] and r["zoomed"] and r["zoom"] > 0
+    assert r["jumped"] == 2
+    assert r["found"] == (1, True)
+    assert r["followed"] == 0
+    assert r["copied"].startswith("North")
+    assert os.path.getsize(printed) > 1000
+    assert "Hello and welcome." in r["source"] and "South 17" in r["source"]
+    if locked:
+        assert r["asked"] == "password" and r["unlocked"] == ("pages", 3)

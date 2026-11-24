@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.32.0 (2026-11-24)
+
+- Added: PDF files, with pypdfium2 (PDFium): continuous scroll with pages rendered on demand in a thread and a small cache, zoom (buttons, Ctrl+wheel, pinch), fit width or page, go to page, thumbnails, the outline in the sidebar, find with highlights, text selection and copy, internal and web links, password-protected PDFs and printing; the source view shows the extracted text. pypdfium2 is bundled in the .deb (now amd64) and the AppImage.
+
 ## 0.31.0 (2026-11-24)
 
 - Added: more office files: OpenDocument drawings (.odg, .otg, .fodg), templates (.dotx, .dotm, .ott, .xltx, .xltm, .ots, .potx, .potm, .otp, .dot, .xlt), flat OpenDocument (.fodt, .fods, .fodp), macro-enabled files (.docm, .xlsm, .pptm…) with a note that macros never run, and Apple iWork files (.pages, .numbers, .key) through the preview picture saved inside them. Password-protected Word, Excel and PowerPoint files ask for the password and are decrypted in memory only (msoffcrypto-tool, optional); encrypted OpenDocument files say they cannot be opened yet.

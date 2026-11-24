@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.32.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: PDF files, with pypdfium2 (PDFium): continuous scroll with pages rendered on demand in a thread and a small cache, zoom (buttons, Ctrl+wheel, pinch), fit width or page, go to page, thumbnails, the outline in the sidebar, find with highlights, text selection and copy, internal and web links, password-protected PDFs and printing; the source view shows the extracted text. pypdfium2 is bundled in the .deb (now amd64) and the AppImage.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.31.0" date="2026-11-24">
       <description>
         <ul>
