@@ -253,6 +253,16 @@ class DocumentSession(
                 }
                 Formatted.Markdown(blocks, anchors)
             }
+            DocumentKind.HTML -> {
+                val parsed = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.HtmlModel.parse(doc.text)
+                job.ensureActive()
+                val anchors = HashMap<String, Int>()
+                parsed.blocks.forEachIndexed { i, b ->
+                    if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i)
+                }
+                anchors.putAll(parsed.ids)
+                Formatted.Markdown(parsed.blocks, anchors)
+            }
             DocumentKind.JSON -> {
                 val lower = doc.name.lowercase()
                 val pretty = if (lower.endsWith(".jsonl") || lower.endsWith(".ndjson")) JsonFormatter.formatLines(doc.text) else JsonFormatter.format(doc.text)

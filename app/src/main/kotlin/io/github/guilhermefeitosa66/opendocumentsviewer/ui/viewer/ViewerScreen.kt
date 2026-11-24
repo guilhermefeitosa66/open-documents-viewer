@@ -126,7 +126,7 @@ fun ViewerScreen(
     val colors = Odv.colors
     var showInfo by remember { mutableStateOf(false) }
     val doc = session.doc
-    val prose = session.mode == ViewMode.FORMATTED && session.kind == DocumentKind.MARKDOWN ||
+    val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML) ||
         session.mode == ViewMode.SOURCE && session.kind == DocumentKind.PLAIN && session.wrap
     val fontSize = if (prose) proseSize else codeSize
 
@@ -359,6 +359,7 @@ private fun subtitle(session: DocumentSession): String {
     val parts = ArrayList<String>()
     parts += doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
+        DocumentKind.HTML -> "HTML"
         DocumentKind.CSV -> "CSV"
         DocumentKind.TSV -> "TSV"
         else -> stringResource(R.string.kind_text)

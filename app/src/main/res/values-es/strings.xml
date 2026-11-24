@@ -21,7 +21,7 @@
     <string name="source_code">Código fuente</string>
     <string name="about_version">Versión %1$s</string>
     <string name="about_body">Un visor de documentos de texto rápido, sin conexión y de solo lectura. Sin anuncios, sin cuenta, sin red. Parte de libre-apps.</string>
-    <string name="about_licenses">Licencia Apache 2.0. Usa commonmark-java (BSD-2-Clause), JetBrains Mono (SIL OFL 1.1), Jetpack Compose y AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Licencia Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), JetBrains Mono (SIL OFL 1.1), Jetpack Compose y AndroidX (Apache 2.0).</string>
     <string name="back">Atrás</string>
     <string name="switch_document">Cambiar de documento</string>
     <string name="all_recents">Todos los recientes</string>
@@ -128,4 +128,6 @@
     <string name="keep_screen_on_desc">Mientras haya un documento abierto.</string>
     <string name="limit_width">Ancho de línea cómodo</string>
     <string name="limit_width_desc">En pantallas grandes, las líneas de texto mantienen un largo fácil de leer.</string>
+    <string name="image_remote">Imagen de internet: no cargada (la app funciona sin conexión).</string>
+    <string name="image_unavailable">Imagen no disponible. Abre la carpeta que la contiene para ver imágenes locales.</string>
 </resources>

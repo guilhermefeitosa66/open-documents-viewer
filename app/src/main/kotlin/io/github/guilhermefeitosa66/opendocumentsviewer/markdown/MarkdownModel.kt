@@ -95,6 +95,11 @@ sealed interface MdBlock {
     data class Html(val raw: String, override val indent: Int, override val quoteDepth: Int) : MdBlock {
         override val plainText get() = raw
     }
+
+    /** An image on its own line. Local images are loaded by the view; remote ones never. */
+    data class Image(val src: String, val alt: String, override val indent: Int, override val quoteDepth: Int) : MdBlock {
+        override val plainText get() = alt
+    }
 }
 
 object MarkdownModel {
@@ -123,7 +128,11 @@ object MarkdownModel {
     private fun block(node: Node, indent: Int, quote: Int, out: MutableList<MdBlock>) {
         when (node) {
             is Heading -> out += MdBlock.Heading(node.level, inline(node), indent, quote)
-            is Paragraph -> out += MdBlock.Paragraph(inline(node), indent, quote)
+            is Paragraph -> {
+                val only = node.firstChild
+                if (only is Image && only.next == null) out += MdBlock.Image(only.destination.orEmpty(), altOf(only), indent, quote)
+                else out += MdBlock.Paragraph(inline(node), indent, quote)
+            }
             is BlockQuote -> children(node).forEach { block(it, indent, quote + 1, out) }
             is BulletList -> children(node).forEach { if (it is ListItem) listItem(it, "•", indent, quote, out) }
             is OrderedList -> {
@@ -140,6 +149,14 @@ object MarkdownModel {
             else -> children(node).forEach { block(it, indent, quote, out) }
         }
     }
+
+    private fun altOf(image: Image): String = buildString {
+        fun walk(n: Node) {
+            if (n is Text) append(n.literal)
+            generateSequence(n.firstChild) { it.next }.forEach(::walk)
+        }
+        walk(image)
+    }.ifEmpty { image.title.orEmpty() }
 
     private fun listItem(item: ListItem, marker: String, indent: Int, quote: Int, out: MutableList<MdBlock>) {
         var checked: Boolean? = null

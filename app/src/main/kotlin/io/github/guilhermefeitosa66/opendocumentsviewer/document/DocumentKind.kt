@@ -12,6 +12,7 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     CSV(hasFormattedView = true, prose = false),
     TSV(hasFormattedView = true, prose = false),
     DOTENV(hasFormattedView = true, prose = false),
+    HTML(hasFormattedView = true, prose = true),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -36,6 +37,7 @@ object DocumentTypes {
         if (ext in jsonExt || lower == ".babelrc" || lower == ".eslintrc" || lower == "composer.lock") {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
+        if (ext == "html" || ext == "htm" || ext == "xhtml" || ext == "shtml") return DocumentType(DocumentKind.HTML, Languages.HTML, "HTML")
         if (ext == "csv") return DocumentType(DocumentKind.CSV, null, "CSV")
         if (ext == "tsv" || ext == "tab") return DocumentType(DocumentKind.TSV, null, "TSV")
 
@@ -49,7 +51,7 @@ object DocumentTypes {
             "text/csv", "text/comma-separated-values" -> DocumentType(DocumentKind.CSV, null, "CSV")
             "text/tab-separated-values" -> DocumentType(DocumentKind.TSV, null, "TSV")
             "text/xml", "application/xml" -> DocumentType(DocumentKind.CODE, Languages.XML, "XML")
-            "text/html" -> DocumentType(DocumentKind.CODE, Languages.HTML, "HTML")
+            "text/html", "application/xhtml+xml" -> DocumentType(DocumentKind.HTML, Languages.HTML, "HTML")
             "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml" -> DocumentType(DocumentKind.CODE, Languages.YAML, "YAML")
             "application/x-sh", "text/x-sh", "application/x-shellscript", "text/x-shellscript" -> DocumentType(DocumentKind.CODE, Languages.SHELL, "SH")
             else -> DocumentType(DocumentKind.PLAIN, null, if (ext.isNotEmpty() && ext.length <= 4) ext.uppercase() else "TXT")

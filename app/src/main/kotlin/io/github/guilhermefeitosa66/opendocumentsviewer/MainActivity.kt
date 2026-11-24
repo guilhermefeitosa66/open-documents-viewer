@@ -229,12 +229,16 @@ class MainActivity : ComponentActivity() {
             )
         } else {
             val base = 16f
+            androidx.compose.runtime.CompositionLocalProvider(
+                io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.LocalImageLoader provides { src, w -> vm.loadImage(session, src, w) },
+            ) {
             ViewerScreen(
                 session = session,
                 proseSize = (base * vm.proseScale).sp,
                 codeSize = (13.5f * vm.codeScale).sp,
                 actions = remember(session) { actions(session) { switcher = true } },
             )
+            }
             BackHandler {
                 when {
                     session.searchOpen -> session.closeSearch()
@@ -346,7 +350,9 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.material3.VerticalDivider(color = colors.line)
             }
             Box(Modifier.weight(1f).fillMaxHeight()) {
-                if (session != null) {
+                if (session != null) androidx.compose.runtime.CompositionLocalProvider(
+                    io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.LocalImageLoader provides { src, w -> vm.loadImage(session, src, w) },
+                ) {
                     ViewerScreen(
                         session = session,
                         proseSize = (16f * vm.proseScale).sp,
@@ -359,7 +365,8 @@ class MainActivity : ComponentActivity() {
                             onCloseSplit = vm::closeSplit,
                         ),
                     )
-                } else {
+                }
+                if (session == null) {
                     Box(Modifier.fillMaxSize().background(colors.paper), contentAlignment = Alignment.Center) {
                         Text(stringResource(R.string.wide_empty), color = colors.ink2, fontSize = 16.sp)
                     }

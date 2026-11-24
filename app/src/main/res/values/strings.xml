@@ -22,7 +22,7 @@
     <string name="source_code">Source code</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_body">A fast, offline, read-only viewer for text documents. No ads, no account, no network. Part of libre-apps.</string>
-    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), jsoup (MIT), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
     <string name="back">Back</string>
     <string name="switch_document">Switch document</string>
     <string name="all_recents">All recent files</string>
@@ -129,4 +129,6 @@
     <string name="keep_screen_on_desc">While a document is open.</string>
     <string name="limit_width">Comfortable line width</string>
     <string name="limit_width_desc">On large screens, text lines stay at a readable length.</string>
+    <string name="image_remote">Online image: not loaded (the app works offline).</string>
+    <string name="image_unavailable">Image not available. Open the folder that holds it to see local images.</string>
 </resources>

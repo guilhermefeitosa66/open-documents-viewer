@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 108
-        versionName = "0.9.0"
+        versionCode = 109
+        versionName = "0.10.0"
     }
 
     buildFeatures {
@@ -60,6 +60,9 @@ dependencies {
     implementation("org.commonmark:commonmark-ext-gfm-strikethrough:$commonmark")
     implementation("org.commonmark:commonmark-ext-task-list-items:$commonmark")
     implementation("org.commonmark:commonmark-ext-autolink:$commonmark")
+
+    // HTML parser for the formatted view of .html files (MIT). Only touched when an HTML file opens.
+    implementation("org.jsoup:jsoup:1.24.1")
 
     testImplementation("junit:junit:4.13.2")
     // android.jar's org.json is a stub on the JVM.

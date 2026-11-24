@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.10.0] - 2026-11-24
+
+### Added
+- HTML (`.html`, `.htm`, `.xhtml`): a native, safe formatted view (no JavaScript, no network) rendered like markdown:
+  headings, paragraphs, lists (with task boxes and nesting), quotes, code blocks with highlighting, tables, rules, links
+  and anchors (`id`s); the source view keeps the highlighted HTML. Scripts, styles, frames and forms are dropped.
+- Images in markdown and HTML: embedded `data:` images and files next to the document (when its folder is open) are
+  shown; online images are never fetched and show a placeholder with their description.
+
+### Dependencies
+- jsoup 1.24.1 (MIT), used only when an HTML file is opened.
+
 ## [0.9.0] - 2026-11-24
 
 ### Added

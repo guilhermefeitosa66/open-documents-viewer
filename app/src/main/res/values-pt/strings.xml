@@ -21,7 +21,7 @@
     <string name="source_code">Código-fonte</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_body">Um visualizador de documentos de texto rápido, offline e só de leitura. Sem anúncio, sem conta, sem rede. Parte da libre-apps.</string>
-    <string name="about_licenses">Licença Apache 2.0. Usa commonmark-java (BSD-2-Clause), JetBrains Mono (SIL OFL 1.1), Jetpack Compose e AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Licença Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), JetBrains Mono (SIL OFL 1.1), Jetpack Compose e AndroidX (Apache 2.0).</string>
     <string name="back">Voltar</string>
     <string name="switch_document">Trocar de documento</string>
     <string name="all_recents">Todos os recentes</string>
@@ -128,4 +128,6 @@
     <string name="keep_screen_on_desc">Enquanto um documento estiver aberto.</string>
     <string name="limit_width">Largura de linha confortável</string>
     <string name="limit_width_desc">Em telas grandes, as linhas de texto ficam num comprimento fácil de ler.</string>
+    <string name="image_remote">Imagem da internet: não carregada (o app funciona offline).</string>
+    <string name="image_unavailable">Imagem indisponível. Abra a pasta que a contém para ver imagens locais.</string>
 </resources>

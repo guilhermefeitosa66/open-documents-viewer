@@ -25,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -193,6 +194,7 @@ private fun Block(
         is MdBlock.Table -> TableBlockView(block, colors, body, codeSize, linkListener)
         is MdBlock.Rule -> HorizontalDivider(Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = colors.rule)
         is MdBlock.Html -> Text(block.raw, fontFamily = MonoFamily, fontSize = codeSize, color = colors.ink2)
+        is MdBlock.Image -> ImageBlockView(block, colors)
     }
 }
 
@@ -313,6 +315,33 @@ private fun TableRowView(
                     else -> TextAlign.Start
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun ImageBlockView(block: MdBlock.Image, colors: OdvColors) {
+    val loader = LocalImageLoader.current
+    val widthPx = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp.roundToPx() }
+    val result by androidx.compose.runtime.produceState<ImageResult?>(null, block.src) { value = loader(block.src, widthPx) }
+    when (val r = result) {
+        is ImageResult.Loaded -> androidx.compose.foundation.Image(
+            r.bitmap, contentDescription = block.alt.ifEmpty { null },
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+            contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+        )
+        else -> {
+            val label = when (r) {
+                ImageResult.Remote -> androidx.compose.ui.res.stringResource(io.github.guilhermefeitosa66.opendocumentsviewer.R.string.image_remote)
+                null -> "…"
+                else -> androidx.compose.ui.res.stringResource(io.github.guilhermefeitosa66.opendocumentsviewer.R.string.image_unavailable)
+            }
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(colors.paper2).padding(horizontal = 14.dp, vertical = 10.dp),
+            ) {
+                if (block.alt.isNotBlank()) Text(block.alt, color = colors.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(label, color = colors.ink2, fontSize = 12.sp)
+            }
         }
     }
 }

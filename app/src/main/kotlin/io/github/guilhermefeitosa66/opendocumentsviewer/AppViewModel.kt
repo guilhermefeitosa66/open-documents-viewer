@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import io.github.guilhermefeitosa66.opendocumentsviewer.folder.FolderSession
+import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ImageResult
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -377,6 +378,32 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 target.isDirectory -> message = R.string.link_is_folder
                 else -> openUri(f.documentUri(target), target.mimeType, external = false, folderDocumentId = target.documentId, anchor = fragment)
             }
+        }
+    }
+
+    /**
+     * Loads an image referenced by [s]'s document: embedded (data:) or a file next to it inside the
+     * opened folder. Never from the network.
+     */
+    suspend fun loadImage(s: DocumentSession, src: String, maxWidth: Int): ImageResult {
+        val dec = io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ImageDecoding
+        if (src.isBlank()) return ImageResult.Unavailable
+        if (dec.isRemote(src)) return ImageResult.Remote
+        return withContext(Dispatchers.IO) {
+            val bytes = dec.dataUriBytes(src)
+            val bmp = if (bytes != null) {
+                dec.decode("data:" + src.hashCode() + ":" + bytes.size, maxWidth) { bytes.inputStream() }
+            } else {
+                val f = folder
+                val docId = s.folderDocumentId
+                val (path, _) = io.github.guilhermefeitosa66.opendocumentsviewer.folder.RelativePath.split(src)
+                val target = if (f != null && docId != null && io.github.guilhermefeitosa66.opendocumentsviewer.folder.RelativePath.isRelative(src)) f.resolve(docId, path) else null
+                target?.takeIf { !it.isDirectory }?.let { t ->
+                    val uri = f!!.documentUri(t)
+                    dec.decode(uri.toString(), maxWidth) { context.contentResolver.openInputStream(uri) }
+                }
+            }
+            if (bmp != null) ImageResult.Loaded(bmp) else ImageResult.Unavailable
         }
     }
 
