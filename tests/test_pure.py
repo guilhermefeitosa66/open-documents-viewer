@@ -798,3 +798,24 @@ def test_docx_errors(tmp_path):
     bad.write_bytes(b"not a zip")
     with pytest.raises(docx.DocxError):
         docx.build(None, str(bad))
+
+
+def test_odt(tmp_path):
+    from odv.formats import odt
+    from office import make_odt
+
+    doc = odt.build(None, str(make_odt(tmp_path / "r.odt")))
+    text = _flat(doc)
+    assert text.startswith("Company header\n")
+    assert "Plain bold, red italic and a link.[1]\n" in text
+    assert "Centered  line\n" in text and "hidden text" not in text
+    assert "1. First step\n2. Second step\n• A bullet\n" in text
+    assert "[1] A footnote." in text and text.rstrip().endswith("Page footer")
+    assert [(h.level, h.title) for h in doc.outline] == [(1, "Report Title"), (2, "Introduction"), (2, "Details")]
+    styles = {op[1]: op[2] for op in doc.ops if op[0] == "text"}
+    assert "bold" in styles["bold"] and {"italic", "fg-B5502B"} <= set(styles["red italic"])
+    table = next(op[1] for op in doc.ops if op[0] == "table")
+    assert table.header == ["Name", "Size"] and table.rows == [["merged", ""]]
+    assert [op[0] for op in doc.ops].count("image") == 1
+    assert doc.links[0].href == "https://libre-apps.org"
+    assert len(text) == doc.length

@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.22.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: OpenDocument text (.odt), read-only, with the same scope as Word documents: headings and outline, inline styles, alignment, lists, tables, images, links, header and footer, notes and page breaks.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.21.0" date="2026-11-24">
       <description>
         <ul>

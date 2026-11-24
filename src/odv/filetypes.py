@@ -6,7 +6,7 @@ MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
 # Word-processing documents read from their package (odv.formats.office).
-DOCUMENT_EXT = {".docx"}
+DOCUMENT_EXT = {".docx", ".odt"}
 # Structured data with a tree view: extension -> (parser kind, source language).
 TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
             ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),

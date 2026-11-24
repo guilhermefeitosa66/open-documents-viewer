@@ -9,4 +9,8 @@ def build(text, path: str = ""):
         from odv.formats import docx
 
         return docx.build(text, path)
+    if ext in (".odt", ".ott", ".fodt"):
+        from odv.formats import odt
+
+        return odt.build(text, path)
     raise ValueError(f"unsupported document: {ext}")

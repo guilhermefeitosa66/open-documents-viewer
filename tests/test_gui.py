@@ -994,3 +994,24 @@ def test_docx_file(tmp_path):
     assert r["state"] == ("formatted", False, False)
     assert "Plain bold, red italic and a link." in r["text"]
     assert r["outline"] == ["Report Title", "Introduction", "Details"] and r["align"]
+
+
+def test_odt_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_odt
+
+    path = str(make_odt(tmp_path / "report.odt"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["mode"] = doc.mode
+        r["outline"] = [e.title for e in doc.outline()]
+        r["text"] = buffer_text(doc)
+
+    r = run_app(scenario)
+    assert r["mode"] == "formatted" and r["outline"] == ["Report Title", "Introduction", "Details"]
+    assert "1. First step" in r["text"]

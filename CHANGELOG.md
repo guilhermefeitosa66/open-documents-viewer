@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.22.0 (2026-11-24)
+
+- Added: OpenDocument text (.odt), read-only, with the same scope as Word documents: headings and outline, inline styles, alignment, lists, tables, images, links, header and footer, notes and page breaks.
+
 ## 0.21.0 (2026-11-24)
 
 - Added: Word documents (.docx), read-only and fluid: headings and outline, bold, italic, underline, strike, colours, sizes, alignment, numbered and bulleted lists, tables, images, links, header and footer, footnotes and page breaks.
