@@ -42,6 +42,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     PPTX(hasFormattedView = true, prose = false),
     /** OpenDocument presentations (.odp/.otp/.fodp): same slides as PPTX. */
     ODP(hasFormattedView = true, prose = false),
+    /** PowerPoint 97–2003 (.ppt/.pps/.pot): the slides' text, placed. */
+    PPT(hasFormattedView = true, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -76,6 +78,7 @@ object DocumentTypes {
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
+        if (ext == "ppt" || ext == "pps" || ext == "pot") return DocumentType(DocumentKind.PPT, null, "PPT")
         if (ext in setOf("odp", "otp", "fodp")) return DocumentType(DocumentKind.ODP, null, "ODP")
         if (ext in setOf("pptx", "ppsx", "potx", "pptm", "ppsm", "potm")) return DocumentType(DocumentKind.PPTX, null, "PPTX")
         if (ext == "xls" || ext == "xlt") return DocumentType(DocumentKind.XLS, null, "XLS")
@@ -125,6 +128,7 @@ object DocumentTypes {
         if (m == "application/vnd.oasis.opendocument.presentation" || m == "application/vnd.oasis.opendocument.presentation-template" ||
             m == "application/vnd.oasis.opendocument.presentation-flat-xml"
         ) return DocumentType(DocumentKind.ODP, null, "ODP")
+        if (m == "application/vnd.ms-powerpoint") return DocumentType(DocumentKind.PPT, null, "PPT")
         if (m == "application/vnd.ms-excel") return DocumentType(DocumentKind.XLS, null, "XLS")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")

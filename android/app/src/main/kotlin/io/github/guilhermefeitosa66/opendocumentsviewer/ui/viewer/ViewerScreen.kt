@@ -263,9 +263,15 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
 
         // Notices last, so they sit above the document.
         ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
-        if (session.mode == ViewMode.FORMATTED && (session.formatted as? Formatted.Markdown)?.partial == true) {
+        if (session.mode == ViewMode.FORMATTED && !session.presenting &&
+            ((session.formatted as? Formatted.Markdown)?.partial == true || (session.formatted as? Formatted.Slides)?.pres?.partial == true)
+        ) {
             PartialNotice(
-                if (session.kind == DocumentKind.DOC) R.string.partial_text_only else R.string.partial_render,
+                when (session.kind) {
+                    DocumentKind.DOC -> R.string.partial_text_only
+                    DocumentKind.PPT -> R.string.partial_slides_text
+                    else -> R.string.partial_render
+                },
                 Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp),
             )
         }
@@ -413,7 +419,7 @@ private fun subtitle(session: DocumentSession): String {
         else if (doc.type.kind == DocumentKind.DOCX || doc.type.kind == DocumentKind.DOC) "Word"
         else if (doc.type.kind == DocumentKind.ODT || doc.type.kind == DocumentKind.ODS || doc.type.kind == DocumentKind.ODP) "OpenDocument"
         else if (doc.type.kind == DocumentKind.XLSX || doc.type.kind == DocumentKind.XLS) "Excel"
-        else if (doc.type.kind == DocumentKind.PPTX) "PowerPoint"
+        else if (doc.type.kind == DocumentKind.PPTX || doc.type.kind == DocumentKind.PPT) "PowerPoint"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -428,7 +434,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS && doc.type.kind != DocumentKind.PPTX && doc.type.kind != DocumentKind.ODP) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS && doc.type.kind != DocumentKind.PPTX && doc.type.kind != DocumentKind.ODP && doc.type.kind != DocumentKind.PPT) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }

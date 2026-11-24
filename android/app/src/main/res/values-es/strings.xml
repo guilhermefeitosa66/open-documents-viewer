@@ -176,4 +176,5 @@
     <string name="slide_grid">Diapositivas</string>
     <string name="slide_present">Presentar</string>
     <string name="slide_notes">Notas</string>
+    <string name="partial_slides_text">Texto de una presentación antigua de PowerPoint: no se muestran las imágenes ni el formato.</string>
 </resources>

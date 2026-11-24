@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.29.0] - 2026-11-24
+
+### Added
+- PowerPoint 97–2003 presentations (.ppt, .pps, .pot), best effort with no library: each slide's text where the file
+  places it (titles centered, body text with bullets), speaker notes, hidden slides marked, in the same slide view
+  with presentation mode. Pictures and formatting are not read; a short notice says so. Password-protected files
+  get a clear message.
+
 ## [0.28.0] - 2026-11-24
 
 ### Added

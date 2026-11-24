@@ -177,4 +177,5 @@
     <string name="slide_grid">Slides</string>
     <string name="slide_present">Present</string>
     <string name="slide_notes">Notes</string>
+    <string name="partial_slides_text">Text from an older PowerPoint presentation: pictures and formatting are not shown.</string>
 </resources>
