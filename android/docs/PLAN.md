@@ -151,3 +151,28 @@ fold (to design with the desktop agent so both apps share it).
 4. Bundle JetBrains Mono (~+250 KB, same look as the desktop) or use the system monospace? Proposal:
    bundle, two weights.
 5. Hide `.env` values by default? Proposal: yes.
+
+## 9. After v0.1: every document format (November 2026)
+
+Stages A to D of the task list took the viewer from text to "any document", still read-only and offline.
+
+- **Files and navigation (A):** share and save a copy, folders through SAF trees, relative links, light tabs,
+  two panes and split view from 840 dp, outline, reload on change, full screen.
+- **More text formats (B):** native safe HTML, images and SVG, RTF, Jupyter, 60+ languages, JSON/YAML/XML trees,
+  sortable CSV, encodings picked by hand, EPUB and FB2, `.eml`/`.vcf`/`.ics`.
+- **Office (C):** own readers instead of Apache POI (too heavy and awkward on Android): WordprocessingML and ODF
+  text into the markdown block model, SpreadsheetML/ODS/BIFF8 into a shared `Workbook` model drawn by a virtualized
+  grid, PresentationML/ODP/PPT into a shared slide model drawn on a canvas. An own OLE2 (CFB) reader serves the
+  97–2003 formats; the Word and PowerPoint ones give text only. Encrypted OOXML is decrypted in memory (ECMA-376
+  agile and standard) with the platform's crypto. Number formats, the ODS/PPTX/ODP/DOC/PPT readers are ports of the
+  Linux app's code.
+- **PDF (D):** PDFium through a read-only subset of Open PDF Viewer's JNI layer (same author), built in the app;
+  the binaries are fetched pinned by `tools/fetch-pdfium.sh`. Open PDF Viewer is offered for PDF tools.
+
+Rules kept: every format loads on demand (nothing new in the cold start path; PDFium is loaded with the first
+PDF), parsing runs off the main thread, big sheets and documents are virtualized, archives are kept as bytes and
+pictures are read from them when shown (`zip:` sources), nothing is copied into app storage, and a partial render
+says so with a short notice instead of an error screen.
+
+Cost: the release APK went from 1.8 MB (v0.1) to 21.6 MB, almost all of it PDFium for three ABIs. Splitting the
+APK per ABI (or an App Bundle in the store) brings each install back to about 8 MB.

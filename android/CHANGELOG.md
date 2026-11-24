@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.32.2] - 2026-11-24
+
+### Changed
+- README: a table of every supported format family and how it is shown; the own readers in the license list.
+- docs/PLAN.md: what stages A to D added, the rules they kept and the APK size cost.
+
 ## [0.32.1] - 2026-11-24
 
 ### Fixed

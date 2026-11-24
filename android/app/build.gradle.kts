@@ -18,8 +18,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 132
-        versionName = "0.32.1"
+        versionCode = 133
+        versionName = "0.32.2"
         externalNativeBuild {
             cmake { arguments += listOf("-DANDROID_STL=c++_static") }
         }
