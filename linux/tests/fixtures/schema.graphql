@@ -1,0 +1,4 @@
+type Query {
+  # all books
+  books(first: Int = 10): [Book!]! @cached
+}

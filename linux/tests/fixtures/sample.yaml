@@ -1,0 +1,7 @@
+name: odv
+version: 0.1
+items:
+  - id: 1
+    tags: [a, b]
+  - id: 2
+    note: "find me here"

@@ -1,0 +1,14 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Ana Souza
+ORG:libre-apps
+TEL;TYPE=cell:+55 86 99999-0000
+EMAIL;TYPE=work:ana@example.org
+ADR;TYPE=home:;;Rua A\, 10;Teresina;PI;64000-000;Brasil
+NOTE:Primeira linha\nsegunda linha
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Lima;Bruno;;;
+TEL:123
+END:VCARD

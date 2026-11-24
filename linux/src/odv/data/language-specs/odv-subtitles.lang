@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Subtitles: SubRip (.srt) and WebVTT (.vtt). -->
+<language id="odv-subtitles" name="Subtitles" version="2.0" _section="Other">
+  <metadata>
+    <property name="globs">*.srt;*.vtt</property>
+  </metadata>
+  <styles>
+    <style id="header" name="Header" map-to="def:keyword"/>
+    <style id="index" name="Cue number" map-to="def:number"/>
+    <style id="time" name="Timing" map-to="def:special-constant"/>
+    <style id="arrow" name="Arrow" map-to="def:operator"/>
+    <style id="tag" name="Tag" map-to="def:preprocessor"/>
+    <style id="note" name="Note" map-to="def:comment"/>
+  </styles>
+  <definitions>
+    <context id="odv-subtitles">
+      <include>
+        <context id="header" style-ref="header">
+          <match>^WEBVTT.*$</match>
+        </context>
+        <context id="note" style-ref="note" end-at-line-end="true">
+          <start>^NOTE\b</start>
+        </context>
+        <context id="index" style-ref="index">
+          <match>^\d+\s*$</match>
+        </context>
+        <context id="time" style-ref="time">
+          <match extended="true">(\d{1,2}:)?\d{2}:\d{2}[,.]\d{3}</match>
+        </context>
+        <context id="arrow" style-ref="arrow">
+          <match>--&gt;</match>
+        </context>
+        <context id="tag" style-ref="tag">
+          <match>&lt;/?[a-zA-Z][^&gt;]*&gt;|\{\\[^}]*\}</match>
+        </context>
+      </include>
+    </context>
+  </definitions>
+</language>

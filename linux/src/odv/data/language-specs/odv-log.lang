@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Log files: severity levels coloured, timestamps, quoted strings, numbers. -->
+<language id="odv-log" name="Log" version="2.0" _section="Other">
+  <metadata>
+    <property name="globs">*.log;*.log.[0-9]</property>
+  </metadata>
+  <styles>
+    <style id="error" name="Error" map-to="def:error"/>
+    <style id="warning" name="Warning" map-to="def:warning"/>
+    <style id="info" name="Info" map-to="def:note"/>
+    <style id="debug" name="Debug" map-to="def:comment"/>
+    <style id="time" name="Timestamp" map-to="def:special-constant"/>
+    <style id="string" name="String" map-to="def:string"/>
+    <style id="number" name="Number" map-to="def:number"/>
+  </styles>
+  <definitions>
+    <context id="odv-log">
+      <include>
+        <context id="error" style-ref="error">
+          <match extended="true">\b(FATAL|CRITICAL|CRIT|EMERG(ENCY)?|ALERT|ERROR|ERR|SEVERE|PANIC|FAIL(ED|URE)?|Traceback|Exception)\b</match>
+        </context>
+        <context id="warning" style-ref="warning">
+          <match extended="true">\b(WARN(ING)?|DEPRECATED)\b</match>
+        </context>
+        <context id="info" style-ref="info">
+          <match extended="true">\b(INFO|NOTICE|OK|SUCCESS)\b</match>
+        </context>
+        <context id="debug" style-ref="debug">
+          <match extended="true">\b(DEBUG|TRACE|VERBOSE)\b</match>
+        </context>
+        <context id="time" style-ref="time">
+          <match extended="true">\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}([.,]\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?|\b\d{2}:\d{2}:\d{2}([.,]\d+)?\b</match>
+        </context>
+        <context id="string" style-ref="string">
+          <match>"[^"\n]*"</match>
+        </context>
+        <context id="number" style-ref="number">
+          <match extended="true">\b\d+(\.\d+)?\b</match>
+        </context>
+      </include>
+    </context>
+  </definitions>
+</language>

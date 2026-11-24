@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+/build/
+/dist/
+/AppDir/
+/appimage-builder-cache/
+.bundle.yml
+/AppDir.squashfs
+*.AppImage
+.venv/
+.pytest_cache/
+/appimage-build/
+/BRIEFING.md

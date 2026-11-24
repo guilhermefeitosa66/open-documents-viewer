@@ -1,0 +1,24 @@
+[project]
+name = "open-documents-viewer"
+dynamic = ["version"]
+description = "A fast, read-only viewer for Markdown, text, code and data files"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+# PyGObject, GTK 4, libadwaita and GtkSourceView 5 come from the distribution.
+dependencies = ["markdown-it-py>=3"]
+
+[project.scripts]
+open-documents-viewer = "odv.__main__:run"
+
+[tool.setuptools.dynamic]
+version = { attr = "odv.__version__" }
+
+[tool.setuptools.package-data]
+odv = ["data/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
