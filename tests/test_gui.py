@@ -1082,3 +1082,26 @@ def iter_children(widget):
     while child is not None:
         yield child
         child = child.get_next_sibling()
+
+
+def test_ods_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_ods
+
+    path = str(make_ods(tmp_path / "sales.ods"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        view = win.active_pane.current_doc().views["formatted"]
+        r["tabs"] = [b.get_label() for b in iter_children(view.tabs)]
+        r["columns"] = [c.get_title() for c in view.columnview.get_columns()]
+        r["rows"] = list(view.model.rows)
+        view.set_current(3, 1)
+        r["bar"] = view.value_label.get_label()
+
+    r = run_app(scenario)
+    assert r["tabs"] == ["Sales"] and r["columns"] == ["", "A", "B", "C"] and r["rows"] == [0, 1, 3, 4]
+    assert r["bar"] == "=SUM(B2:B2)   →   R$ 1.234,50"

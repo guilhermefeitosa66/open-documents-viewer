@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.25.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: OpenDocument spreadsheets (.ods), read-only, in the same sheet view: the text exactly as the file shows it, formulas, styles, widths, merges, hidden rows, columns and sheets.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.24.0" date="2026-11-24">
       <description>
         <ul>

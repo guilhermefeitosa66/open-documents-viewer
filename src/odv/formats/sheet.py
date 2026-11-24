@@ -33,6 +33,7 @@ class Cell:
     formula: str | None = None
     style: int = 0
     error: str | None = None
+    text: str | None = None  # the shown text, when the file stores it (ODS)
 
 
 @dataclass
@@ -525,5 +526,7 @@ class XlsxReader:
 def display(workbook: Workbook, cell: Cell) -> str:
     if cell.error:
         return cell.error
+    if cell.text is not None:
+        return cell.text
     style = workbook.styles[cell.style] if cell.style < len(workbook.styles) else Style()
     return format_value(cell.value, style.fmt, workbook.date1904)

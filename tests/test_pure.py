@@ -881,3 +881,25 @@ def test_xlsx_reader(tmp_path):
     style = wb.styles[sh.rows[0][0].style]
     assert style.bold and style.color == "B5502B" and style.fill == "F5D7A1"
     reader.close()
+
+
+def test_ods_reader(tmp_path):
+    from office import make_ods
+    from odv.formats.ods import OdsReader
+
+    reader = OdsReader(str(make_ods(tmp_path / "s.ods")))
+    wb = reader.workbook
+    assert [(s.name, s.hidden) for s in wb.sheets] == [("Sales", False), ("Hidden", True)]
+    sh = reader.read_sheet(0)
+    show = lambda r, c: sheetfmt.display(wb, sh.rows[r][c])  # noqa: E731
+    assert sh.complete and sh.max_row == 5 and sh.max_col == 4  # the padding rows are cut
+    assert [show(0, c) for c in range(3)] == ["Item", "Price", "Date"]
+    assert show(1, 1) == "R$ 1.234,50" and sh.rows[1][1].value == 1234.5
+    assert sh.rows[3][1].formula == "=SUM(B2:B2)" and show(3, 2) == "VERDADEIRO"
+    assert sh.rows[4][0].error == "#DIV/0!"
+    assert sh.hidden_rows == {2} and sh.hidden_cols == {3} and sh.merges == [(4, 1, 4, 2)]
+    assert round(sh.col_widths[0]) == 20
+    style = wb.styles[sh.rows[0][0].style]
+    assert style.bold and style.color == "B5502B" and style.fill == "F5D7A1"
+    assert reader.read_sheet(1).rows[0][0].value == 7.0
+    reader.close()

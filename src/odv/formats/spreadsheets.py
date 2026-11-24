@@ -10,4 +10,8 @@ def open_workbook(path: str):
         from odv.formats.sheet import XlsxReader
 
         return XlsxReader(path)
+    if ext in (".ods", ".ots", ".fods"):
+        from odv.formats.ods import OdsReader
+
+        return OdsReader(path)
     raise ValueError(f"unsupported spreadsheet: {ext}")

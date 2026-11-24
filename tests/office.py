@@ -174,3 +174,48 @@ def make_xlsx(path, extra_rows=0):
         z.writestr("xl/worksheets/sheet1.xml", sheet1)
         z.writestr("xl/worksheets/sheet2.xml", sheet2)
     return path
+
+
+def make_ods(path):
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content {ODF_NS} xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0">
+<office:automatic-styles>
+  <style:style style:name="co1" style:family="table-column"><style:table-column-properties style:column-width="4cm"/></style:style>
+  <style:style style:name="ta2" style:family="table"><style:table-properties table:display="false"/></style:style>
+  <style:style style:name="ce1" style:family="table-cell"><style:table-cell-properties fo:background-color="#f5d7a1"/>
+    <style:text-properties fo:font-weight="bold" fo:color="#b5502b"/></style:style>
+</office:automatic-styles>
+<office:body><office:spreadsheet>
+<table:table table:name="Sales">
+  <table:table-column table:style-name="co1"/><table:table-column table:number-columns-repeated="2"/>
+  <table:table-column table:visibility="collapse"/>
+  <table:table-row>
+    <table:table-cell table:style-name="ce1" office:value-type="string"><text:p>Item</text:p></table:table-cell>
+    <table:table-cell table:style-name="ce1" office:value-type="string"><text:p>Price</text:p></table:table-cell>
+    <table:table-cell table:style-name="ce1" office:value-type="string"><text:p>Date</text:p></table:table-cell>
+    <table:table-cell office:value-type="string"><text:p>secret col</text:p></table:table-cell>
+  </table:table-row>
+  <table:table-row>
+    <table:table-cell office:value-type="string"><text:p>Rich</text:p></table:table-cell>
+    <table:table-cell office:value-type="currency" office:value="1234.5"><text:p>R$ 1.234,50</text:p></table:table-cell>
+    <table:table-cell office:value-type="date" office:date-value="2023-03-15"><text:p>15/03/2023</text:p></table:table-cell>
+  </table:table-row>
+  <table:table-row table:visibility="collapse"><table:table-cell office:value-type="string"><text:p>hidden row</text:p></table:table-cell></table:table-row>
+  <table:table-row>
+    <table:table-cell office:value-type="string"><text:p>Total</text:p></table:table-cell>
+    <table:table-cell table:formula="of:=SUM([.B2:.B2])" office:value-type="currency" office:value="1234.5"><text:p>R$ 1.234,50</text:p></table:table-cell>
+    <table:table-cell office:value-type="boolean" office:boolean-value="true"><text:p>VERDADEIRO</text:p></table:table-cell>
+  </table:table-row>
+  <table:table-row>
+    <table:table-cell table:formula="of:=1/0" office:value-type="string"><text:p>#DIV/0!</text:p></table:table-cell>
+    <table:table-cell table:number-columns-spanned="2" office:value-type="string"><text:p>merged here</text:p></table:table-cell>
+    <table:covered-table-cell/>
+  </table:table-row>
+  <table:table-row table:number-rows-repeated="1048570"><table:table-cell table:number-columns-repeated="1024"/></table:table-row>
+</table:table>
+<table:table table:name="Hidden" table:style-name="ta2"><table:table-row><table:table-cell office:value-type="float" office:value="7"><text:p>7</text:p></table:table-cell></table:table-row></table:table>
+</office:spreadsheet></office:body></office:document-content>"""
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("mimetype", "application/vnd.oasis.opendocument.spreadsheet")
+        z.writestr("content.xml", content)
+    return path

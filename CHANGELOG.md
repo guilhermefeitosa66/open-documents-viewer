@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.25.0 (2026-11-24)
+
+- Added: OpenDocument spreadsheets (.ods), read-only, in the same sheet view: the text exactly as the file shows it, formulas, styles, widths, merges, hidden rows, columns and sheets.
+
 ## 0.24.0 (2026-11-24)
 
 - Added: Excel workbooks (.xlsx, .xlsm), read-only: sheet tabs, a grid with the file's number, date and currency formats, bold/italic/colours/fills, column widths, merged cells, hidden rows, columns and sheets respected; a bar shows the selected cell's value and formula; find in cells; copy rows as TSV. Formulas are shown, never recalculated, and macros never run.
