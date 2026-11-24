@@ -631,3 +631,25 @@ def test_xml_entity_bomb_is_refused():
             + ']><l>&i;</l>')
     with pytest.raises(treedata.ParseError):
         treedata.parse("xml", bomb)
+
+
+def test_csv_sort_order(tmp_path):
+    p = tmp_path / "s.csv"
+    p.write_text("name,qty\nbanana,10\nApple,2\ncherry,\n,7\napple pie,1000\n")
+    ix = CsvIndex(str(p))
+    ix.build()
+    assert list(ix.sort_order(0)) == [2, 5, 1, 3, 4]  # case-insensitive, the empty name last
+    assert list(ix.sort_order(1, numeric=True)) == [2, 4, 1, 5, 3]  # numbers, the empty qty last
+    assert list(ix.sort_order(1, descending=True, numeric=True)) == [5, 1, 4, 2, 3]
+    assert ix.sort_order(0, cancelled=lambda: True) is not None  # small files finish before checking
+    ix.close()
+
+
+def test_csv_encoding_detection(tmp_path):
+    p = tmp_path / "latin.csv"
+    p.write_bytes("cidade;estado\nSão Luís;MA\n".encode("cp1252"))
+    ix = CsvIndex(str(p))
+    ix.build()
+    assert ix.encoding == "cp1252" and ix.delimiter == ";"
+    assert ix.row(1) == ["São Luís", "MA"]
+    ix.close()

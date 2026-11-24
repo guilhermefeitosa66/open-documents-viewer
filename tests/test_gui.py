@@ -827,3 +827,33 @@ def test_data_trees():
     assert r["path"] == "$.items[1].note"
     assert r["xml_path"] == "/library/book[2]/title"
     assert r["broken"] == ("source", True, True)
+
+
+def test_table_sorting(tmp_path):
+    path = tmp_path / "sort.csv"
+    path.write_text("name,qty\nbanana,10\napple,2\ncherry,7\n")
+
+    def scenario(win, r):
+        from gi.repository import Gtk
+
+        win.open_path(str(path))
+        yield from settle(win)
+        table = win.active_pane.current_doc().views["formatted"]
+        cols = table.columnview.get_columns()
+        qty = cols.get_item(2)
+        table.columnview.sort_by_column(qty, Gtk.SortType.DESCENDING)
+        yield 0.6
+        r["desc"] = [table.model.row_at(i) for i in range(3)]
+        table.columnview.sort_by_column(cols.get_item(1), Gtk.SortType.ASCENDING)
+        yield 0.6
+        r["by_name"] = [table.index.row(table.model.row_at(i))[0] for i in range(3)]
+        table.selection.select_item(0, True)
+        r["copied_row"] = table.model.row_at(0)
+        table.columnview.sort_by_column(None, Gtk.SortType.ASCENDING)
+        yield 0.3
+        r["original"] = [table.model.row_at(i) for i in range(3)]
+
+    r = run_app(scenario)
+    assert r["desc"] == [1, 3, 2]
+    assert r["by_name"] == ["apple", "banana", "cherry"] and r["copied_row"] == 2
+    assert r["original"] == [1, 2, 3]

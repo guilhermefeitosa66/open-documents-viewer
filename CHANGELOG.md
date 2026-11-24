@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.16.0 (2026-11-24)
+
+- Added: click a column header to sort a CSV/TSV table (numbers as numbers, empty cells last), in a thread with a progress bar; the file is never changed and the # column keeps the original row numbers.
+- Added: CSV/TSV files in Windows-1252 are detected and read correctly.
+
 ## 0.15.0 (2026-11-24)
 
 - Added: JSON, NDJSON, YAML and XML open as a collapsible tree, with the selected node's path ($.a.b[2] or /a/b[3]) shown and copyable, and find inside the tree; invalid data falls back to the source at the error line.

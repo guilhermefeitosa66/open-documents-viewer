@@ -31,7 +31,19 @@ class CsvIndex:
         self._cache: OrderedDict[int, list[str]] = OrderedDict()
         head = bytes(self._mm[:65536])
         self._bom = 3 if head.startswith(b"\xef\xbb\xbf") else 0
-        self.dialect = self._dialect(head.decode("utf-8", "replace"), delimiter)
+        self.encoding = self._encoding(head)
+        self.dialect = self._dialect(head.decode(self.encoding, "replace"), delimiter)
+
+    @staticmethod
+    def _encoding(head: bytes) -> str:
+        """UTF-8 unless the sample is not valid UTF-8 (then Windows-1252)."""
+        try:
+            head.decode("utf-8")
+            return "utf-8"
+        except UnicodeDecodeError as e:
+            if e.reason == "unexpected end of data" and e.start >= len(head) - 3:
+                return "utf-8"  # the sample was cut inside a character
+            return "cp1252"
 
     @staticmethod
     def _dialect(sample: str, delimiter: str | None):
@@ -96,16 +108,58 @@ class CsvIndex:
             return cached
         if i + 1 >= len(self.offsets):
             return []
-        start = self.offsets[i] + (self._bom if i == 0 else 0)
-        text = self._mm[start:self.offsets[i + 1]].decode("utf-8", "replace").rstrip("\r\n")
-        try:
-            cells = next(csv.reader(io.StringIO(text), self.dialect))
-        except (StopIteration, csv.Error):
-            cells = [text]
+        cells = self._parse(i)
         self._cache[i] = cells
         if len(self._cache) > 4096:
             self._cache.popitem(last=False)
         return cells
+
+    def _parse(self, i: int) -> list[str]:
+        start = self.offsets[i] + (self._bom if i == 0 else 0)
+        text = self._mm[start:self.offsets[i + 1]].decode(self.encoding, "replace").rstrip("\r\n")
+        try:
+            return next(csv.reader(io.StringIO(text), self.dialect))
+        except (StopIteration, csv.Error):
+            return [text]
+
+    def sort_order(self, column: int, descending: bool = False, numeric: bool = False,
+                   cancelled=lambda: False, progress=None) -> array | None:
+        """Data row numbers (1..n) ordered by ``column``; the file is not
+        touched. Empty cells go last either way. None if cancelled."""
+        n = self.rows_indexed
+        keys = []
+        empty = []
+        # One streaming csv.reader over the file is far faster than parsing
+        # row by row; its rows line up with the index (both honour quotes).
+        with open(self.path, encoding=self.encoding, errors="replace", newline="") as f:
+            if self._bom:
+                f.read(1)
+            reader = csv.reader(f, self.dialect)
+            next(reader, None)  # the header
+            for i, cells in enumerate(reader, 1):
+                if i >= n:
+                    break
+                if i % 100000 == 0:
+                    if cancelled():
+                        return None
+                    if progress:
+                        progress(i / n)
+                value = cells[column].strip() if column < len(cells) else ""
+                if not value:
+                    empty.append(i)
+                    continue
+                if numeric:
+                    try:
+                        key = float(value.replace(",", "").replace("_", ""))
+                    except ValueError:
+                        key = float("inf")
+                else:
+                    key = value.casefold()
+                keys.append((key, i))
+        keys.sort(key=lambda kv: kv[0], reverse=descending)
+        order = array("Q", (i for _k, i in keys))
+        order.extend(empty)
+        return order
 
     def row_of_offset(self, offset: int) -> int:
         """The row containing byte ``offset`` (0 = the header)."""

@@ -464,6 +464,7 @@ class DocumentPage(Gtk.Box):
         view.connect("first-rows", lambda v: self._first_content())
         view.connect("progress", self._on_table_progress, big)
         view.connect("complete", self._on_table_complete)
+        view.connect("busy", self._on_table_busy)
         view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg, "dialog-warning-symbolic"))
         self._add_view("formatted", view)
 
@@ -477,6 +478,10 @@ class DocumentPage(Gtk.Box):
                     "already work.").format(size=human_size(view.index.size), percent=f"{fraction * 100:.0f}"))
                 self.banner.set_button_label(_("Stop loading"))
                 self.banner.set_revealed(True)
+
+    def _on_table_busy(self, _view, fraction):
+        self.progress.set_visible(fraction < 1.0)
+        self.progress.set_fraction(fraction)
 
     def _on_table_complete(self, view):
         self.progress.set_visible(False)
