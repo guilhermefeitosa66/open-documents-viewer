@@ -274,7 +274,8 @@ class DocumentLoader(private val context: Context) {
             return Result.success(
                 LoadedDocument(
                     uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
-                    text = wb.plainText(), charset = "", type = earlyType, truncated = false, location = meta.location,
+                    // The sheets as text are built only when the source view or "Copy all" asks (it costs more than reading).
+                    text = "", charset = "", type = earlyType, truncated = false, location = meta.location,
                     modified = stamp(uri).second, bytes = bytes, model = wb,
                 )
             )

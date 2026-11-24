@@ -113,8 +113,9 @@ class Workbook(val sheets: List<Sheet>, val styles: List<CellStyle>, val date190
             while (i < ref.length && (ref[i] == '$')) i++
             while (i < ref.length && ref[i].isLetter()) { col = col * 26 + (ref[i].uppercaseChar() - 'A' + 1); i++ }
             while (i < ref.length && ref[i] == '$') i++
-            val row = ref.substring(i).takeWhile { it.isDigit() }.toIntOrNull() ?: 1
-            return (row - 1) to (col - 1)
+            var row = 0
+            while (i < ref.length && ref[i].isDigit()) { row = row * 10 + (ref[i] - '0'); i++ }
+            return ((if (row == 0) 1 else row) - 1) to (col - 1)
         }
     }
 }

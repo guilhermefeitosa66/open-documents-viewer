@@ -144,9 +144,10 @@ object XlsxReader {
                     }
                     "c" -> {
                         val ref = x.attr("r")
-                        val col = ref?.let { Workbook.parseRef(it).second } ?: nextCol
+                        val parsed = ref?.let { Workbook.parseRef(it) }
+                        val col = parsed?.second ?: nextCol
                         nextCol = col + 1
-                        val r = ref?.let { Workbook.parseRef(it).first } ?: row
+                        val r = parsed?.first ?: row
                         val type = x.attr("t") ?: "n"
                         val style = x.attr("s")?.toIntOrNull() ?: 0
                         var v: String? = null

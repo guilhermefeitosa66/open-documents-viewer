@@ -18,8 +18,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 133
-        versionName = "0.32.2"
+        versionCode = 134
+        versionName = "0.32.3"
         externalNativeBuild {
             cmake { arguments += listOf("-DANDROID_STL=c++_static") }
         }
@@ -34,6 +34,16 @@ android {
         }
     }
     sourceSets["main"].jniLibs.srcDirs(pdfium.resolve("jniLibs"))
+
+    // One APK per ABI (PDFium makes up most of the size) plus a universal one.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
     sourceSets["main"].assets.srcDirs("src/main/assets", pdfium.resolve("assets"))
 
     buildFeatures {

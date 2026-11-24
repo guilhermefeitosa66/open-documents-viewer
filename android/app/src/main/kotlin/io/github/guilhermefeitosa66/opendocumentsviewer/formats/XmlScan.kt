@@ -27,11 +27,12 @@ class XmlScan(private val s: String) {
         return null
     }
 
-    /** Local name (no prefix). */
-    val local: String get() = name.substringAfter(':')
+    /** Local name (no prefix), computed once per tag. */
+    var local: String = ""
+        private set
 
     fun next(): Event {
-        pendingEnd?.let { name = it; pendingEnd = null; return Event.END }
+        pendingEnd?.let { name = it; local = localOf(it); pendingEnd = null; return Event.END }
         while (true) {
             if (pos >= s.length) return Event.EOF
             if (s[pos] != '<') {
@@ -53,6 +54,7 @@ class XmlScan(private val s: String) {
                 s.startsWith("</", pos) -> {
                     val end = s.indexOf('>', pos).let { if (it < 0) s.length else it }
                     name = s.substring(pos + 2, end).trim()
+                    local = localOf(name)
                     pos = end + 1
                     return Event.END
                 }
@@ -66,6 +68,7 @@ class XmlScan(private val s: String) {
         var i = pos + 1
         while (i < s.length && !s[i].isWhitespace() && s[i] != '>' && s[i] != '/') i++
         name = s.substring(pos + 1, i)
+        local = localOf(name)
         while (i < s.length) {
             while (i < s.length && s[i].isWhitespace()) i++
             if (i >= s.length) break
@@ -122,6 +125,8 @@ class XmlScan(private val s: String) {
     }
 
     companion object {
+        private fun localOf(n: String): String { val c = n.indexOf(':'); return if (c < 0) n else n.substring(c + 1) }
+
         fun decode(s: String, from: Int, to: Int): String {
             // Only look inside [from, to): searching the rest of a big document each time is quadratic.
             var amp = -1

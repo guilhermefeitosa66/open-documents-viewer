@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.lazySource
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LineIndex
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadFailure
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
@@ -251,7 +252,7 @@ class DocumentSession(
         onShown(doc)
         scope.launch {
             // A PDF's text is extracted only when the source view is asked for.
-            if (source == null && doc.type.kind != DocumentKind.PDF) source = withContext(Dispatchers.Default) { buildSource(doc) }.also(::finishStates)
+            if (source == null && !doc.type.kind.lazySource) source = withContext(Dispatchers.Default) { buildSource(doc) }.also(::finishStates)
             if (formatted == null && doc.type.kind.hasFormattedView) {
                 assignFormatted(withContext(Dispatchers.Default) { buildFormatted(doc) }
                     .also { f -> (f as? Formatted.Json)?.content?.let(::finishStates) })
@@ -274,8 +275,10 @@ class DocumentSession(
         }
     }
 
-    /** Text of every page, for the source view and "Copy all". */
-    suspend fun pdfText(): String? {
+    /** The source text of a lazy kind (PDF pages, workbook sheets), for "Copy all"; null for other kinds. */
+    suspend fun lazyText(): String? {
+        source?.let { if (doc?.type?.kind?.lazySource == true) return it.text.toString() }
+        (formatted as? Formatted.Sheet)?.let { f -> return withContext(Dispatchers.Default) { f.wb.plainText() } }
         val f = formatted as? Formatted.Pdf ?: return null
         return buildString {
             for (i in 0 until f.doc.pageCount) {
@@ -287,6 +290,10 @@ class DocumentSession(
     }
 
     private suspend fun buildSource(doc: LoadedDocument): TextContent {
+        (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { wb ->
+            val job = kotlinx.coroutines.currentCoroutineContext()
+            return TextContent.build(wb.plainText(), null) { job.isActive }
+        }
         if (doc.type.kind == DocumentKind.PDF) {
             val pdf = (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentLoader.PdfModel)?.doc
             val text = pdf?.let { p -> buildString { for (i in 0 until p.pageCount) { if (i > 0) append('\n'); append("— ").append(i + 1).append(" —\n").append(PdfText.clean(p.text(i)).trimEnd()).append('\n') } } }.orEmpty()
@@ -642,7 +649,7 @@ class DocumentSession(
     fun toggleMode() {
         preferFormatted = !preferFormatted
         val d = doc
-        if (!preferFormatted && source == null && d?.type?.kind == DocumentKind.PDF) {
+        if (!preferFormatted && source == null && d != null && d.type.kind.lazySource) {
             scope.launch { source = withContext(Dispatchers.Default) { buildSource(d) }.also(::finishStates) }
         }
         if (searchOpen) runSearch()

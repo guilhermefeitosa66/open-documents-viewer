@@ -56,6 +56,10 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     ICALENDAR(hasFormattedView = true, prose = true),
 }
 
+/** Kinds whose source text is built only when asked (it is expensive: whole PDFs, big workbooks). */
+val DocumentKind.lazySource: Boolean
+    get() = this == DocumentKind.PDF || this == DocumentKind.XLSX || this == DocumentKind.ODS || this == DocumentKind.XLS
+
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
     /** Short badge shown in the recents list (MD, KT, JSON...). */
     val badge: String get() = label

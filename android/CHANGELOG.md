@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.32.3] - 2026-11-24
+
+### Fixed
+- Opening a large spreadsheet is about five times faster (50,000 × 10 cells: 6.4 s → 1.2 s, release build on the
+  emulator): the sheets as text are built only when the source view or "Copy all" needs them, and the XML scanner and
+  cell references allocate less.
+
+### Changed
+- Release builds also come as one APK per ABI (arm64-v8a 9.5 MB, armeabi-v7a 7.1 MB, x86_64 9.8 MB) besides the
+  universal one (21.6 MB).
+- `tools/measure_open.py` measures cold start and the time to open one file of each family.
+
 ## [0.32.2] - 2026-11-24
 
 ### Changed

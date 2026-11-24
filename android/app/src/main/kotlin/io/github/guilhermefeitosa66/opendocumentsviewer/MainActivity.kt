@@ -454,9 +454,9 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun copyAll(doc: LoadedDocument) {
-            if (session.formatted is io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.Formatted.Pdf) {
+            if (doc.type.kind.let { it == io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind.PDF || it == io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind.XLSX || it == io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind.ODS || it == io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind.XLS }) {
                 lifecycleScope.launch {
-                    val text = session.pdfText().orEmpty()
+                    val text = session.lazyText().orEmpty()
                     if (text.length > MAX_CLIP_CHARS) vm.message = R.string.too_large_to_copy else copyText(text, doc.name)
                 }
                 return
