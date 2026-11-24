@@ -577,3 +577,45 @@ def test_tab_moved_to_the_other_pane_reloads_there(tmp_path):
     r = run_app(scenario)
     assert r["right"] == "two"
     assert "moving.txt" not in r["left"]
+
+
+def test_reading_comfort():
+    from odv import settings
+
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.py"))
+        win.open_path(os.path.join(FIX, "sample.md"))
+        yield 1.2
+        md = win.active_pane.current_doc()
+        win._zoom(1)
+        win._zoom(1)
+        yield 0.2
+        r["prose_classes"] = [c for c in md.views["formatted"].view.get_css_classes() if c.startswith("zoom")]
+        settings.set("prose_width", "narrow")
+        r["clamp"] = md.views["formatted"].clamp.get_maximum_size()
+        win.active_pane.view.set_selected_page(win.active_pane.find_page(os.path.join(FIX, "sample.py")))
+        yield 0.3
+        code = win.active_pane.current_doc()
+        src = code.views["source"]
+        r["code_classes"] = [c for c in src.view.get_css_classes() if c.startswith("zoom")]
+        win.toggle_wrap()
+        r["wrap"] = src.get_wrap()
+        settings.set("minimap", True)
+        settings.set("line_numbers", False)
+        r["minimap"] = src.minimap is not None
+        r["numbers"] = src.view.get_show_line_numbers()
+        settings.set("minimap", False)
+        r["minimap_off"] = src.minimap is None
+        win.toggle_focus_mode()
+        r["focus"] = (win.content_view.get_reveal_top_bars(), win.active_pane.bar.get_visible())
+        win.toggle_focus_mode()
+        r["unfocus"] = (win.content_view.get_reveal_top_bars(), win.active_pane.bar.get_visible())
+        settings.set("line_numbers", True)
+
+    r = run_app(scenario)
+    assert r["prose_classes"] == ["zoom-120"]
+    assert r["clamp"] == 680
+    assert r["code_classes"] == []  # zoom is per kind
+    assert r["wrap"] is True
+    assert r["minimap"] and r["minimap_off"] and r["numbers"] is False
+    assert r["focus"] == (False, False) and r["unfocus"] == (True, True)

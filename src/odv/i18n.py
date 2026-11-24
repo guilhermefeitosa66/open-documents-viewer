@@ -161,6 +161,29 @@ CATALOG: dict[str, dict[str, str]] = {
     "The folder, tabs, split and scroll positions, when the app starts without files.": {
         "pt": "A pasta, as abas, a tela dividida e as posições de rolagem, quando o app abre sem arquivos.",
         "es": "La carpeta, las pestañas, la vista dividida y las posiciones, cuando la app se abre sin archivos."},
+    # comfort
+    "Reading": {"pt": "Leitura", "es": "Lectura"},
+    "Text width for prose": {"pt": "Largura do texto corrido", "es": "Ancho del texto"},
+    "Markdown and other formatted text.": {"pt": "Markdown e outros textos formatados.",
+                                           "es": "Markdown y otros textos con formato."},
+    "Narrow": {"pt": "Estreita", "es": "Estrecho"},
+    "Medium": {"pt": "Média", "es": "Medio"},
+    "Wide": {"pt": "Larga", "es": "Ancho"},
+    "Full width": {"pt": "Largura total", "es": "Ancho completo"},
+    "Line numbers in code": {"pt": "Números de linha no código", "es": "Números de línea en el código"},
+    "Minimap in code": {"pt": "Minimapa no código", "es": "Minimapa en el código"},
+    "Zoom {level}%": {"pt": "Zoom {level}%", "es": "Zoom {level}%"},
+    "Zoom in": {"pt": "Aumentar zoom", "es": "Acercar"},
+    "Zoom out": {"pt": "Diminuir zoom", "es": "Alejar"},
+    "Normal size": {"pt": "Tamanho normal", "es": "Tamaño normal"},
+    "Line wrap": {"pt": "Quebra de linha", "es": "Ajuste de línea"},
+    "Line wrap on": {"pt": "Quebra de linha ligada", "es": "Ajuste de línea activado"},
+    "Line wrap off": {"pt": "Quebra de linha desligada", "es": "Ajuste de línea desactivado"},
+    "Full Screen": {"pt": "Tela cheia", "es": "Pantalla completa"},
+    "Focus Mode": {"pt": "Modo foco", "es": "Modo concentración"},
+    "Focus mode: Ctrl+Shift+Enter brings the bars back.": {
+        "pt": "Modo foco: Ctrl+Shift+Enter traz as barras de volta.",
+        "es": "Modo concentración: Ctrl+Mayús+Intro devuelve las barras."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

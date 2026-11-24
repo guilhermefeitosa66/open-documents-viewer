@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from odv import settings
 from odv.bench import after_next_paint
@@ -90,6 +90,12 @@ class DocumentPage(Gtk.Box):
         self.search_bar.connect_entry(self.search_entry)
         self.append(self.search_bar)
 
+        # Ctrl + mouse wheel zooms the current view.
+        wheel = Gtk.EventControllerScroll(flags=Gtk.EventControllerScrollFlags.VERTICAL,
+                                          propagation_phase=Gtk.PropagationPhase.CAPTURE)
+        wheel.connect("scroll", self._on_wheel)
+        self.add_controller(wheel)
+
         self.progress = Gtk.ProgressBar(visible=False, valign=Gtk.Align.START)
         self.progress.add_css_class("osd")
         self.stack = Gtk.Stack(vexpand=True, hexpand=True, transition_type=Gtk.StackTransitionType.NONE)
@@ -149,6 +155,30 @@ class DocumentPage(Gtk.Box):
         self.deleted = False
         self.emit("changed-on-disk")
         return False
+
+    # -- comfort ----------------------------------------------------------------
+    def zoom_kind(self) -> str:
+        if self.mode == "formatted":
+            return "table" if self.kind.kind == "delimited" else "prose"
+        return "code"
+
+    def zoom(self, direction: int) -> int:
+        from odv import comfort
+
+        return comfort.step_zoom(self.zoom_kind(), direction)
+
+    def _on_wheel(self, ctrl, _dx, dy):
+        if not ctrl.get_current_event_state() & Gdk.ModifierType.CONTROL_MASK or dy == 0:
+            return False
+        self.zoom(-1 if dy > 0 else 1)
+        return True
+
+    def toggle_wrap(self) -> bool | None:
+        view = self.views.get(self.mode)
+        if view is not None and hasattr(view, "set_wrap"):
+            view.set_wrap(not view.get_wrap())
+            return view.get_wrap()
+        return None
 
     # -- outline ----------------------------------------------------------------
     def _set_outline(self, entries) -> None:

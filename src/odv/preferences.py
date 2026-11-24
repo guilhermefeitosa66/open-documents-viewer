@@ -119,6 +119,23 @@ class PreferencesDialog(Adw.PreferencesDialog if hasattr(Adw, "PreferencesDialog
         bg_group.add(self.bg_row)
         page.add(bg_group)
 
+        reading = Adw.PreferencesGroup(title=_("Reading"))
+        widths = [("narrow", _("Narrow")), ("medium", _("Medium")), ("wide", _("Wide")), ("full", _("Full width"))]
+        width_row = Adw.ComboRow(title=_("Text width for prose"),
+                                 subtitle=_("Markdown and other formatted text."),
+                                 model=Gtk.StringList.new([label for _key, label in widths]))
+        keys = [key for key, _label in widths]
+        current = settings.get("prose_width")
+        width_row.set_selected(keys.index(current) if current in keys else 1)
+        width_row.connect("notify::selected", lambda row, _p: settings.set("prose_width", keys[row.get_selected()]))
+        reading.add(width_row)
+        for key, title in (("line_numbers", _("Line numbers in code")), ("minimap", _("Minimap in code"))):
+            row = Adw.SwitchRow(title=title)
+            row.set_active(settings.get(key))
+            row.connect("notify::active", lambda r, _p, k=key: settings.set(k, r.get_active()))
+            reading.add(row)
+        page.add(reading)
+
         files_group = Adw.PreferencesGroup(title=_("Files and folders"))
         watch_row = Adw.SwitchRow(
             title=_("Reload files when they change"),

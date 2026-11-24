@@ -8,7 +8,7 @@ import os
 
 from gi.repository import Gio, GLib, Gtk
 
-from odv import theme
+from odv import comfort, settings, theme
 from odv.textio import HIGHLIGHT_LIMIT, split_chunks
 
 _gs = None
@@ -67,11 +67,15 @@ def feed_buffer(buffer, chunks, on_first, on_done, budget_ms: float = 8.0) -> ca
     return cancel
 
 
-class SourceView(Gtk.ScrolledWindow):
+class SourceView(Gtk.Box):
+    """The text, in a scroller, with GtkSourceView's minimap beside it when on."""
+
     def __init__(self, path: str, lang_hint: str | None, wrap: bool):
         super().__init__(vexpand=True, hexpand=True)
         self.path = path
         self._cancel = None
+        self.scroller = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
+        self.minimap = None
         gs = gtksource()
         if gs:
             self.buffer = gs.Buffer()
@@ -92,7 +96,36 @@ class SourceView(Gtk.ScrolledWindow):
         self.view.set_bottom_margin(24)
         self.view.set_left_margin(10)
         self.view.set_right_margin(16)
-        self.set_child(self.view)
+        self.scroller.set_child(self.view)
+        self.append(self.scroller)
+        self._apply_settings()
+        settings.on_change(self._on_setting)
+
+    def get_vadjustment(self):
+        return self.scroller.get_vadjustment()
+
+    def set_wrap(self, wrap: bool) -> None:
+        self.view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR if wrap else Gtk.WrapMode.NONE)
+
+    def get_wrap(self) -> bool:
+        return self.view.get_wrap_mode() != Gtk.WrapMode.NONE
+
+    def _on_setting(self, key, _value):
+        if key in ("zoom", "line_numbers", "minimap"):
+            self._apply_settings()
+
+    def _apply_settings(self):
+        comfort.apply_zoom(self.view, "code")
+        gs = gtksource()
+        if not gs:
+            return
+        self.view.set_show_line_numbers(settings.get("line_numbers"))
+        if settings.get("minimap") and self.minimap is None:
+            self.minimap = gs.Map(view=self.view, width_request=96)
+            self.append(self.minimap)
+        elif not settings.get("minimap") and self.minimap is not None:
+            self.remove(self.minimap)
+            self.minimap = None
 
     def _language(self, gs, hint):
         lm = gs.LanguageManager.get_default()
@@ -120,3 +153,4 @@ class SourceView(Gtk.ScrolledWindow):
         if self._cancel:
             self._cancel()
         theme.remove_listener(self._on_theme)
+        settings.remove_listener(self._on_setting)

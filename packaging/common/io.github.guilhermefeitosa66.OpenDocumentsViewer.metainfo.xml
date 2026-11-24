@@ -27,6 +27,15 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.8.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: text zoom (Ctrl +/−/0 and Ctrl+wheel), kept separately for prose, code and tables.</li>
+        <li>Added: line wrap toggle (Alt+Z), full screen (F11) and focus mode without bars (Ctrl+Shift+Enter).</li>
+        <li>Added: Preferences for the prose text width, line numbers and a minimap in code.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.7.0" date="2026-11-24">
       <description>
         <ul>

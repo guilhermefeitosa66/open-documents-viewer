@@ -6,7 +6,11 @@
 import json
 import os
 
-DEFAULTS = {"theme": "libre-apps", "background": True, "watch": True, "restore_session": True}
+DEFAULTS = {
+    "theme": "libre-apps", "background": True, "watch": True, "restore_session": True,
+    "zoom": {"prose": 100, "code": 100, "table": 100}, "prose_width": "medium",
+    "line_numbers": True, "minimap": False,
+}
 
 _values: dict | None = None
 _listeners: list = []
@@ -18,7 +22,7 @@ def _path() -> str:
 
 
 def load() -> dict:
-    out = dict(DEFAULTS)
+    out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()}
     try:
         with open(_path()) as f:
             data = json.load(f)
@@ -62,6 +66,11 @@ def set(key: str, value) -> None:  # noqa: A001 - mirrors get()
 
 def on_change(callback) -> None:
     _listeners.append(callback)
+
+
+def remove_listener(callback) -> None:
+    if callback in _listeners:
+        _listeners.remove(callback)
 
 
 def reset_cache() -> None:

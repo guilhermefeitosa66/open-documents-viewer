@@ -10,6 +10,7 @@ import threading
 
 from gi.repository import Gdk, Gio, GLib, GObject, Gtk, Pango
 
+from odv import comfort, settings
 from odv.csvindex import CsvIndex, detect_numeric
 
 MAX_COLUMNS = 256
@@ -68,6 +69,8 @@ class TableView(Gtk.ScrolledWindow):
         self.columnview = Gtk.ColumnView(model=self.selection, show_row_separators=False,
                                          show_column_separators=True, reorderable=False)
         self.columnview.add_css_class("data-table")
+        comfort.apply_zoom(self.columnview, "table")
+        settings.on_change(self._on_setting)
         self.set_child(self.columnview)
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key)
@@ -185,7 +188,12 @@ class TableView(Gtk.ScrolledWindow):
         self.columnview.scroll_to(position, None, Gtk.ListScrollFlags.FOCUS | Gtk.ListScrollFlags.SELECT, None)
         on_result(True)
 
+    def _on_setting(self, key, _value):
+        if key == "zoom":
+            comfort.apply_zoom(self.columnview, "table")
+
     def shutdown(self):
+        settings.remove_listener(self._on_setting)
         if self.index:
             self.index.cancelled = True
             GLib.timeout_add(500, lambda: (self.index.close(), False)[1])

@@ -100,7 +100,9 @@ def css_for(t: dict, with_background: bool) -> str:
         "odv_config": dots["config"], "odv_data": dots["data"], "odv_text": dots["text"],
     }
     defs = "".join(f"@define-color {k} {v};\n" for k, v in colors.items())
-    return defs + _COMMON + (_WITH_BACKGROUND if translucent else "")
+    from odv.comfort import zoom_css
+
+    return defs + _COMMON + zoom_css() + (_WITH_BACKGROUND if translucent else "")
 
 
 def _apply(*_args) -> None:

@@ -441,3 +441,20 @@ def test_session_drops_what_is_gone(tmp_path, monkeypatch):
     assert state["panes"] == [{"tabs": [{"path": str(a), "mode": "source", "scroll": 10}], "selected": 0}]
     session.save({"folder": None, "panes": []})
     assert session.load() is None
+
+
+def test_zoom_steps(tmp_path, monkeypatch):
+    from odv import comfort
+
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    settings.reset_cache()
+    assert comfort.zoom_of("code") == 100
+    assert comfort.step_zoom("code", 1) == 110
+    assert comfort.step_zoom("code", 1) == 120
+    assert comfort.zoom_of("prose") == 100  # each kind keeps its own
+    for _ in range(30):
+        comfort.step_zoom("code", -1)
+    assert comfort.zoom_of("code") == comfort.ZOOM_STEPS[0]
+    assert comfort.step_zoom("code", 0) == 100
+    assert ".zoom-150 { font-size: 1.50em; }" in comfort.zoom_css()
+    settings.reset_cache()

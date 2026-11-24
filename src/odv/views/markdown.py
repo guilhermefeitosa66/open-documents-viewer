@@ -8,7 +8,7 @@ import bisect
 
 from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
-from odv import theme
+from odv import comfort, settings, theme
 from odv.i18n import _
 
 MAX_WIDTH = 820
@@ -37,8 +37,10 @@ class MarkdownView(Gtk.ScrolledWindow):
         self.view.add_css_class("markdown")
         self._make_tags()
         theme.on_change(self._on_theme)
-        clamp = Adw.ClampScrollable(maximum_size=MAX_WIDTH, tightening_threshold=MAX_WIDTH, child=self.view)
-        self.set_child(clamp)
+        self.clamp = Adw.ClampScrollable(child=self.view)
+        self.set_child(self.clamp)
+        self._apply_settings()
+        settings.on_change(self._on_setting)
 
         click = Gtk.GestureClick(button=1)
         click.connect("released", self._on_click)
@@ -225,9 +227,20 @@ class MarkdownView(Gtk.ScrolledWindow):
         it = found[1] if isinstance(found, tuple) else found
         return it.get_offset()
 
+    def _on_setting(self, key, _value):
+        if key in ("zoom", "prose_width"):
+            self._apply_settings()
+
+    def _apply_settings(self):
+        comfort.apply_zoom(self.view, "prose")
+        width = comfort.prose_width() or 100000
+        self.clamp.set_maximum_size(width)
+        self.clamp.set_tightening_threshold(min(width, 820))
+
     def shutdown(self):
         self._cancelled = True
         theme.remove_listener(self._on_theme)
+        settings.remove_listener(self._on_setting)
 
 
 def confirm_external(window, uri: str) -> None:

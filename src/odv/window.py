@@ -203,6 +203,10 @@ class Window(Adw.ApplicationWindow):
         section.append(_("Reload"), "win.reload")
         section.append(_("Split View"), "win.split")
         menu.append_section(None, section)
+        view_section = Gio.Menu()
+        view_section.append(_("Full Screen"), "win.fullscreen")
+        view_section.append(_("Focus Mode"), "win.focus-mode")
+        menu.append_section(None, view_section)
         prefs = Gio.Menu()
         prefs.append(_("Preferences"), "win.preferences")
         menu.append_section(None, prefs)
@@ -231,6 +235,7 @@ class Window(Adw.ApplicationWindow):
         self.stack.add_named(self.paned, "docs")
         content_view = Adw.ToolbarView(content=self.stack)
         content_view.add_top_bar(header)
+        self.content_view = content_view
 
         self.split_view = Adw.OverlaySplitView(sidebar=sidebar_view, content=content_view, show_sidebar=False,
                                                min_sidebar_width=220, max_sidebar_width=360,
@@ -287,6 +292,12 @@ class Window(Adw.ApplicationWindow):
         add("quick-open", self.quick_open, ("<Control>p",))
         add("command-palette", self.command_palette, ("<Control><Shift>p",))
         add("outline", self.show_outline, ("<Control><Shift>l",))
+        add("zoom-in", lambda: self._zoom(1), ("<Control>plus", "<Control>equal", "<Control>KP_Add"))
+        add("zoom-out", lambda: self._zoom(-1), ("<Control>minus", "<Control>KP_Subtract"))
+        add("zoom-reset", lambda: self._zoom(0), ("<Control>0", "<Control>KP_0"))
+        add("toggle-wrap", self.toggle_wrap, ("<Alt>z",))
+        add("fullscreen", self.toggle_fullscreen, ("F11",))
+        add("focus-mode", self.toggle_focus_mode, ("<Control><Shift>Return",))
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
         self.set_help_overlay(_shortcuts_window())
@@ -529,6 +540,12 @@ class Window(Adw.ApplicationWindow):
             Item(_("Other pane"), "Ctrl+K", act("win.focus-other-pane")),
             Item(_("Show sidebar"), "F9", act("win.toggle-sidebar")),
             Item(_("Outline"), "Ctrl+Shift+L", act("win.outline")),
+            Item(_("Zoom in"), "Ctrl++", act("win.zoom-in")),
+            Item(_("Zoom out"), "Ctrl+-", act("win.zoom-out")),
+            Item(_("Normal size"), "Ctrl+0", act("win.zoom-reset")),
+            Item(_("Line wrap"), "Alt+Z", act("win.toggle-wrap")),
+            Item(_("Full Screen"), "F11", act("win.fullscreen")),
+            Item(_("Focus Mode"), "Ctrl+Shift+Enter", act("win.focus-mode")),
             Item(_("Reload"), "Ctrl+R", act("win.reload")),
             Item(_("Close tab"), "Ctrl+W", act("win.close-tab")),
             Item(_("Preferences"), "Ctrl+,", act("win.preferences")),
@@ -546,6 +563,38 @@ class Window(Adw.ApplicationWindow):
         dialog = PaletteDialog(_("Run a command"), items=items)
         dialog.present(self)
         return dialog
+
+    # -- comfort ----------------------------------------------------------------
+    def _zoom(self, direction):
+        doc = self.active_pane.current_doc() if self.active_pane else None
+        if doc is not None:
+            level = doc.zoom(direction)
+            self.toast(_("Zoom {level}%").format(level=level), timeout=1)
+
+    def toggle_wrap(self):
+        doc = self.active_pane.current_doc() if self.active_pane else None
+        if doc is not None:
+            wrapped = doc.toggle_wrap()
+            if wrapped is not None:
+                self.toast(_("Line wrap on") if wrapped else _("Line wrap off"), timeout=1)
+
+    def toggle_fullscreen(self):
+        if self.is_fullscreen():
+            self.unfullscreen()
+        else:
+            self.fullscreen()
+
+    def toggle_focus_mode(self):
+        self.focus_mode = not getattr(self, "focus_mode", False)
+        if self.focus_mode:
+            self._sidebar_before_focus = self.split_view.get_show_sidebar()
+            self.split_view.set_show_sidebar(False)
+            self.toast(_("Focus mode: Ctrl+Shift+Enter brings the bars back."), timeout=2)
+        else:
+            self.split_view.set_show_sidebar(getattr(self, "_sidebar_before_focus", False))
+        self.content_view.set_reveal_top_bars(not self.focus_mode)
+        for pane in self.panes:
+            pane.bar.set_visible(not self.focus_mode)
 
     def search_folder(self):
         if not self.folder:
@@ -708,6 +757,9 @@ def _shortcuts_window():
                     ("F9", _("Show sidebar")), ("<Control><Shift>l", _("Outline")),
                     ("<Control><Shift>f", _("Search in folder")),
                     ("<Control>p", _("Go to file")), ("<Control><Shift>p", _("Run a command")),
+                    ("<Control>plus", _("Zoom in")), ("<Control>minus", _("Zoom out")),
+                    ("<Control>0", _("Normal size")), ("<Alt>z", _("Line wrap")),
+                    ("F11", _("Full Screen")), ("<Control><Shift>Return", _("Focus Mode")),
                     ("<Control>comma", _("Preferences")),
                     ("<Control>Page_Down", _("Next tab")), ("<Control>Page_Up", _("Previous tab"))],
     }

@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.8.0 (2026-11-24)
+
+- Added: text zoom (Ctrl +/−/0 and Ctrl+wheel), kept separately for prose, code and tables.
+- Added: line wrap toggle (Alt+Z), full screen (F11) and focus mode without bars (Ctrl+Shift+Enter).
+- Added: Preferences for the prose text width, line numbers and a minimap in code.
+
 ## 0.7.0 (2026-11-24)
 
 - Added: the app reopens the last session (folder, tabs, split, views and scroll positions) when started without files; Preferences can turn it off.
