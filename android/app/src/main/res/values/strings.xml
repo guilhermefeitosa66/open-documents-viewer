@@ -173,4 +173,8 @@
     <string name="sheet_charts">Charts (not drawn): %1$s</string>
     <string name="sheet_truncated">This sheet is very large: only its first part is shown.</string>
     <string name="kind_spreadsheet">Spreadsheet</string>
+    <string name="slide_hidden">hidden slide</string>
+    <string name="slide_grid">Slides</string>
+    <string name="slide_present">Present</string>
+    <string name="slide_notes">Notes</string>
 </resources>

@@ -173,6 +173,25 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
+        if (earlyType.kind == DocumentKind.PPTX) {
+            val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
+                return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
+            }
+            if (read.truncated) return failure(LoadFailure.Other("presentation larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
+            val bytes = read.bytes.copyOf(read.length)
+            val pres = try {
+                io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptxReader.read(bytes)
+            } catch (e: Exception) {
+                return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
+            }
+            return Result.success(
+                LoadedDocument(
+                    uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
+                    text = pres.plainText(), charset = "", type = earlyType, truncated = false, location = meta.location,
+                    modified = stamp(uri).second, bytes = bytes, model = pres,
+                )
+            )
+        }
         if (earlyType.kind == DocumentKind.XLSX || earlyType.kind == DocumentKind.ODS || earlyType.kind == DocumentKind.XLS) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))

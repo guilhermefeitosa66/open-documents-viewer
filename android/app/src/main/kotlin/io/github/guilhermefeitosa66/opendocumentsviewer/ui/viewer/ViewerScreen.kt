@@ -224,6 +224,9 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     TableView(f.table, session, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
+                is Formatted.Slides -> {
+                    SlideView(f.pres, session, session.doc?.bytes, current, padding, LocalReading.current)
+                }
                 is Formatted.Sheet -> {
                     SheetView(f.wb, session, session.formattedList, fontSize, matches, current, padding)
                 }
@@ -267,7 +270,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
             )
         }
 
-        if (session.hasToggle && !session.searchOpen) {
+        if (session.hasToggle && !session.searchOpen && !session.presenting) {
             ModePill(session, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 20.dp))
         }
     }
@@ -410,6 +413,7 @@ private fun subtitle(session: DocumentSession): String {
         else if (doc.type.kind == DocumentKind.DOCX || doc.type.kind == DocumentKind.DOC) "Word"
         else if (doc.type.kind == DocumentKind.ODT || doc.type.kind == DocumentKind.ODS) "OpenDocument"
         else if (doc.type.kind == DocumentKind.XLSX || doc.type.kind == DocumentKind.XLS) "Excel"
+        else if (doc.type.kind == DocumentKind.PPTX) "PowerPoint"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -424,7 +428,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS && doc.type.kind != DocumentKind.PPTX) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }

@@ -185,7 +185,8 @@ class MainActivity : ComponentActivity() {
         // Tablets, open foldables and wide landscape: list beside the document, and split view.
         val wide = LocalConfiguration.current.screenWidthDp >= WIDE_DP
 
-        if (wide && !vm.settingsOpen) {
+        // Presenting slides takes the whole screen, even where the list would sit beside it.
+        if (wide && !vm.settingsOpen && session?.presenting != true) {
             WideLayout(session, onSwitcher = { switcher = true }, onSplitPick = { splitPicking = true })
         } else if (session == null && vm.settingsOpen) {
             SettingsScreen(

@@ -172,4 +172,8 @@
     <string name="sheet_charts">Gráficos (no dibujados): %1$s</string>
     <string name="sheet_truncated">Esta hoja es muy grande: solo se muestra la primera parte.</string>
     <string name="kind_spreadsheet">Hoja de cálculo</string>
+    <string name="slide_hidden">diapositiva oculta</string>
+    <string name="slide_grid">Diapositivas</string>
+    <string name="slide_present">Presentar</string>
+    <string name="slide_notes">Notas</string>
 </resources>

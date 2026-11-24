@@ -172,4 +172,8 @@
     <string name="sheet_charts">Gráficos (não desenhados): %1$s</string>
     <string name="sheet_truncated">Esta planilha é muito grande: só a primeira parte é mostrada.</string>
     <string name="kind_spreadsheet">Planilha</string>
+    <string name="slide_hidden">slide oculto</string>
+    <string name="slide_grid">Slides</string>
+    <string name="slide_present">Apresentar</string>
+    <string name="slide_notes">Notas</string>
 </resources>

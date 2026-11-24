@@ -79,6 +79,8 @@ sealed interface Formatted {
     data class Env(val lines: List<EnvLine>) : Formatted
     data class Svg(val svg: com.caverock.androidsvg.SVG) : Formatted
     data class Tree(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeDocument) : Formatted
+    /** Presentations (PPTX, ODP, PPT): slides drawn on a canvas. */
+    data class Slides(val pres: io.github.guilhermefeitosa66.opendocumentsviewer.formats.Presentation) : Formatted
     /** Spreadsheets (XLSX, ODS, XLS): a grid per sheet. */
     data class Sheet(val wb: io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook) : Formatted
     /** The formatted view could not be built (invalid JSON...): the source is shown instead. */
@@ -138,6 +140,7 @@ class DocumentSession(
     /** Headings of the formatted view (markdown now; other formats add theirs). */
     val outline: List<OutlineItem> by derivedStateOf {
         when (val f = formatted) {
+            is Formatted.Slides -> f.pres.slides.mapIndexedNotNull { i, s -> s.title.takeIf { it.isNotBlank() }?.let { OutlineItem(1, "${i + 1}. $it", i) } }
             is Formatted.Markdown -> f.toc?.takeIf { it.isNotEmpty() } ?: f.blocks.mapIndexedNotNull { i, b ->
                 (b as? MdBlock.Heading)?.let { OutlineItem(it.level, it.content.text, i) }
             }
@@ -147,6 +150,7 @@ class DocumentSession(
 
     fun jumpToOutline(item: OutlineItem) {
         if (mode != ViewMode.FORMATTED) preferFormatted = true
+        if (formatted is Formatted.Slides) { slideGrid = false; slideJump = item.item; return }
         jumpTarget = item.item
     }
 
@@ -310,6 +314,7 @@ class DocumentSession(
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
             } ?: Formatted.Unavailable
+            DocumentKind.PPTX -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Presentation)?.let { Formatted.Slides(it) } ?: Formatted.Unavailable
             DocumentKind.XLSX, DocumentKind.ODS, DocumentKind.XLS -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { Formatted.Sheet(it) } ?: Formatted.Unavailable
             DocumentKind.DOCX, DocumentKind.ODT, DocumentKind.DOC -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.Result)?.let { r ->
                 val anchors = HashMap(headingAnchors(r.blocks))
@@ -448,6 +453,14 @@ class DocumentSession(
     fun toggleNode(id: Int) {
         treeExpanded = if (id in treeExpanded) treeExpanded - id else treeExpanded + id
     }
+
+    // ---- Presentations -----------------------------------------------------------------
+
+    var slideIndex by mutableStateOf(0)
+    /** A slide to show (set by the outline). */
+    var slideJump by mutableStateOf<Int?>(null)
+    var slideGrid by mutableStateOf(false)
+    var presenting by mutableStateOf(false)
 
     // ---- Spreadsheets ------------------------------------------------------------------
 
@@ -620,6 +633,7 @@ class DocumentSession(
                         is Formatted.Markdown -> TextSearch.search(f.blocks.map { it.plainText }, q, opts, active)
                         is Formatted.Table -> TextSearch.search(shownRows.map { it.joinToString("  ") }, q, opts, active)
                         is Formatted.Env -> TextSearch.search(f.lines.map(::envText), q, opts, active)
+                        is Formatted.Slides -> TextSearch.search(f.pres.slides.map { it.text() + "\n" + it.notes }, q, opts, active)
                         is Formatted.Sheet -> sheetSnapshot?.let { TextSearch.search(it.searchLines(f.wb), q, opts, active) }
                         is Formatted.Tree -> TextSearch.search(treeLinesSnapshot.map { (it.node.key ?: "") + " " + (it.node.value ?: "") }, q, opts, active)
                         else -> null

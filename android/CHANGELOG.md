@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.27.0] - 2026-11-24
+
+### Added
+- PowerPoint presentations (.pptx, .ppsx, .potx, .pptm): each slide drawn to scale with its background (color or
+  picture), shapes (rectangles, rounded rectangles, ellipses, lines; fill, outline, rotation), pictures, simple
+  tables and text with its styles (bold, italic, underline, strikethrough, colors, sizes, alignment, bullets,
+  numbering, levels, vertical anchoring). Placeholders inherit position and text size from the layout and master;
+  theme colors are resolved. Swipe between slides, the speaker notes below, a grid of thumbnails, and a full-screen
+  landscape presentation mode (tap right for the next slide, left for the previous one, back to leave). The outline
+  lists the slide titles; search finds slides by their text and notes. Macros are never run.
+
 ## [0.26.0] - 2026-11-24
 
 ### Added
