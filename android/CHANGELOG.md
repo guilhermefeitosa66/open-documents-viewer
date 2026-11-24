@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.30.0] - 2026-11-24
+
+### Added
+- Password-protected Word, Excel and PowerPoint 2007+ files: the viewer asks for the password and decrypts the file
+  in memory only (ECMA-376 agile and standard AES encryption, with the platform's crypto). The password is never
+  saved or sent. Protected files this app cannot open (older Office formats, OpenDocument) get a clear explanation.
+- OpenDocument drawings (.odg, .otg, flat .fodg): pages shown as slides.
+- Apple Pages, Numbers and Keynote files: the preview picture they carry is shown, with a note.
+- Macro-enabled files (.docm, .xlsm, .pptm…) say that their macros are never run.
+- Templates (.dotx, .xltx, .potx, .ott, .ots, .otp) and flat OpenDocument files open as their base format.
+
 ## [0.29.0] - 2026-11-24
 
 ### Added

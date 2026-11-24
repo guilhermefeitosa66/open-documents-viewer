@@ -39,6 +39,11 @@ sealed interface LoadFailure {
     data object Binary : LoadFailure
     /** An e-book locked with DRM. */
     data object Encrypted : LoadFailure
+    /** An encrypted Office file: the viewer asks for its password. */
+    data object NeedsPassword : LoadFailure
+    data object WrongPassword : LoadFailure
+    /** Protected in a way this app cannot open (older formats, ODF): explained. */
+    data object Protected : LoadFailure
     data class Other(val message: String) : LoadFailure
 }
 
@@ -122,8 +127,38 @@ class DocumentLoader(private val context: Context) {
         }
     }
 
-    /** [charset]: an encoding the user picked ("Encoding…"), or null to detect it. */
-    fun load(uri: Uri, mimeHint: String?, charset: String? = null): Result<LoadedDocument> {
+    private sealed interface Unlock {
+        class Ok(val bytes: ByteArray) : Unlock
+        class Failed(val failure: LoadFailure) : Unlock
+    }
+
+    /** Encrypted Office 2007+ files are decrypted in memory with [password]; others pass through. */
+    private fun unlock(bytes: ByteArray, password: String?): Unlock {
+        val crypto = io.github.guilhermefeitosa66.opendocumentsviewer.formats.OoxmlCrypto
+        if (!crypto.isEncryptedPackage(bytes)) return Unlock.Ok(bytes)
+        if (password == null) return Unlock.Failed(LoadFailure.NeedsPassword)
+        return try {
+            Unlock.Ok(crypto.decrypt(bytes, password))
+        } catch (_: io.github.guilhermefeitosa66.opendocumentsviewer.formats.OoxmlCrypto.WrongPassword) {
+            Unlock.Failed(LoadFailure.WrongPassword)
+        } catch (e: Exception) {
+            Unlock.Failed(LoadFailure.Protected)
+        }
+    }
+
+    private fun officeFailure(e: Exception, label: String): LoadFailure = when {
+        e is io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocModel.Protected ||
+            e is io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsReader.Protected ||
+            e is io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptReader.Protected ||
+            e.message?.contains("password protected") == true -> LoadFailure.Protected
+        else -> LoadFailure.Other(label + ": " + (e.message ?: e.javaClass.simpleName))
+    }
+
+    /**
+     * [charset]: an encoding the user picked ("Encoding…"), or null to detect it. [password]: for an
+     * encrypted Office file, asked by the viewer.
+     */
+    fun load(uri: Uri, mimeHint: String?, charset: String? = null, password: String? = null): Result<LoadedDocument> {
         val meta = meta(uri)
         fun failure(f: LoadFailure): Result<LoadedDocument> = Result.failure(LoadException(f, meta.name))
         val stream: InputStream = try {
@@ -173,18 +208,38 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
+        if (earlyType.kind == DocumentKind.IWORK) {
+            val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
+                return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
+            }
+            val bytes = read.bytes.copyOf(read.length)
+            val zip = io.github.guilhermefeitosa66.opendocumentsviewer.formats.ZipFiles
+            val names = listOf("QuickLook/Preview.jpg", "preview.jpg", "QuickLook/Thumbnail.jpg", "preview-web.jpg", "preview-micro.jpg")
+            val preview = (if (zip.isZip(bytes)) runCatching { zip.entries(bytes) { it in names } }.getOrNull()?.let { found -> names.firstNotNullOfOrNull { found[it] } } else null)
+                ?: return failure(LoadFailure.Other(earlyType.label + ": no preview picture inside (only Pages, Numbers or Keynote can open it)"))
+            return Result.success(
+                LoadedDocument(
+                    uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
+                    text = "", charset = "", type = DocumentType(DocumentKind.IMAGE, null, earlyType.label), truncated = false,
+                    location = meta.location, modified = stamp(uri).second, bytes = preview,
+                )
+            )
+        }
         if (earlyType.kind == DocumentKind.PPTX || earlyType.kind == DocumentKind.ODP || earlyType.kind == DocumentKind.PPT) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("presentation larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
-            val bytes = read.bytes.copyOf(read.length)
+            val bytes = when (val u = unlock(read.bytes.copyOf(read.length), password)) {
+                is Unlock.Ok -> u.bytes
+                is Unlock.Failed -> return failure(u.failure)
+            }
             val pres = try {
                 if (earlyType.kind == DocumentKind.ODP) io.github.guilhermefeitosa66.opendocumentsviewer.formats.OdpReader.read(bytes)
                 else if (earlyType.kind == DocumentKind.PPT) io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptReader.read(bytes)
                 else io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptxReader.read(bytes)
             } catch (e: Exception) {
-                return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
+                return failure(officeFailure(e, earlyType.label))
             }
             return Result.success(
                 LoadedDocument(
@@ -199,13 +254,16 @@ class DocumentLoader(private val context: Context) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("workbook larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
-            val bytes = read.bytes.copyOf(read.length)
+            val bytes = when (val u = unlock(read.bytes.copyOf(read.length), password)) {
+                is Unlock.Ok -> u.bytes
+                is Unlock.Failed -> return failure(u.failure)
+            }
             val wb = try {
                 if (earlyType.kind == DocumentKind.ODS) io.github.guilhermefeitosa66.opendocumentsviewer.formats.OdsReader.read(bytes)
                 else if (earlyType.kind == DocumentKind.XLS) io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsReader.read(bytes)
                 else io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsxReader.read(bytes)
             } catch (e: Exception) {
-                return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
+                return failure(officeFailure(e, earlyType.label))
             } catch (e: OutOfMemoryError) {
                 return failure(LoadFailure.Other(earlyType.label + ": too large for this device"))
             }
@@ -222,7 +280,10 @@ class DocumentLoader(private val context: Context) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("document larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
-            val bytes = read.bytes.copyOf(read.length)
+            val bytes = when (val u = unlock(read.bytes.copyOf(read.length), password)) {
+                is Unlock.Ok -> u.bytes
+                is Unlock.Failed -> return failure(u.failure)
+            }
             if (earlyType.kind == DocumentKind.DOC && !io.github.guilhermefeitosa66.opendocumentsviewer.formats.Cfb.isCfb(bytes)) {
                 // Many ".doc" files are really RTF or HTML saved by Word: shown as what they are.
                 val decoded = TextDecoder.decode(bytes, bytes.size) as? Decoded.Text ?: return failure(LoadFailure.Binary)
@@ -245,7 +306,7 @@ class DocumentLoader(private val context: Context) {
                 else if (earlyType.kind == DocumentKind.ODT) io.github.guilhermefeitosa66.opendocumentsviewer.markdown.OdtModel.parse(bytes)
                 else io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.parse(bytes)
             } catch (e: Exception) {
-                return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
+                return failure(officeFailure(e, earlyType.label))
             }
             return Result.success(
                 LoadedDocument(

@@ -23,7 +23,10 @@ object OdtModel {
             return Reader(doc, doc).read()
         }
         val files = ZipFiles.entries(bytes) { it.endsWith(".xml") }
-        val content = files["content.xml"] ?: throw NotOdt("no content.xml (an encrypted document?)")
+        if (files["META-INF/manifest.xml"]?.let { String(it, Charsets.UTF_8).contains("encryption-data") } == true) {
+            throw NotOdt("the document is password protected")
+        }
+        val content = files["content.xml"] ?: throw NotOdt("no content.xml")
         val styles = files["styles.xml"]?.let { xml(String(it, Charsets.UTF_8)) }
         return Reader(xml(String(content, Charsets.UTF_8)), styles).read()
     }

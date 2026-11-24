@@ -189,6 +189,18 @@ class DocumentSession(
     var charsetOverride by mutableStateOf<String?>(null)
         private set
     private var loader: (suspend () -> Result<LoadedDocument>)? = null
+    private var onShownFirst: ((LoadedDocument) -> Unit)? = null
+    /** Password of an encrypted Office file, kept only in memory for this session. Read by the loader. */
+    var password by mutableStateOf<String?>(null)
+        private set
+
+    /** Opens the encrypted file again with [pw]. */
+    fun unlock(pw: String) {
+        val l = loader ?: return
+        password = pw
+        load = LoadState.Loading
+        start(l, onShownFirst ?: {})
+    }
 
     /** Reads the file again with [charset] (null: detect it again). Position is kept. */
     fun reencode(charset: String?) {
@@ -199,6 +211,7 @@ class DocumentSession(
 
     fun start(loader: suspend () -> Result<LoadedDocument>, onShown: (LoadedDocument) -> Unit) {
         this.loader = loader
+        if (onShownFirst == null) onShownFirst = onShown
         scope.launch {
             val result = withContext(Dispatchers.IO) { loader() }
             val doc = result.getOrElse {

@@ -177,4 +177,13 @@
     <string name="slide_present">Presentar</string>
     <string name="slide_notes">Notas</string>
     <string name="partial_slides_text">Texto de una presentación antigua de PowerPoint: no se muestran las imágenes ni el formato.</string>
+    <string name="error_protected_title">Este archivo está protegido</string>
+    <string name="error_protected_body">Está bloqueado con contraseña de una forma que esta app no puede abrir. Ábrelo en la app que lo creó.</string>
+    <string name="password_title">Se necesita contraseña</string>
+    <string name="password_body">Este documento está protegido con contraseña. Solo se usa para abrir el archivo aquí, en memoria: no se guarda ni se envía a ningún sitio.</string>
+    <string name="password_label">Contraseña</string>
+    <string name="password_wrong">Contraseña incorrecta. Inténtalo de nuevo.</string>
+    <string name="password_open">Abrir</string>
+    <string name="macros_never_run">Este archivo tiene macros. Aquí nunca se ejecutan.</string>
+    <string name="iwork_preview">Solo se muestra la imagen de vista previa que trae el archivo: ábrelo en Pages, Numbers o Keynote para ver el documento completo.</string>
 </resources>

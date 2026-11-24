@@ -178,4 +178,13 @@
     <string name="slide_present">Present</string>
     <string name="slide_notes">Notes</string>
     <string name="partial_slides_text">Text from an older PowerPoint presentation: pictures and formatting are not shown.</string>
+    <string name="error_protected_title">This file is protected</string>
+    <string name="error_protected_body">It is locked with a password in a way this app cannot open. Open it in the app that made it.</string>
+    <string name="password_title">Password needed</string>
+    <string name="password_body">This document is protected with a password. It is used only to open the file here, in memory: it is not saved or sent anywhere.</string>
+    <string name="password_label">Password</string>
+    <string name="password_wrong">Wrong password. Try again.</string>
+    <string name="password_open">Open</string>
+    <string name="macros_never_run">This file has macros. They are never run here.</string>
+    <string name="iwork_preview">Only the preview picture this file carries is shown: open it in Pages, Numbers or Keynote for the whole document.</string>
 </resources>

@@ -157,7 +157,7 @@ fun ViewerScreen(
             }
             when (val load = session.load) {
                 LoadState.Loading -> Loading()
-                is LoadState.Failed -> Failure(load.failure)
+                is LoadState.Failed -> Failure(load.failure, onPassword = session::unlock)
                 is LoadState.Ready -> {
                     Content(session, fontSize, actions)
                     LaunchedEffect(Unit) { actions.onFirstContent() }
@@ -192,7 +192,13 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
     var leadingItems = 0
 
     if (doc.type.kind == DocumentKind.IMAGE) {
-        RasterContent(session, doc)
+        Box(Modifier.fillMaxSize()) {
+            RasterContent(session, doc)
+            // iWork files: only the preview picture they carry is shown.
+            if (doc.name.lowercase().substringAfterLast('.') in setOf("pages", "numbers", "key")) {
+                PartialNotice(R.string.iwork_preview, Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp))
+            }
+        }
         return
     }
     Box(Modifier.fillMaxSize()) {
@@ -274,6 +280,11 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                 },
                 Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp),
             )
+        }
+
+        val lowerName = session.doc?.name?.lowercase().orEmpty()
+        if (lowerName.substringAfterLast('.') in setOf("docm", "dotm", "xlsm", "xltm", "pptm", "ppsm", "potm")) {
+            PartialNotice(R.string.macros_never_run, Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp))
         }
 
         if (session.hasToggle && !session.searchOpen && !session.presenting) {
@@ -585,9 +596,14 @@ private fun Loading() {
 }
 
 @Composable
-private fun Failure(failure: LoadFailure) {
+private fun Failure(failure: LoadFailure, onPassword: ((String) -> Unit)? = null) {
     val colors = Odv.colors
+    if ((failure == LoadFailure.NeedsPassword || failure == LoadFailure.WrongPassword) && onPassword != null) {
+        PasswordPrompt(wrong = failure == LoadFailure.WrongPassword, onPassword = onPassword)
+        return
+    }
     val (title, body) = when (failure) {
+        LoadFailure.NeedsPassword, LoadFailure.WrongPassword, LoadFailure.Protected -> R.string.error_protected_title to R.string.error_protected_body
         LoadFailure.Binary -> R.string.error_binary_title to R.string.error_binary_body
         LoadFailure.Encrypted -> R.string.error_drm_title to R.string.error_drm_body
         LoadFailure.NotFound -> R.string.error_not_found_title to R.string.error_not_found_body
@@ -602,6 +618,41 @@ private fun Failure(failure: LoadFailure) {
             Spacer(Modifier.height(8.dp))
             Text(failure.message, fontSize = 12.sp, fontFamily = MonoFamily, color = colors.ink2)
         }
+    }
+}
+
+/** An encrypted Office file: the password opens it in memory only (never saved, never sent). */
+@Composable
+private fun PasswordPrompt(wrong: Boolean, onPassword: (String) -> Unit) {
+    val colors = Odv.colors
+    var pw by remember { mutableStateOf("") }
+    var shown by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(stringResource(R.string.password_title), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.ink)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.password_body), fontSize = 15.sp, color = colors.ink2)
+        Spacer(Modifier.height(16.dp))
+        androidx.compose.material3.OutlinedTextField(
+            value = pw,
+            onValueChange = { pw = it },
+            singleLine = true,
+            label = { Text(stringResource(R.string.password_label)) },
+            isError = wrong,
+            supportingText = if (wrong) ({ Text(stringResource(R.string.password_wrong)) }) else null,
+            visualTransformation = if (shown) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Password,
+                imeAction = androidx.compose.ui.text.input.ImeAction.Go,
+            ),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onGo = { if (pw.isNotEmpty()) onPassword(pw) }),
+            trailingIcon = {
+                IconButton(onClick = { shown = !shown }) {
+                    Icon(painterResource(if (shown) R.drawable.ic_visibility_off else R.drawable.ic_visibility), stringResource(if (shown) R.string.hide_values else R.string.show_values))
+                }
+            },
+        )
+        Spacer(Modifier.height(12.dp))
+        androidx.compose.material3.Button(onClick = { onPassword(pw) }, enabled = pw.isNotEmpty()) { Text(stringResource(R.string.password_open)) }
     }
 }
 

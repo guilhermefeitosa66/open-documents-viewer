@@ -44,6 +44,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     ODP(hasFormattedView = true, prose = false),
     /** PowerPoint 97–2003 (.ppt/.pps/.pot): the slides' text, placed. */
     PPT(hasFormattedView = true, prose = false),
+    /** Apple iWork (.pages/.numbers/.key): only the preview picture the file embeds, shown as an image. */
+    IWORK(hasFormattedView = false, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -79,6 +81,8 @@ object DocumentTypes {
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
         if (ext == "ppt" || ext == "pps" || ext == "pot") return DocumentType(DocumentKind.PPT, null, "PPT")
+        if (ext in setOf("odg", "otg", "fodg")) return DocumentType(DocumentKind.ODP, null, "ODG")
+        if (ext in setOf("pages", "numbers", "key")) return DocumentType(DocumentKind.IWORK, null, ext.uppercase().take(4))
         if (ext in setOf("odp", "otp", "fodp")) return DocumentType(DocumentKind.ODP, null, "ODP")
         if (ext in setOf("pptx", "ppsx", "potx", "pptm", "ppsm", "potm")) return DocumentType(DocumentKind.PPTX, null, "PPTX")
         if (ext == "xls" || ext == "xlt") return DocumentType(DocumentKind.XLS, null, "XLS")
@@ -128,6 +132,7 @@ object DocumentTypes {
         if (m == "application/vnd.oasis.opendocument.presentation" || m == "application/vnd.oasis.opendocument.presentation-template" ||
             m == "application/vnd.oasis.opendocument.presentation-flat-xml"
         ) return DocumentType(DocumentKind.ODP, null, "ODP")
+        if (m == "application/vnd.oasis.opendocument.graphics" || m == "application/vnd.oasis.opendocument.graphics-template") return DocumentType(DocumentKind.ODP, null, "ODG")
         if (m == "application/vnd.ms-powerpoint") return DocumentType(DocumentKind.PPT, null, "PPT")
         if (m == "application/vnd.ms-excel") return DocumentType(DocumentKind.XLS, null, "XLS")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
