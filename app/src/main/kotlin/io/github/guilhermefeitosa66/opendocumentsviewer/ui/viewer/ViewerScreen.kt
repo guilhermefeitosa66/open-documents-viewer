@@ -223,6 +223,8 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
     val colors = Odv.colors
     val doc = session.doc
     var menu by remember { mutableStateOf(false) }
+    var showOutline by remember { mutableStateOf(false) }
+    if (showOutline) OutlineSheet(session, onDismiss = { showOutline = false })
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().height(64.dp).padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -268,6 +270,11 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                         stringResource(if (session.revealAllSecrets) R.string.hide_values else R.string.show_values),
                         tint = colors.accentInk,
                     )
+                }
+            }
+            if (session.outline.size >= 2) {
+                IconButton(onClick = { showOutline = true }) {
+                    Icon(painterResource(R.drawable.ic_outline), stringResource(R.string.outline))
                 }
             }
             IconButton(onClick = session::openSearch) {
@@ -522,3 +529,34 @@ fun formatSize(bytes: Long): String = when {
     else -> String.format(java.util.Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }
 
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun OutlineSheet(session: DocumentSession, onDismiss: () -> Unit) {
+    val colors = Odv.colors
+    val minLevel = session.outline.minOfOrNull { it.level } ?: 1
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss, containerColor = colors.card) {
+        Text(
+            stringResource(R.string.outline),
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+            fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.ink,
+        )
+        androidx.compose.foundation.lazy.LazyColumn(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
+            items(session.outline.size) { i ->
+                val item = session.outline[i]
+                Text(
+                    item.title.ifBlank { "…" },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { session.jumpToOutline(item); onDismiss() }
+                        .heightIn(min = 44.dp)
+                        .padding(start = 24.dp + 16.dp * (item.level - minLevel), end = 24.dp, top = 10.dp, bottom = 10.dp),
+                    fontSize = if (item.level <= minLevel) 16.sp else 15.sp,
+                    fontWeight = if (item.level <= minLevel) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (item.level <= minLevel + 1) colors.ink else colors.ink2,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}

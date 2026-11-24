@@ -60,6 +60,9 @@ class TextContent(val text: String, val index: LineIndex, val highlighter: RowHi
     }
 }
 
+/** An entry of a document's table of contents: jumping goes to list item [item] of the formatted view. */
+data class OutlineItem(val level: Int, val title: String, val item: Int)
+
 sealed interface Formatted {
     data class Markdown(val blocks: List<MdBlock>, val anchors: Map<String, Int>) : Formatted
     data class Json(val content: TextContent) : Formatted
@@ -117,6 +120,21 @@ class DocumentSession(
     val mode: ViewMode by derivedStateOf {
         val k = kind
         if (k != null && k.hasFormattedView && preferFormatted && formatted != Formatted.Unavailable) ViewMode.FORMATTED else ViewMode.SOURCE
+    }
+
+    /** Headings of the formatted view (markdown now; other formats add theirs). */
+    val outline: List<OutlineItem> by derivedStateOf {
+        when (val f = formatted) {
+            is Formatted.Markdown -> f.blocks.mapIndexedNotNull { i, b ->
+                (b as? MdBlock.Heading)?.let { OutlineItem(it.level, it.content.text, i) }
+            }
+            else -> emptyList()
+        }
+    }
+
+    fun jumpToOutline(item: OutlineItem) {
+        if (mode != ViewMode.FORMATTED) preferFormatted = true
+        jumpTarget = item.item
     }
 
     val hasToggle: Boolean get() = kind?.hasFormattedView == true && formatted != Formatted.Unavailable

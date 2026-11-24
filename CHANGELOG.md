@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.7.0] - 2026-11-24
+
+### Added
+- Contents (outline) button for documents with headings: a sheet lists them, indented by level; tapping one scrolls there
+  (switching to the formatted view if needed). Markdown now; later formats plug into the same outline.
+
 ## [0.6.0] - 2026-11-24
 
 ### Added

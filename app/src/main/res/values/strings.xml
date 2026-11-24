@@ -120,4 +120,5 @@
     <string name="close_split">Close split view</string>
     <string name="split_pick_title">Show beside this one</string>
     <string name="wide_empty">Pick a document on the left.</string>
+    <string name="outline">Contents</string>
 </resources>
