@@ -619,3 +619,41 @@ def test_reading_comfort():
     assert r["wrap"] is True
     assert r["minimap"] and r["minimap_off"] and r["numbers"] is False
     assert r["focus"] == (False, False) and r["unfocus"] == (True, True)
+
+
+def test_file_actions(tmp_path):
+    from odv import fileactions
+
+    original = os.path.join(FIX, "sample.py")
+    before = open(original, "rb").read()
+
+    def scenario(win, r):
+        win.open_path(original)
+        win.open_path(os.path.join(FIX, "sample.md"))
+        yield 1.2
+        md = win.active_pane.current_doc()
+        res = fileactions.print_doc(win, md, export_to=str(tmp_path / "md.pdf"))
+        r["md_print"] = (res, (tmp_path / "md.pdf").read_bytes()[:4])
+        win.active_pane.view.set_selected_page(win.active_pane.find_page(original))
+        yield 0.3
+        code = win.active_pane.current_doc()
+        fileactions.print_doc(win, code, export_to=str(tmp_path / "code.pdf"))
+        r["code_print"] = (tmp_path / "code.pdf").read_bytes()[:4]
+        done = []
+        fileactions.copy_to(win, original, str(tmp_path / "copy.py"), done.append)
+        fileactions.copy_to(win, original, original, done.append)
+        yield 0.8
+        r["copies"] = done
+        dialog = win.file_action("properties")
+        yield 0.3
+        r["dialog"] = win.get_visible_dialog() is dialog
+        dialog.close()
+        win.file_action("copy-path")
+        win.command_palette().close()
+
+    r = run_app(scenario)
+    assert r["md_print"][1] == b"%PDF" and r["code_print"] == b"%PDF"
+    assert sorted(r["copies"]) == [False, True]
+    assert (tmp_path / "copy.py").read_bytes() == before
+    assert open(original, "rb").read() == before
+    assert r["dialog"]

@@ -458,3 +458,15 @@ def test_zoom_steps(tmp_path, monkeypatch):
     assert comfort.step_zoom("code", 0) == 100
     assert ".zoom-150 { font-size: 1.50em; }" in comfort.zoom_css()
     settings.reset_cache()
+
+
+def test_file_properties():
+    import gi
+
+    gi.require_version("Gtk", "4.0")
+    from odv import fileactions
+
+    rows = dict(fileactions.properties(os.path.join(FIX, "sample.py"), "utf-8", 7))
+    assert rows["Name"] == "sample.py" and rows["Encoding"] == "utf-8" and rows["Lines"] == "7"
+    assert rows["Permissions"].startswith("-r")
+    assert "text/x-python" in rows["Type"]

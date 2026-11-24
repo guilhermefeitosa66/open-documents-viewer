@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.9.0 (2026-11-24)
+
+- Added: file actions in the main menu, the tab menu and the command palette: copy path, show in folder, open with another app, save a copy (Ctrl+Shift+S), print (Ctrl+Alt+P) and properties (Alt+Enter).
+- Fixed: jumping to a heading (anchors, outline) lands on it even while the layout is still being measured.
+
 ## 0.8.0 (2026-11-24)
 
 - Added: text zoom (Ctrl +/−/0 and Ctrl+wheel), kept separately for prose, code and tables.

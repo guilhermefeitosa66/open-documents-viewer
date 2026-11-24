@@ -184,6 +184,31 @@ CATALOG: dict[str, dict[str, str]] = {
     "Focus mode: Ctrl+Shift+Enter brings the bars back.": {
         "pt": "Modo foco: Ctrl+Shift+Enter traz as barras de volta.",
         "es": "Modo concentración: Ctrl+Mayús+Intro devuelve las barras."},
+    # file actions
+    "Copy Path": {"pt": "Copiar caminho", "es": "Copiar ruta"},
+    "Path copied": {"pt": "Caminho copiado", "es": "Ruta copiada"},
+    "Show in Folder": {"pt": "Mostrar na pasta", "es": "Mostrar en la carpeta"},
+    "Open With…": {"pt": "Abrir com…", "es": "Abrir con…"},
+    "Save a Copy…": {"pt": "Salvar uma cópia…", "es": "Guardar una copia…"},
+    "Save a Copy": {"pt": "Salvar uma cópia", "es": "Guardar una copia"},
+    "Saved a copy to {path}": {"pt": "Cópia salva em {path}", "es": "Copia guardada en {path}"},
+    "Could not save the copy: {error}": {"pt": "Não foi possível salvar a cópia: {error}",
+                                         "es": "No se pudo guardar la copia: {error}"},
+    "A copy cannot replace the original.": {"pt": "Uma cópia não pode substituir o original.",
+                                            "es": "Una copia no puede reemplazar el original."},
+    "Print…": {"pt": "Imprimir…", "es": "Imprimir…"},
+    "Page %N of %Q": {"pt": "Página %N de %Q", "es": "Página %N de %Q"},
+    "Open the file once in this view before printing.": {
+        "pt": "Abra o arquivo nesta visão antes de imprimir.",
+        "es": "Abre el archivo en esta vista antes de imprimir."},
+    "Properties": {"pt": "Propriedades", "es": "Propiedades"},
+    "Name": {"pt": "Nome", "es": "Nombre"},
+    "Size": {"pt": "Tamanho", "es": "Tamaño"},
+    "Type": {"pt": "Tipo", "es": "Tipo"},
+    "Modified": {"pt": "Modificado", "es": "Modificado"},
+    "Permissions": {"pt": "Permissões", "es": "Permisos"},
+    "Encoding": {"pt": "Codificação", "es": "Codificación"},
+    "Lines": {"pt": "Linhas", "es": "Líneas"},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

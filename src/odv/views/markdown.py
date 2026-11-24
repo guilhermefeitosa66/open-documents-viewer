@@ -215,10 +215,24 @@ class MarkdownView(Gtk.ScrolledWindow):
         return True
 
     def scroll_to_offset(self, offset: int) -> None:
+        """Scroll so ``offset`` is at the top. Line heights are measured
+        lazily, so the scroll is repeated while the layout settles."""
         it = self.buffer.get_iter_at_offset(offset)
         mark = self.buffer.create_mark(None, it, True)
         self.view.scroll_to_mark(mark, 0.0, True, 0.0, 0.0)
-        self.buffer.delete_mark(mark)
+        steps = [150, 350, 700]
+
+        def again():
+            if self._cancelled or mark.get_deleted():
+                return False
+            self.view.scroll_to_mark(mark, 0.0, True, 0.0, 0.0)
+            if steps:
+                GLib.timeout_add(steps.pop(0), again)
+            else:
+                self.buffer.delete_mark(mark)
+            return False
+
+        GLib.timeout_add(steps.pop(0), again)
 
     def top_offset(self) -> int:
         """Buffer offset at the top of the visible area."""

@@ -56,6 +56,15 @@ class Pane(Gtk.Box):
         self.append(self.view)
         self.view.connect("notify::selected-page", self._on_selected)
         self.view.connect("close-page", self._on_close_page)
+        tab_menu = Gio.Menu()
+        for label, action in ((_("Copy Path"), "win.copy-path"), (_("Show in Folder"), "win.show-in-folder"),
+                              (_("Open With…"), "win.open-with"), (_("Save a Copy…"), "win.save-copy"),
+                              (_("Print…"), "win.print"), (_("Properties"), "win.properties")):
+            tab_menu.append(label, action)
+        self.view.set_menu_model(tab_menu)
+        # The tab menu acts on the tab it was opened on.
+        self.view.connect("setup-menu", lambda v, page: page and (v.set_selected_page(page),
+                                                                   self.window.set_active_pane(self)))
         self.view.connect("page-attached", lambda *a: self.window.on_pages_changed(self))
         self.view.connect("page-detached", lambda *a: GLib.idle_add(lambda: self.window.on_pages_changed(self)))
         focus = Gtk.EventControllerFocus()
@@ -203,6 +212,11 @@ class Window(Adw.ApplicationWindow):
         section.append(_("Reload"), "win.reload")
         section.append(_("Split View"), "win.split")
         menu.append_section(None, section)
+        file_section = Gio.Menu()
+        file_section.append(_("Save a Copy…"), "win.save-copy")
+        file_section.append(_("Print…"), "win.print")
+        file_section.append(_("Properties"), "win.properties")
+        menu.append_section(None, file_section)
         view_section = Gio.Menu()
         view_section.append(_("Full Screen"), "win.fullscreen")
         view_section.append(_("Focus Mode"), "win.focus-mode")
@@ -298,6 +312,10 @@ class Window(Adw.ApplicationWindow):
         add("toggle-wrap", self.toggle_wrap, ("<Alt>z",))
         add("fullscreen", self.toggle_fullscreen, ("F11",))
         add("focus-mode", self.toggle_focus_mode, ("<Control><Shift>Return",))
+        for name, accels in (("copy-path", ("<Control><Alt>c",)), ("show-in-folder", ()), ("open-with", ()),
+                             ("save-copy", ("<Control><Shift>s",)), ("print", ("<Control><Alt>p",)),
+                             ("properties", ("<Alt>Return",))):
+            add(name, lambda n=name: self.file_action(n), accels)
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
         self.set_help_overlay(_shortcuts_window())
@@ -526,7 +544,9 @@ class Window(Adw.ApplicationWindow):
         from odv.palette import Item, PaletteDialog
 
         def act(name):
-            return lambda: self.activate_action(name, None)
+            run = lambda: self.activate_action(name, None)  # noqa: E731
+            run.action = name
+            return run
 
         doc = self.active_pane.current_doc() if self.active_pane else None
         items = [
@@ -540,6 +560,12 @@ class Window(Adw.ApplicationWindow):
             Item(_("Other pane"), "Ctrl+K", act("win.focus-other-pane")),
             Item(_("Show sidebar"), "F9", act("win.toggle-sidebar")),
             Item(_("Outline"), "Ctrl+Shift+L", act("win.outline")),
+            Item(_("Copy Path"), "Ctrl+Alt+C", act("win.copy-path")),
+            Item(_("Show in Folder"), "", act("win.show-in-folder")),
+            Item(_("Open With…"), "", act("win.open-with")),
+            Item(_("Save a Copy…"), "Ctrl+Shift+S", act("win.save-copy")),
+            Item(_("Print…"), "Ctrl+Alt+P", act("win.print")),
+            Item(_("Properties"), "Alt+Enter", act("win.properties")),
             Item(_("Zoom in"), "Ctrl++", act("win.zoom-in")),
             Item(_("Zoom out"), "Ctrl+-", act("win.zoom-out")),
             Item(_("Normal size"), "Ctrl+0", act("win.zoom-reset")),
@@ -554,7 +580,9 @@ class Window(Adw.ApplicationWindow):
             Item(_("Quit"), "Ctrl+Q", act("app.quit")),
         ]
         if doc is None:
-            items = [i for i in items if i.detail not in ("Ctrl+F", "Ctrl+E", "Ctrl+R", "Ctrl+W")]
+            needs_doc = {"win.find", "win.toggle-mode", "win.reload", "win.close-tab", "win.copy-path",
+                         "win.show-in-folder", "win.open-with", "win.save-copy", "win.print", "win.properties"}
+            items = [i for i in items if getattr(i.run, "action", None) not in needs_doc]
         names = [(themes.DEFAULT_ID, "libre-apps")] + [(t["id"], t["name"]) for t in themes.catalogue()]
         for tid, name in names:
             items.append(Item(_("Theme: {name}").format(name=name), "", lambda t=tid: theme.set_theme(t)))
@@ -563,6 +591,17 @@ class Window(Adw.ApplicationWindow):
         dialog = PaletteDialog(_("Run a command"), items=items)
         dialog.present(self)
         return dialog
+
+    # -- file actions -----------------------------------------------------------
+    def file_action(self, name):
+        from odv import fileactions
+
+        doc = self.active_pane.current_doc() if self.active_pane else None
+        if doc is None:
+            return None
+        return {"copy-path": fileactions.copy_path, "show-in-folder": fileactions.show_in_folder,
+                "open-with": fileactions.open_with, "save-copy": fileactions.save_copy,
+                "print": fileactions.print_doc, "properties": fileactions.show_properties}[name](self, doc)
 
     # -- comfort ----------------------------------------------------------------
     def _zoom(self, direction):
@@ -757,6 +796,8 @@ def _shortcuts_window():
                     ("F9", _("Show sidebar")), ("<Control><Shift>l", _("Outline")),
                     ("<Control><Shift>f", _("Search in folder")),
                     ("<Control>p", _("Go to file")), ("<Control><Shift>p", _("Run a command")),
+                    ("<Control><Shift>s", _("Save a Copy…")), ("<Control><Alt>p", _("Print…")),
+                    ("<Alt>Return", _("Properties")), ("<Control><Alt>c", _("Copy Path")),
                     ("<Control>plus", _("Zoom in")), ("<Control>minus", _("Zoom out")),
                     ("<Control>0", _("Normal size")), ("<Alt>z", _("Line wrap")),
                     ("F11", _("Full Screen")), ("<Control><Shift>Return", _("Focus Mode")),
