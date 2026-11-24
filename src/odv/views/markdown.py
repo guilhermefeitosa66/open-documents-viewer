@@ -237,6 +237,10 @@ class MarkdownView(Gtk.ScrolledWindow):
         its anchor, if any), anything else asks before opening the browser."""
         from odv.links import resolve
 
+        if self._doc is not None and href in self._doc.attachments:
+            name, data = self._doc.attachments[href]
+            save_attachment(self.get_root(), name, data)
+            return
         kind, target, anchor = resolve(href, self.path)
         if kind == "anchor":
             self.scroll_to_heading(anchor)
@@ -317,3 +321,33 @@ def confirm_external(window, uri: str) -> None:
 
     dialog.choose(window, None, done)
     return dialog
+
+
+def save_attachment(window, name: str, data: bytes) -> None:
+    """Ask where to save an attachment (from an e-mail); writes in a thread."""
+    import os
+    import threading
+
+    dialog = Gtk.FileDialog(title=_("Save Attachment"), modal=True, initial_name=os.path.basename(name))
+
+    def chosen(dlg, result):
+        try:
+            target = dlg.save_finish(result)
+        except GLib.Error:
+            return
+        path = target.get_path() if target else None
+        if not path:
+            return
+
+        def work():
+            try:
+                with open(path, "wb") as f:
+                    f.write(data)
+                message = _("Saved {name}").format(name=os.path.basename(path))
+            except OSError as e:
+                message = _("Could not save the copy: {error}").format(error=e.strerror or str(e))
+            GLib.idle_add(lambda: (hasattr(window, "toast") and window.toast(message), False)[1])
+
+        threading.Thread(target=work, daemon=True).start()
+
+    dialog.save(window, None, chosen)

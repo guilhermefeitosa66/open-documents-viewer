@@ -47,6 +47,7 @@ class Doc:
     links: list[Link] = field(default_factory=list)
     headings: dict[str, int] = field(default_factory=dict)  # slug -> offset
     outline: list[Heading] = field(default_factory=list)
+    attachments: dict = field(default_factory=dict)  # "odv-attachment:N" -> (file name, bytes)
     length: int = 0
 
 

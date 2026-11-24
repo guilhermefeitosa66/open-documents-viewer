@@ -167,7 +167,7 @@ class Kind:
     @property
     def rich(self) -> bool:
         """Shown formatted by the rich-text view (odv.formats.RICH)."""
-        return self.kind in ("markdown", "html", "rtf", "notebook", "ebook")
+        return self.kind in ("markdown", "html", "rtf", "notebook", "ebook", "message")
 
     @property
     def has_formatted(self) -> bool:
@@ -211,6 +211,8 @@ def classify(path: str) -> Kind:
         return Kind("rtf", None, wrap=True)
     if ext == ".ipynb":
         return Kind("notebook", "json")
+    if ext in (".eml", ".vcf", ".vcard", ".ics", ".ical", ".ifb"):
+        return Kind("message", None, wrap=True)
     if ext == ".epub":
         return Kind("ebook", None)
     if ext == ".fb2":
@@ -232,7 +234,7 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
-    if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2"):
+    if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2", ".eml", ".vcf", ".ics"):
         return "markdown"
     if ext in DELIMITED_EXT or ext in IMAGE_EXT:
         return "data"

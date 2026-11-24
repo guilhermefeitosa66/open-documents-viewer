@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.20.0 (2026-11-24)
+
+- Added: e-mail messages (.eml): headers, the body (HTML rendered safely, inline images shown, remote ones and scripts never loaded) and attachments you can save.
+- Added: contacts (.vcf) and calendars (.ics) as readable cards and a dated list of events and tasks.
+
 ## 0.19.0 (2026-11-24)
 
 - Added: Markdown shows local images (remote ones are never loaded).

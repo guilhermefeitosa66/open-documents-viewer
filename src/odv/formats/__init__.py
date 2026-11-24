@@ -10,6 +10,7 @@ RICH = {
     "rtf": "odv.formats.rtfrender",
     "notebook": "odv.formats.ipynb",
     "ebook": "odv.formats.epub",
+    "message": "odv.formats.messages",
 }
 
 

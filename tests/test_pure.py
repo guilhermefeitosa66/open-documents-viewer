@@ -734,3 +734,33 @@ def test_markdown_local_images(tmp_path):
     assert "[image: remote]" in text and "[image: missing]" in text
     assert len(text) == doc.length
     assert all(op[0] != "image" for op in mdrender.build(md.read_text()).ops)  # no path, no files read
+
+
+# -- e-mail, contacts, calendars ----------------------------------------------------------
+
+from odv.formats import messages  # noqa: E402
+
+
+def test_eml():
+    doc = messages.build(None, os.path.join(FIX, "sample.eml"))
+    text = _flat(doc)
+    assert text.startswith("Relatório de março\n")
+    assert "segue o relatório." in text and "alert(1)" not in text
+    header = next(op[1] for op in doc.ops if op[0] == "table")
+    assert header.rows[0] == ["From", "Ana <ana@example.org>"]
+    assert [op[0] for op in doc.ops].count("image") == 1  # the cid: logo; the remote pixel is not loaded
+    assert list(doc.attachments.values()) == [("dados.csv", b"id,valor\n1,10\n")]
+    link = next(link for link in doc.links if link.href == "odv-attachment:0")
+    assert text[link.start:link.end] == "dados.csv"
+
+
+def test_vcf_and_ics():
+    vcf = messages.build(open(os.path.join(FIX, "contacts.vcf")).read(), "contacts.vcf")
+    assert [h.title for h in vcf.outline] == ["Ana Souza", "Bruno Lima"]
+    rows = next(op[1] for op in vcf.ops if op[0] == "table").rows
+    assert ["Address (home)", "Rua A, 10, Teresina, PI, 64000-000, Brasil"] in rows
+    assert ["Note", "Primeira linha\nsegunda linha"] in rows
+    ics = messages.build(open(os.path.join(FIX, "events.ics")).read(), "events.ics")
+    assert [h.title for h in ics.outline] == ["First meeting", "Second", "Entregar"]  # by date
+    first = next(op[1] for op in ics.ops if op[0] == "table").rows
+    assert first[0] == ["Starts", "2026-12-01 09:00 (America/Fortaleza)"] and ["Organizer", "Ana"] in first

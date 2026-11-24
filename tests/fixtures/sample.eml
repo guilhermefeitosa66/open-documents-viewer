@@ -1,0 +1,56 @@
+From: Ana <ana@example.org>
+To: Bruno <bruno@example.org>
+Subject: =?utf-8?q?Relat=C3=B3rio_de_mar=C3=A7o?=
+Date: Tue, 24 Nov 2026 10:00:00 -0300
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7216516653984371152=="
+
+--===============7216516653984371152==
+Content-Type: multipart/alternative;
+ boundary="===============4721150770929226514=="
+
+--===============4721150770929226514==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Olá,
+
+segue o relatório.
+
+--===============4721150770929226514==
+MIME-Version: 1.0
+Content-Type: multipart/related;
+ boundary="===============2287251404015005293=="
+
+--===============2287251404015005293==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>Ol=C3=A1,</p><p>segue o <b>relat=C3=B3rio</b>.</p><img src=3D"=
+cid:logo@x"><img src=3D"https://tracker.example.org/pixel.gif"><script>alert(=
+1)</script></body></html>
+
+--===============2287251404015005293==
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-ID: <logo@x>
+MIME-Version: 1.0
+Content-Disposition: inline
+
+iVBORw0KGgoAAAANSUhEUgAAACgAAAAeAQMAAABkE86eAAAAIGNIUk0AAHomAACAhAAA+gAAAIDo
+AAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGUExURbVQK////6D++u8AAAABYktHRAH/Ai3eAAAAB3RJ
+TUUH6gsYEgAd5dLH4gAAAAxJREFUCNdjYBh6AAAAtAABXnGQvwAAAABJRU5ErkJggg==
+
+--===============2287251404015005293==--
+
+--===============4721150770929226514==--
+
+--===============7216516653984371152==
+Content-Type: text/csv
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="dados.csv"
+MIME-Version: 1.0
+
+aWQsdmFsb3IKMSwxMAo=
+
+--===============7216516653984371152==--

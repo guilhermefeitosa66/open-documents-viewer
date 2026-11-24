@@ -950,3 +950,23 @@ def test_sidebar_filter(tmp_path):
     r = run_app(scenario)
     assert r["rows"] == [os.path.join("docs", "deep", "install-guide.md")]
     assert r["opened"] == "install-guide.md" and r["back"] == "tree"
+
+
+def test_email_contacts_calendar():
+    def scenario(win, r):
+        for f in ("sample.eml", "contacts.vcf", "events.ics"):
+            win.open_path(os.path.join(FIX, f))
+        yield from settle(win)
+        docs = {d.name: d for d in win.active_pane.docs()}
+        r["modes"] = sorted(d.mode for d in docs.values())
+        r["eml"] = buffer_text(docs["sample.eml"]).split("\n", 1)[0]
+        r["outline"] = [e.title for e in docs["events.ics"].outline()]
+        docs["contacts.vcf"].set_mode("source")
+        yield 0.6
+        r["vcf_source"] = buffer_text(docs["contacts.vcf"]).startswith("BEGIN:VCARD")
+
+    r = run_app(scenario)
+    assert r["modes"] == ["formatted", "formatted", "formatted"]
+    assert r["eml"] == "Relatório de março"
+    assert r["outline"] == ["First meeting", "Second", "Entregar"]
+    assert r["vcf_source"]
