@@ -75,8 +75,8 @@
     <string name="relative_links_later">Links para outros arquivos precisam de acesso à pasta, que vem na próxima versão.</string>
     <string name="error_no_app">Nenhum app faz isso.</string>
     <plurals name="files">
-        <item quantity="one">%d arquivo</item>
-        <item quantity="other">%d arquivos</item>
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d itens</item>
     </plurals>
     <plurals name="lines">
         <item quantity="one">%d linha</item>
@@ -95,4 +95,16 @@
     <string name="copy_saved">Cópia salva</string>
     <string name="copy_failed">Não deu para salvar a cópia.</string>
     <string name="more_options_for">Mais opções para %1$s</string>
+    <string name="open_folder">Abrir pasta</string>
+    <string name="filter_by_name">Filtrar por nome</string>
+    <string name="sort_by_name">Ordenar por nome</string>
+    <string name="sort_by_date">Ordenar por data</string>
+    <string name="sort_by_size">Ordenar por tamanho</string>
+    <string name="show_hidden_files">Mostrar arquivos ocultos</string>
+    <string name="hide_hidden_files">Ocultar arquivos ocultos</string>
+    <string name="refresh">Atualizar</string>
+    <string name="folder_empty">Esta pasta está vazia.</string>
+    <string name="folder_error">Não deu para listar esta pasta. Abra de novo pela tela inicial.</string>
+    <string name="no_matches_in_folder">Nada com esse nome nas pastas abertas.</string>
+    <string name="enter_folder">Entrar em %1$s</string>
 </resources>

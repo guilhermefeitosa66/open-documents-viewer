@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
+import android.provider.DocumentsContract
+import io.github.guilhermefeitosa66.opendocumentsviewer.folder.FolderSession
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -142,7 +144,46 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openRecent(entry: RecentEntry) {
-        openUri(Uri.parse(entry.uri), entry.mimeType, external = false)
+        if (entry.isFolder) openFolder(Uri.parse(entry.uri), fromPicker = false)
+        else openUri(Uri.parse(entry.uri), entry.mimeType, external = false)
+    }
+
+    /** The granted folder being browsed; documents opened from it return to it. */
+    var folder by mutableStateOf<FolderSession?>(null)
+        private set
+
+    fun openFolder(treeUri: Uri, fromPicker: Boolean) {
+        closeSession()
+        folder?.close()
+        folder = null
+        viewModelScope.launch {
+            val resolver = context.contentResolver
+            val ok = withContext(Dispatchers.IO) {
+                if (fromPicker) {
+                    try {
+                        resolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    } catch (_: Exception) {
+                    }
+                }
+                resolver.persistedUriPermissions.any { it.uri == treeUri && it.isReadPermission }
+            }
+            if (!ok) {
+                message = R.string.error_permission_body
+                return@launch
+            }
+            val name = withContext(Dispatchers.IO) { FolderSession.rootName(resolver, treeUri) }
+            folder = FolderSession(treeUri, name, resolver)
+            val entry = RecentEntry(
+                uri = treeUri.toString(), name = name, mimeType = DocumentsContract.Document.MIME_TYPE_DIR, size = -1,
+                openedAt = System.currentTimeMillis(), persisted = true, location = null,
+            )
+            recents = withContext(Dispatchers.IO) { store.upsert(entry) }
+        }
+    }
+
+    fun closeFolder() {
+        folder?.close()
+        folder = null
     }
 
     /** Leaves the viewer, keeping the reading position. */
@@ -230,7 +271,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         return try {
-            resolver.persistedUriPermissions.any { it.uri == uri && it.isReadPermission }
+            val u = uri.toString()
+            resolver.persistedUriPermissions.any { it.isReadPermission && (it.uri == uri || u.startsWith(it.uri.toString() + "/document/")) }
         } catch (_: Exception) {
             false
         }

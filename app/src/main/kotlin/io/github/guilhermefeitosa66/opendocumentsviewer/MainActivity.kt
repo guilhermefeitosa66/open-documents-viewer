@@ -20,6 +20,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.toArgb
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.settings.SettingsScreen
+import io.github.guilhermefeitosa66.opendocumentsviewer.ui.folder.FolderScreen
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.theme.Themes
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -73,6 +74,18 @@ class MainActivity : ComponentActivity() {
 
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.openUri(uri, null, external = false, fromPicker = true)
+    }
+
+    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) vm.openFolder(uri, fromPicker = true)
+    }
+
+    private fun openFolderPicker() {
+        try {
+            pickFolder.launch(null)
+        } catch (_: ActivityNotFoundException) {
+            vm.message = R.string.error_no_picker
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,6 +152,19 @@ class MainActivity : ComponentActivity() {
                 onBack = { vm.settingsOpen = false },
             )
             BackHandler { vm.settingsOpen = false }
+        } else if (session == null && vm.folder != null) {
+            val folder = vm.folder!!
+            FolderScreen(
+                folder = folder,
+                onBack = { if (!folder.up()) vm.closeFolder() },
+                onOpenFile = { entry -> vm.openUri(folder.documentUri(entry), entry.mimeType, external = false) },
+            )
+            BackHandler {
+                when {
+                    folder.filter.isNotEmpty() -> folder.filter = ""
+                    !folder.up() -> vm.closeFolder()
+                }
+            }
         } else if (session == null) {
             val theme = Themes.byId(vm.themeId)
             HomeScreen(
@@ -147,11 +173,12 @@ class MainActivity : ComponentActivity() {
                 recents = vm.recents,
                 loaded = vm.recentsLoaded,
                 onOpenFile = ::openPicker,
+                onOpenFolder = ::openFolderPicker,
                 onOpenRecent = vm::openRecent,
                 onRemove = vm::removeRecent,
                 onClearAll = vm::clearRecents,
-                onShareRecent = { shareItem(shareableOf(it)) },
-                onSaveRecent = { saveItem(shareableOf(it)) },
+                onShareRecent = { if (!it.isFolder) shareItem(shareableOf(it)) },
+                onSaveRecent = { if (!it.isFolder) saveItem(shareableOf(it)) },
             )
         } else {
             val base = 16f

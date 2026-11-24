@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.3.0] - 2026-11-24
+
+### Added
+- "Open folder" (Storage Access Framework tree): an expandable tree with a breadcrumb (enter a folder to go deeper),
+  filter by name (keeps the folders leading to matches), hidden files on demand, sort by name, date or size.
+- Granted folders appear in the recent files; documents opened from a folder go back to it.
+
+### Changed
+- The recent list counts items (files and folders).
+
 ## [0.2.0] - 2026-11-24
 
 ### Added

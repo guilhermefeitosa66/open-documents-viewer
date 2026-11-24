@@ -20,7 +20,14 @@ data class RecentEntry(
     val formatted: Boolean = true,
     val wrap: Boolean? = null,
     val position: ViewPosition = ViewPosition(),
-)
+) {
+    /** A granted folder (ACTION_OPEN_DOCUMENT_TREE) rather than a file. */
+    val isFolder: Boolean get() = mimeType == FOLDER_MIME
+
+    companion object {
+        const val FOLDER_MIME = "vnd.android.document/directory"
+    }
+}
 
 object RecentsCodec {
     fun encode(entries: List<RecentEntry>): String {

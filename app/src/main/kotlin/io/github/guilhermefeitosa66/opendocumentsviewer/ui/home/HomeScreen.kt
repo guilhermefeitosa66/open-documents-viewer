@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -76,6 +78,7 @@ fun HomeScreen(
     recents: List<RecentEntry>,
     loaded: Boolean,
     onOpenFile: () -> Unit,
+    onOpenFolder: () -> Unit,
     onOpenRecent: (RecentEntry) -> Unit,
     onRemove: (RecentEntry) -> Unit,
     onClearAll: () -> Unit,
@@ -116,16 +119,33 @@ fun HomeScreen(
             }
         }
 
-        Button(
-            onClick = onOpenFile,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp).height(64.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = colors.accent, contentColor = colors.onAccent),
-            contentPadding = PaddingValues(horizontal = 20.dp),
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(painterResource(R.drawable.ic_file), null, Modifier.size(24.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(stringResource(R.string.open_file), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Button(
+                onClick = onOpenFile,
+                modifier = Modifier.weight(1f).height(64.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accent, contentColor = colors.onAccent),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_file), null, Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
+                Text(stringResource(R.string.open_file), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
+            }
+            OutlinedButton(
+                onClick = onOpenFolder,
+                modifier = Modifier.weight(1f).height(64.dp),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, colors.line),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = colors.card, contentColor = colors.ink),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_folder), null, Modifier.size(24.dp), tint = colors.accentInk)
+                Spacer(Modifier.width(10.dp))
+                Text(stringResource(R.string.open_folder), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
+            }
         }
 
         if (loaded && recents.isEmpty()) {
@@ -226,7 +246,11 @@ fun RecentRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(bg), contentAlignment = Alignment.Center) {
-            Text(type.badge.take(4), fontFamily = MonoFamily, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg)
+            if (entry.isFolder) {
+                Icon(painterResource(R.drawable.ic_folder), null, tint = colors.accentInk, modifier = Modifier.size(22.dp))
+            } else {
+                Text(type.badge.take(4), fontFamily = MonoFamily, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg)
+            }
         }
         Column(Modifier.weight(1f)) {
             Text(entry.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -302,8 +326,10 @@ private fun RecentMenu(
             Icon(Icons.Filled.MoreVert, stringResource(R.string.more_options_for, entry.name), tint = Odv.colors.ink2)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { open = false; onShare(entry) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { open = false; onSave(entry) })
+            if (!entry.isFolder) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { open = false; onShare(entry) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { open = false; onSave(entry) })
+            }
             DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_recents)) }, onClick = { open = false; onRemove(entry) })
         }
     }
