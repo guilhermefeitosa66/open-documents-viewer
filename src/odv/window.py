@@ -106,11 +106,13 @@ class Pane(Gtk.Box):
         doc.connect("first-content", lambda d: (page.set_loading(False),
                                                 self.window.bench.file_first_content(d.name, started)))
         doc.connect("loaded", lambda d: self.window.bench.file_loaded(d.name, started))
-        doc.connect("mode-changed", lambda d: self._sync_switch())
-        doc.connect("changed-on-disk", self._on_changed_on_disk)
+        # Tabs can be dragged to the other pane: always ask the window where
+        # the document lives now instead of assuming this pane.
+        doc.connect("mode-changed", lambda d: self.window.pane_of(d) and self.window.pane_of(d)._sync_switch())
+        doc.connect("changed-on-disk", lambda d: self.window.pane_of(d) and self.window.pane_of(d).reload_doc(d))
         return page
 
-    def _on_changed_on_disk(self, doc):
+    def reload_doc(self, doc):
         page = self.view.get_page(doc)
         if page is None:
             return
@@ -251,6 +253,7 @@ class Window(Adw.ApplicationWindow):
         self._actions()
         self._sync_sidebar_buttons()
 
+        self.connect("close-request", self._on_close_request)
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop.connect("drop", self._on_drop)
         self.add_controller(drop)
@@ -352,6 +355,63 @@ class Window(Adw.ApplicationWindow):
         for p in self.panes:
             (p.add_css_class if split else p.remove_css_class)("pane-split")
 
+    # -- session ----------------------------------------------------------------
+    def session_state(self) -> dict:
+        panes = []
+        for pane in self.panes:
+            docs = pane.docs()
+            current = pane.current_doc()
+            panes.append({
+                "tabs": [{"path": d.path, "mode": d.mode, "scroll": round(d.scroll_position(), 1)} for d in docs],
+                "selected": docs.index(current) if current in docs else 0,
+            })
+        width, height = self.get_default_size()
+        return {
+            "folder": self.folder,
+            "sidebar": self.split_view.get_show_sidebar(),
+            "panes": panes,
+            "active": self.panes.index(self.active_pane) if self.active_pane in self.panes else 0,
+            "size": [width, height],
+            "maximized": self.is_maximized(),
+        }
+
+    def restore_session(self, state: dict) -> None:
+        if state.get("size"):
+            self.set_default_size(*state["size"])
+        if state.get("maximized"):
+            self.maximize()
+        if state.get("folder"):
+            self.open_folder(state["folder"])
+            self.split_view.set_show_sidebar(bool(state.get("sidebar", True)))
+        for i, saved in enumerate(state.get("panes") or []):
+            if i == 1:
+                self.toggle_split(open_current=False)
+            pane = self.panes[i]
+            for tab in saved["tabs"]:
+                doc = DocumentPage(tab["path"], self.open_path, tab.get("mode"), scroll=tab.get("scroll") or None)
+                pane._append(doc)
+            page = pane.view.get_nth_page(saved.get("selected", 0))
+            if page:
+                pane.view.set_selected_page(page)
+        active = state.get("active", 0)
+        if 0 <= active < len(self.panes):
+            self.set_active_pane(self.panes[active])
+        self._update_stack()
+        self._update_title()
+
+    def _on_close_request(self, _window):
+        from odv import session, settings
+
+        if settings.get("restore_session") and not self.bench.enabled:
+            session.save(self.session_state())
+        return False
+
+    def pane_of(self, doc):
+        for pane in self.panes:
+            if doc in pane.docs():
+                return pane
+        return None
+
     def set_active_pane(self, pane):
         if pane is self.active_pane or pane not in self.panes:
             return
@@ -387,7 +447,7 @@ class Window(Adw.ApplicationWindow):
         self._style_panes()
         self.split_action.set_state(GLib.Variant.new_boolean(False))
 
-    def toggle_split(self):
+    def toggle_split(self, open_current=True):
         if len(self.panes) > 1:
             self._remove_pane(self.panes[1])
             self._update_stack()
@@ -398,7 +458,7 @@ class Window(Adw.ApplicationWindow):
         width = self.paned.get_width()
         if width > 0:
             self.paned.set_position(width // 2)
-        if doc is not None:
+        if doc is not None and open_current:
             # Same file on both sides; Markdown and CSV show the other view.
             other = ("source" if doc.mode == "formatted" else "formatted") if doc.has_formatted else None
             pane.open(doc.path, other)

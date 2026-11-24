@@ -6,7 +6,7 @@
 import json
 import os
 
-DEFAULTS = {"theme": "libre-apps", "background": True, "watch": True}
+DEFAULTS = {"theme": "libre-apps", "background": True, "watch": True, "restore_session": True}
 
 _values: dict | None = None
 _listeners: list = []

@@ -222,16 +222,17 @@ def test_small_text_colour_passes_contrast():
 def test_settings_round_trip(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     settings.reset_cache()
-    assert settings.load() == {"theme": "libre-apps", "background": True, "watch": True}
+    d = settings.DEFAULTS
+    assert settings.load() == d
     settings.save({"theme": "kitty", "background": False})
-    assert settings.load() == {"theme": "kitty", "background": False, "watch": True}
+    assert settings.load() == {**d, "theme": "kitty", "background": False}
     (tmp_path / "open-documents-viewer" / "settings.json").write_text('{"theme": 3, "x": 1}')
-    assert settings.load() == {"theme": "libre-apps", "background": True, "watch": True}
+    assert settings.load() == d
     # set() keeps every other key.
     settings.reset_cache()
     settings.set("watch", False)
     settings.set("theme", "neon")
-    assert settings.load() == {"theme": "neon", "background": True, "watch": False}
+    assert settings.load() == {**d, "theme": "neon", "watch": False}
     settings.reset_cache()
 
 
@@ -423,3 +424,20 @@ def test_link_resolution(tmp_path):
     assert r("javascript:alert(1)") == ("ignored", None, None)
     assert r("") == ("ignored", None, None)
     assert r(f"file://{tmp_path}/docs/b.md") == ("local", str(tmp_path / "docs" / "b.md"), None)
+
+
+def test_session_drops_what_is_gone(tmp_path, monkeypatch):
+    from odv import session
+
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    a = tmp_path / "a.md"
+    a.write_text("x")
+    assert session.load() is None
+    session.save({"folder": str(tmp_path / "gone"), "panes": [
+        {"tabs": [{"path": str(a), "mode": "source", "scroll": 10}, {"path": str(tmp_path / "b.md")}], "selected": 1},
+        {"tabs": [{"path": str(tmp_path / "c.md")}], "selected": 0}]})
+    state = session.load()
+    assert state["folder"] is None
+    assert state["panes"] == [{"tabs": [{"path": str(a), "mode": "source", "scroll": 10}], "selected": 0}]
+    session.save({"folder": None, "panes": []})
+    assert session.load() is None

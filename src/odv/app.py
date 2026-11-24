@@ -44,7 +44,7 @@ class Application(Adw.Application):
             os.path.join(DATA_DIR, "icons"))
         Gtk.Window.set_default_icon_name(APP_ID)
         for name, cb, accels in (
-            ("quit", lambda *a: self.quit(), ["<Control>q"]),
+            ("quit", lambda *a: self._quit(), ["<Control>q"]),
             ("about", self._about, []),
             ("new-window", lambda *a: self._window(new=True).present(), ["<Control>n"]),
         ):
@@ -54,6 +54,12 @@ class Application(Adw.Application):
             if accels:
                 self.set_accels_for_action(f"app.{name}", accels)
 
+    def _quit(self):
+        win = self.get_active_window()
+        if win is not None and hasattr(win, "_on_close_request"):
+            win._on_close_request(win)
+        self.quit()
+
     def _window(self, new=False):
         from odv.window import Window
 
@@ -61,7 +67,15 @@ class Application(Adw.Application):
         return win or Window(self)
 
     def do_activate(self):
-        self._window().present()
+        from odv import session, settings
+
+        fresh = self.get_active_window() is None
+        win = self._window()
+        if fresh and not self.bench.enabled and settings.get("restore_session"):
+            state = session.load()
+            if state:
+                win.restore_session(state)
+        win.present()
 
     def do_open(self, files, n_files, hint):
         win = self._window(new=self._new_window)

@@ -157,6 +157,10 @@ CATALOG: dict[str, dict[str, str]] = {
     "Keeps the scroll position. Turn off for files that change all the time.": {
         "pt": "Mantém a posição da rolagem. Desligue para arquivos que mudam o tempo todo.",
         "es": "Mantiene la posición de desplazamiento. Desactívalo para archivos que cambian todo el tiempo."},
+    "Reopen the last session": {"pt": "Reabrir a última sessão", "es": "Reabrir la última sesión"},
+    "The folder, tabs, split and scroll positions, when the app starts without files.": {
+        "pt": "A pasta, as abas, a tela dividida e as posições de rolagem, quando o app abre sem arquivos.",
+        "es": "La carpeta, las pestañas, la vista dividida y las posiciones, cuando la app se abre sin archivos."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

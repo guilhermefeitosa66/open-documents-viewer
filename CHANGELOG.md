@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.7.0 (2026-11-24)
+
+- Added: the app reopens the last session (folder, tabs, split, views and scroll positions) when started without files; Preferences can turn it off.
+- Fixed: a tab dragged to the other pane now reloads and switches views in the pane it is in.
+
 ## 0.6.0 (2026-11-24)
 
 - Added: links to another file with an anchor (other.md#section) open that file at the section.

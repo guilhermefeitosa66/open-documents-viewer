@@ -275,7 +275,9 @@ def test_theme_background_rules(config_dir):
     import json
 
     saved = json.loads((config_dir / "open-documents-viewer" / "settings.json").read_text())
-    assert saved == {"theme": "libre-apps", "background": True, "watch": True}
+    from odv import settings
+
+    assert saved == {**settings.DEFAULTS, "theme": "libre-apps", "background": True}
 
 
 def test_background_waits_for_first_frame(config_dir):
@@ -506,3 +508,72 @@ def test_links_between_files_and_external(tmp_path):
     assert r["opened"] == ("other.md", 2)
     assert r["section"] == "Part 4"
     assert r["dialog"] == "AlertDialog"
+
+
+def test_session_round_trip(tmp_path):
+    from odv import session
+
+    folder = tmp_path / "proj"
+    folder.mkdir()
+    a = folder / "a.md"
+    a.write_text("# A\n\n" + "text\n\n" * 400)
+    b = folder / "b.py"
+    b.write_text("".join(f"x{i} = {i}\n" for i in range(400)))
+
+    def first(win, r):
+        win.open_folder(str(folder))
+        win.open_path(str(a))
+        win.open_path(str(b))
+        yield 1.0
+        win.toggle_split()
+        yield 1.0
+        left = win.panes[0].current_doc()
+        left.views["source"].get_vadjustment().set_value(900)
+        yield 0.3
+        win._on_close_request(win)
+        r["saved"] = session.load()
+
+    r = run_app(first)
+    saved = r["saved"]
+    assert saved["folder"] == str(folder)
+    assert [t["path"] for t in saved["panes"][0]["tabs"]] == [str(a), str(b)]
+    assert saved["panes"][0]["selected"] == 1 and saved["panes"][0]["tabs"][1]["scroll"] >= 800
+    assert len(saved["panes"]) == 2
+
+    def second(win, r):
+        yield 2.0
+        r["folder"] = win.folder
+        r["panes"] = [[d.name for d in p.docs()] for p in win.panes]
+        doc = win.panes[0].current_doc()
+        r["current"] = doc.name
+        r["scroll"] = doc.scroll_position()
+
+    r = run_app(second)
+    assert r["folder"] == str(folder)
+    assert r["panes"][0] == ["a.md", "b.py"] and len(r["panes"]) == 2
+    assert r["current"] == "b.py" and r["scroll"] >= 800
+
+
+def test_tab_moved_to_the_other_pane_reloads_there(tmp_path):
+    path = tmp_path / "moving.txt"
+    path.write_text("one\n")
+
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.py"))
+        win.open_path(str(path))
+        yield 0.8
+        win.toggle_split()
+        yield 0.5
+        left, right = win.panes
+        page = left.find_page(str(path))
+        left.view.transfer_page(page, right.view, 0)
+        yield 0.3
+        path.write_text("two\n")
+        yield 1.5
+        doc = right.find_page(str(path))
+        r["right"] = buffer_text(doc.get_child()).strip() if doc else None
+        r["left"] = [d.name for d in left.docs()]
+
+    r = run_app(scenario)
+    assert r["right"] == "two"
+    assert "moving.txt" not in r["left"]

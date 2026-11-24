@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.7.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: the app reopens the last session (folder, tabs, split, views and scroll positions) when started without files; Preferences can turn it off.</li>
+        <li>Fixed: a tab dragged to the other pane now reloads and switches views in the pane it is in.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.6.0" date="2026-11-24">
       <description>
         <ul>

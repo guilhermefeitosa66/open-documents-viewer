@@ -126,6 +126,12 @@ class PreferencesDialog(Adw.PreferencesDialog if hasattr(Adw, "PreferencesDialog
         watch_row.set_active(settings.get("watch"))
         watch_row.connect("notify::active", lambda row, _p: settings.set("watch", row.get_active()))
         files_group.add(watch_row)
+        session_row = Adw.SwitchRow(
+            title=_("Reopen the last session"),
+            subtitle=_("The folder, tabs, split and scroll positions, when the app starts without files."))
+        session_row.set_active(settings.get("restore_session"))
+        session_row.connect("notify::active", lambda row, _p: settings.set("restore_session", row.get_active()))
+        files_group.add(session_row)
         page.add(files_group)
         self._sync()
 
