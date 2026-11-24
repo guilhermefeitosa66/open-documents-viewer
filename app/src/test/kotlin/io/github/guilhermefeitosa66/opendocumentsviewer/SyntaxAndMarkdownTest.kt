@@ -111,9 +111,20 @@ class LexerTest {
     }
 
     @Test
+    fun diffAndLog() {
+        assertEquals(TokenType.STRING, Languages.DIFF.lexer.tokens("+added")[0].second)
+        assertEquals(TokenType.TAG, Languages.DIFF.lexer.tokens("-removed")[0].second)
+        assertEquals(TokenType.SECTION, Languages.DIFF.lexer.tokens("@@ -1,2 +1,3 @@")[0].second)
+        val log = Languages.LOG.lexer.tokens("2026-11-24 12:00:01.123 ERROR boom")
+        assertTrue("ERROR" to TokenType.TAG in log)
+        assertTrue(log.first().second == TokenType.COMMENT)
+        assertTrue(Languages.LOG.lexer.tokens("I said hello").isEmpty())
+    }
+
+    @Test
     fun everyLanguageSurvivesNastyInput() {
         val nasty = listOf("", "\"", "'", "/*", "\"\"\"", "${'$'}{", "<!--", "[", "a = \"unterminated", "\\", "0x", "1e", "@", "#")
-        for (lang in Languages.all + listOf(Languages.JSON, Languages.MARKDOWN, Languages.DOTENV, Languages.CSV)) {
+        for (lang in Languages.all + listOf(Languages.JSON, Languages.MARKDOWN, Languages.DOTENV, Languages.CSV, Languages.RTF)) {
             var state = 0
             for (line in nasty) state = lang.lexer.tokenize(line, state, Tokens())
         }

@@ -159,7 +159,7 @@ class DocumentLoader(private val context: Context) {
                 size = if (meta.size >= 0) meta.size else length.toLong(),
                 text = decoded.text,
                 charset = decoded.charset,
-                type = DocumentTypes.detect(meta.name, mime),
+                type = DocumentTypes.refineByContent(DocumentTypes.detect(meta.name, mime), decoded.text),
                 truncated = truncated,
                 location = meta.location,
                 modified = stamp(uri).second,

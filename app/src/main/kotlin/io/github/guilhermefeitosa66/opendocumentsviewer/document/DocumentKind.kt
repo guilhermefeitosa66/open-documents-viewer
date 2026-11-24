@@ -53,7 +53,10 @@ object DocumentTypes {
         if (ext == "tsv" || ext == "tab") return DocumentType(DocumentKind.TSV, null, "TSV")
 
         Languages.byFileName(lower)?.let { return DocumentType(DocumentKind.CODE, it, it.badge) }
-        if (ext.isNotEmpty()) Languages.byExtension(ext)?.let { return DocumentType(DocumentKind.CODE, it, it.badge) }
+        if (ext.isNotEmpty()) Languages.byExtension(ext)?.let {
+            // Prose formats (logs, subtitles, reST...) stay wrapped text, with their highlighting.
+            return DocumentType(if (ext in plainExt) DocumentKind.PLAIN else DocumentKind.CODE, it, it.badge)
+        }
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
         val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
@@ -71,6 +74,29 @@ object DocumentTypes {
             "application/x-sh", "text/x-sh", "application/x-shellscript", "text/x-shellscript" -> DocumentType(DocumentKind.CODE, Languages.SHELL, "SH")
             else -> DocumentType(DocumentKind.PLAIN, null, if (ext.isNotEmpty() && ext.length <= 4) ext.uppercase() else "TXT")
         }
+    }
+
+    private val interpreters = mapOf(
+        "sh" to Languages.SHELL, "bash" to Languages.SHELL, "zsh" to Languages.SHELL, "ksh" to Languages.SHELL, "dash" to Languages.SHELL,
+        "fish" to Languages.SHELL, "python" to Languages.PYTHON, "python3" to Languages.PYTHON, "python2" to Languages.PYTHON,
+        "node" to Languages.JAVASCRIPT, "nodejs" to Languages.JAVASCRIPT, "deno" to Languages.TYPESCRIPT, "bun" to Languages.TYPESCRIPT,
+        "ruby" to Languages.RUBY, "perl" to Languages.PERL, "php" to Languages.PHP, "lua" to Languages.LUA, "Rscript" to Languages.R,
+        "pwsh" to Languages.POWERSHELL, "julia" to Languages.JULIA, "elixir" to Languages.ELIXIR, "escript" to Languages.ERLANG,
+        "kotlin" to Languages.KOTLIN, "groovy" to Languages.GROOVY, "make" to Languages.MAKEFILE, "awk" to Languages.SHELL,
+    )
+
+    /**
+     * Files without a known extension that start with a shebang (`#!/usr/bin/env python3`) get the
+     * interpreter's highlighting.
+     */
+    fun refineByContent(type: DocumentType, text: String): DocumentType {
+        if (type.language != null || type.kind != DocumentKind.PLAIN || !text.startsWith("#!")) return type
+        val first = text.substring(2, text.indexOf('\n').let { if (it < 0) minOf(text.length, 200) else it }).trim()
+        val parts = first.split(Regex("\\s+"))
+        var prog = parts.firstOrNull()?.substringAfterLast('/') ?: return type
+        if (prog == "env") prog = parts.drop(1).firstOrNull { !it.startsWith("-") }?.substringAfterLast('/') ?: return type
+        val lang = interpreters[prog] ?: interpreters[prog.trimEnd { it.isDigit() || it == '.' }] ?: return type
+        return DocumentType(DocumentKind.CODE, lang, lang.badge)
     }
 
     /** Type for text shared from another app (no file name): markdown if it looks like it. */

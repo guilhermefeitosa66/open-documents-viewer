@@ -57,7 +57,7 @@ object Languages {
         )
     })
 
-    val GROOVY = Language("groovy", "Groovy / Gradle", "GRDL", setOf("groovy", "gradle", "gvy"), lexerFactory = {
+    val GROOVY = Language("groovy", "Groovy / Gradle", "GRDL", setOf("groovy", "gradle", "gvy", "jenkinsfile"), setOf("jenkinsfile"), lexerFactory = {
         GenericLexer(
             LanguageSpec(
                 keywords = words("""def class interface enum trait extends implements import package return if else for while
@@ -247,7 +247,7 @@ object Languages {
         )
     })
 
-    val RUBY = Language("ruby", "Ruby", "RB", setOf("rb", "rake", "gemspec", "ru"), setOf("gemfile", "rakefile", "podfile", "fastfile", "vagrantfile"), lexerFactory = {
+    val RUBY = Language("ruby", "Ruby", "RB", setOf("rb", "rake", "gemspec", "ru"), setOf("gemfile", "rakefile", "podfile", "fastfile", "vagrantfile", "brewfile", "guardfile", "appfile"), lexerFactory = {
         GenericLexer(
             LanguageSpec(
                 keywords = words("""alias and begin break case class def defined? do else elsif end ensure for if in module next
@@ -407,11 +407,199 @@ object Languages {
 
     val CONF = Language(
         "conf", "Config", "CONF", setOf("gitignore", "dockerignore", "npmignore", "gitattributes", "htaccess"),
-        setOf(".gitignore", ".dockerignore", ".npmignore", ".gitattributes", ".htaccess", "codeowners", "requirements.txt", ".nvmrc", ".tool-versions"),
+        setOf(".gitignore", ".dockerignore", ".npmignore", ".gitattributes", ".htaccess", "codeowners", "requirements.txt", ".nvmrc", ".tool-versions", "procfile", "brewfile.lock", ".mailmap", ".prettierignore", ".eslintignore", "justfile"),
         lexerFactory = {
             GenericLexer(LanguageSpec(lineComments = listOf("#"), strings = listOf(StringRule("\""))))
         },
     )
+
+
+    val JULIA = Language("julia", "Julia", "JL", setOf("jl"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""function end if elseif else for while return module using import export struct mutable begin let do
+                try catch finally macro quote abstract primitive type const global local break continue where in isa"""),
+            literals = words("true false nothing missing NaN Inf"),
+            lineComments = listOf("#"), blockComments = listOf("#=" to "=#"),
+            strings = listOf(StringRule("\"\"\"", multiline = true, interpolation = true), StringRule("\"", interpolation = true), StringRule("'", maxLength = 10)),
+            annotationPrefix = '@', capitalizedTypes = true,
+        ))
+    })
+
+    val HASKELL = Language("haskell", "Haskell", "HS", setOf("hs", "lhs"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""module where import qualified as hiding data type newtype class instance deriving if then else case of
+                let in do forall infix infixl infixr default family"""),
+            literals = words("True False Nothing Just Left Right"),
+            lineComments = listOf("--"), blockComments = listOf("{-" to "-}"),
+            strings = listOf(StringRule("\""), StringRule("'", maxLength = 10)),
+            capitalizedTypes = true, identExtra = "'",
+        ))
+    })
+
+    val ELIXIR = Language("elixir", "Elixir", "EX", setOf("ex", "exs", "heex", "eex"), setOf("mix.lock"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""def defp defmodule defmacro defstruct defprotocol defimpl defdelegate defguard do end fn case cond if else
+                unless when with for receive after try catch rescue raise import alias use require quote unquote in and or not"""),
+            literals = words("true false nil"),
+            lineComments = listOf("#"),
+            strings = listOf(StringRule("\"\"\"", multiline = true), StringRule("\""), StringRule("'")),
+            annotationPrefix = '@', variablePrefix = ':', capitalizedTypes = true, identExtra = "?!",
+        ))
+    })
+
+    val ERLANG = Language("erlang", "Erlang", "ERL", setOf("erl", "hrl"), setOf("rebar.config"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("after and andalso band begin bnot bor bsl bsr bxor case catch cond div end fun if let not of or orelse receive rem try when xor"),
+            literals = words("true false undefined ok error"),
+            lineComments = listOf("%"),
+            strings = listOf(StringRule("\""), StringRule("'")),
+            annotationPrefix = '-', variablePrefix = '?',
+        ))
+    })
+
+    val LISP = Language("lisp", "Lisp / Clojure", "LISP", setOf("clj", "cljs", "cljc", "edn", "lisp", "lsp", "cl", "el", "scm", "ss", "rkt", "fnl"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""def defn defn- defmacro defmulti defmethod defrecord defprotocol deftype defun defvar defparameter defpackage
+                let let* letfn fn lambda if when unless cond case do loop recur ns require import use quote progn setq setf define begin"""),
+            literals = words("nil true false t"),
+            lineComments = listOf(";"),
+            strings = listOf(StringRule("\"", multiline = true)),
+            variablePrefix = ':', identExtra = "-!?*<>=/+.&",
+        ))
+    })
+
+    val OCAML = Language("ocaml", "OCaml", "ML", setOf("ml", "mli", "mll", "mly", "re", "rei"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""let in rec and match with function fun type module struct sig end open include if then else begin
+                val mutable of when as try exception raise external functor object method inherit new private virtual for to downto do done while"""),
+            literals = words("true false None Some"),
+            blockComments = listOf("(*" to "*)"),
+            strings = listOf(StringRule("\""), StringRule("'", maxLength = 6)),
+            capitalizedTypes = true, identExtra = "'",
+        ))
+    })
+
+    val FSHARP = Language("fsharp", "F#", "FS", setOf("fs", "fsi", "fsx"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""let in rec and match with function fun type module namespace open if then else elif begin end val mutable
+                of when as try finally raise member static override abstract default interface inherit new do done for to downto while yield return async use"""),
+            literals = words("true false null None Some"),
+            lineComments = listOf("//"), blockComments = listOf("(*" to "*)"),
+            strings = listOf(StringRule("\"\"\"", multiline = true, escape = null), StringRule("\""), StringRule("'", maxLength = 6)),
+            annotationPrefix = '#', capitalizedTypes = true,
+        ))
+    })
+
+    val ZIG = Language("zig", "Zig", "ZIG", setOf("zig", "zon"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""fn pub const var struct enum union opaque if else while for switch return try catch defer errdefer
+                comptime inline export extern test break continue orelse and or error async await suspend resume threadlocal usingnamespace"""),
+            literals = words("true false null undefined unreachable"),
+            types = words("u8 u16 u32 u64 usize i8 i16 i32 i64 isize f32 f64 bool void anyerror anytype type noreturn"),
+            lineComments = listOf("//"),
+            strings = listOf(StringRule("\""), StringRule("'", maxLength = 10)),
+            annotationPrefix = '@', capitalizedTypes = true,
+        ))
+    })
+
+    val NIM = Language("nim", "Nim", "NIM", setOf("nim", "nims", "nimble"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""proc func method iterator template macro var let const type object enum tuple ref ptr if elif else when case of
+                for while in notin is isnot return yield break continue import from include export try except finally raise discard defer block and or not"""),
+            literals = words("true false nil"),
+            lineComments = listOf("#"), blockComments = listOf("#[" to "]#"),
+            strings = listOf(StringRule("\"\"\"", multiline = true), StringRule("\""), StringRule("'", maxLength = 6)),
+            capitalizedTypes = true,
+        ))
+    })
+
+    val BATCH = Language("batch", "Batch", "BAT", setOf("bat", "cmd"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("echo set if else for in do goto call exit setlocal endlocal shift pause start cd pushd popd not exist defined errorlevel"),
+            caseInsensitive = true,
+            lineComments = listOf("rem ", "REM ", "::", "@rem"),
+            strings = listOf(StringRule("\"")),
+            variablePrefix = '%',
+        ))
+    })
+
+    val GRAPHQL = Language("graphql", "GraphQL", "GQL", setOf("graphql", "gql", "graphqls"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("query mutation subscription fragment on type input enum interface union scalar schema extend directive implements repeatable"),
+            literals = words("true false null"),
+            types = words("Int Float String Boolean ID"),
+            lineComments = listOf("#"),
+            strings = listOf(StringRule("\"\"\"", multiline = true), StringRule("\"")),
+            variablePrefix = '$', annotationPrefix = '@', capitalizedTypes = true,
+        ))
+    })
+
+    val PROTOBUF = Language("protobuf", "Protocol Buffers", "PROTO", setOf("proto"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("syntax edition package import option message enum service rpc returns repeated optional required oneof map reserved extend stream extensions to max public weak"),
+            literals = words("true false"),
+            types = words("double float int32 int64 uint32 uint64 sint32 sint64 fixed32 fixed64 sfixed32 sfixed64 bool string bytes"),
+            lineComments = cComments, blockComments = cBlock,
+            strings = listOf(StringRule("\""), StringRule("'")),
+            capitalizedTypes = true,
+        ))
+    })
+
+    val HCL = Language("hcl", "HCL / Terraform", "HCL", setOf("tf", "tfvars", "hcl", "nomad"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("resource data variable output module provider locals terraform for_each count dynamic content for in if depends_on lifecycle backend required_providers"),
+            literals = words("true false null"),
+            lineComments = listOf("#", "//"), blockComments = cBlock,
+            strings = listOf(StringRule("\"", interpolation = true)),
+            identExtra = "-",
+        ))
+    })
+
+    val NIX = Language("nix", "Nix", "NIX", setOf("nix"), setOf("flake.lock"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("let in with rec inherit if then else assert import or"),
+            literals = words("true false null"),
+            lineComments = listOf("#"), blockComments = cBlock,
+            strings = listOf(StringRule("''", multiline = true, escape = null, interpolation = true), StringRule("\"", interpolation = true)),
+            identExtra = "-'",
+        ))
+    })
+
+    val LATEX = Language("latex", "LaTeX", "TEX", setOf("tex", "sty", "cls", "ltx", "dtx", "ins"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            lineComments = listOf("%"),
+            strings = listOf(StringRule("$$", multiline = true, escape = null), StringRule("$", escape = null)),
+            annotationPrefix = '\\',
+        ))
+    })
+
+    val BIBTEX = Language("bibtex", "BibTeX", "BIB", setOf("bib"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            lineComments = listOf("%"),
+            strings = listOf(StringRule("\"")),
+            annotationPrefix = '@', identExtra = "-",
+        ))
+    })
+
+    val NGINX = Language("nginx", "nginx / Apache config", "CONF", setOf("nginx", "vhost"), setOf("nginx.conf", "httpd.conf", "apache2.conf", "caddyfile"), lexerFactory = {
+        GenericLexer(LanguageSpec(
+            keywords = words("""server location listen root index server_name proxy_pass include return rewrite try_files upstream http events
+                ssl_certificate ssl_certificate_key access_log error_log add_header set if map alias VirtualHost Directory Location ServerName
+                DocumentRoot RewriteEngine RewriteRule RewriteCond Require AllowOverride Options LoadModule Listen"""),
+            literals = words("on off"),
+            lineComments = listOf("#"),
+            strings = listOf(StringRule("\""), StringRule("'")),
+            variablePrefix = '$', identExtra = "_",
+        ))
+    })
+
+    val DIFF = Language("diff", "Diff", "DIFF", setOf("diff", "patch", "rej"), lexerFactory = { DiffLexer })
+    val LOG = Language("log", "Log", "LOG", setOf("log"), lexerFactory = { LogLexer })
+    val PO = Language("po", "gettext", "PO", setOf("po", "pot"), lexerFactory = { PoLexer })
+    val SUBTITLES = Language("subtitles", "Subtitles", "SUB", setOf("srt", "vtt"), lexerFactory = { SubtitleLexer })
+    val RST = Language("rst", "reStructuredText", "RST", setOf("rst", "rest"), lexerFactory = { LightMarkupLexer("=-~^\"'`#*+", listOf(".. "), listOf(":")) })
+    val ASCIIDOC = Language("asciidoc", "AsciiDoc", "ADOC", setOf("adoc", "asciidoc", "asc"), lexerFactory = { LightMarkupLexer("=", listOf("//"), listOf(":", "[")) })
+    val ORG = Language("org", "Org", "ORG", setOf("org"), lexerFactory = { LightMarkupLexer("*", listOf("# "), listOf("#+")) })
 
     val JSON = Language("json", "JSON", "JSON", lexerFactory = { JsonLexer })
     val YAML = Language("yaml", "YAML", "YAML", setOf("yaml", "yml"), setOf(".clang-format", ".clang-tidy"), lexerFactory = { YamlLexer })
@@ -432,6 +620,8 @@ object Languages {
     val all: List<Language> = listOf(
         KOTLIN, JAVA, GROOVY, SCALA, C, CPP, CSHARP, GO, RUST, SWIFT, DART, JAVASCRIPT, TYPESCRIPT, PYTHON, RUBY,
         PHP, SHELL, POWERSHELL, SQL, LUA, R, PERL, CSS, DOCKERFILE, MAKEFILE, CMAKE, CONF, YAML, INI, XML, HTML,
+        JULIA, HASKELL, ELIXIR, ERLANG, LISP, OCAML, FSHARP, ZIG, NIM, BATCH, GRAPHQL, PROTOBUF, HCL, NIX, LATEX, BIBTEX,
+        NGINX, DIFF, LOG, PO, SUBTITLES, RST, ASCIIDOC, ORG,
     )
 
     private val byExt: Map<String, Language> by lazy { all.flatMap { l -> l.extensions.map { it to l } }.toMap() }

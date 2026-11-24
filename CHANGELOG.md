@@ -2,6 +2,16 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.14.0] - 2026-11-24
+
+### Added
+- More languages and formats: Julia, Haskell, Elixir, Erlang, Clojure/Lisp/Scheme/Racket, OCaml/Reason, F#, Zig, Nim,
+  Windows batch, GraphQL, Protocol Buffers, Terraform/HCL, Nix, LaTeX, BibTeX, nginx/Apache/Caddy config, diff/patch,
+  logs (severity colored, timestamps dimmed), gettext .po/.pot, SubRip/WebVTT subtitles, reStructuredText, AsciiDoc, Org.
+- File names: Jenkinsfile, Procfile, Brewfile, Guardfile, justfile, .mailmap and more.
+- Files without an extension are recognized by their shebang (`#!/usr/bin/env python3`, `#!/bin/bash`, node, ruby...).
+- Logs, subtitles and light markup stay wrapped prose with highlighting.
+
 ## [0.13.0] - 2026-11-24
 
 ### Added

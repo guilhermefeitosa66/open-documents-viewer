@@ -511,3 +511,131 @@ object RtfLexer : Lexer {
         return 0
     }
 }
+
+/** Unified diffs and patches: added and removed lines, hunks, file headers. */
+object DiffLexer : Lexer {
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        val n = line.length
+        when {
+            line.startsWith("+++") || line.startsWith("---") -> out.add(0, n, TokenType.HEADING)
+            line.startsWith("@@") -> out.add(0, n, TokenType.SECTION)
+            line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("new file") ||
+                line.startsWith("deleted file") || line.startsWith("similarity") || line.startsWith("rename ") -> out.add(0, n, TokenType.COMMENT)
+            line.startsWith("+") -> out.add(0, n, TokenType.STRING)
+            line.startsWith("-") -> out.add(0, n, TokenType.TAG)
+            line.startsWith("\\") -> out.add(0, n, TokenType.COMMENT)
+        }
+        return 0
+    }
+}
+
+/** Logs: severity words colored, timestamps dimmed. */
+object LogLexer : Lexer {
+    private val time = Regex("^\\[?\\d{2,4}[-/.]\\d{1,2}[-/.]\\d{1,4}[T ]?[\\d:.,]*(Z|[+-]\\d{2}:?\\d{2})?\\]?|^\\[?\\d{1,2}:\\d{2}:\\d{2}[.,]?\\d*\\]?")
+    private val level = Regex("\\b(FATAL|CRITICAL|SEVERE|ERROR|ERR|E|WARNING|WARN|W|INFO|I|NOTICE|DEBUG|D|TRACE|VERBOSE|V)\\b")
+
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        time.find(line)?.let { out.add(it.range.first, it.range.last + 1, TokenType.COMMENT) }
+        // Only the first level word counts, and single letters only as Android logcat tags ("E/Tag", " E ").
+        val m = level.find(line) ?: return 0
+        val w = m.value
+        if (w.length == 1) {
+            val next = line.getOrNull(m.range.last + 1)
+            val prev = line.getOrNull(m.range.first - 1)
+            val logcat = next == '/' || (prev == ' ' && next == ' ')
+            if (!logcat) return 0
+        }
+        val type = when (w) {
+            "FATAL", "CRITICAL", "SEVERE", "ERROR", "ERR", "E" -> TokenType.TAG
+            "WARNING", "WARN", "W" -> TokenType.NUMBER
+            "INFO", "I", "NOTICE" -> TokenType.TYPE
+            else -> TokenType.COMMENT
+        }
+        out.add(m.range.first, m.range.last + 1, type)
+        if (type == TokenType.TAG) out.add(m.range.last + 1, line.length, TokenType.TAG)
+        return 0
+    }
+}
+
+/** gettext .po/.pot catalogs. */
+object PoLexer : Lexer {
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        val t = line.trimStart()
+        val lead = line.length - t.length
+        when {
+            t.startsWith("#") -> out.add(lead, line.length, TokenType.COMMENT)
+            t.startsWith("msg") -> {
+                val sp = t.indexOfFirst { it == ' ' || it == '\t' }.let { if (it < 0) t.length else it }
+                out.add(lead, lead + sp, TokenType.KEYWORD)
+                val q = line.indexOf('"', lead + sp)
+                if (q >= 0) out.add(q, line.length, TokenType.STRING)
+            }
+            t.startsWith("\"") -> out.add(lead, line.length, TokenType.STRING)
+        }
+        return 0
+    }
+}
+
+/** SubRip and WebVTT subtitles: cue numbers and timings stand out from the spoken text. */
+object SubtitleLexer : Lexer {
+    private val timing = Regex("^\\s*[\\d:.,]+\\s*-->\\s*[\\d:.,]+.*$")
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        when {
+            timing.matches(line) -> out.add(0, line.length, TokenType.NUMBER)
+            line.isNotBlank() && line.all { it.isDigit() || it.isWhitespace() } -> out.add(0, line.length, TokenType.COMMENT)
+            line.startsWith("WEBVTT") || line.startsWith("NOTE") -> out.add(0, line.length, TokenType.HEADING)
+            else -> {
+                var i = line.indexOf('<')
+                while (i >= 0) {
+                    val e = line.indexOf('>', i)
+                    if (e < 0) break
+                    out.add(i, e + 1, TokenType.TAG)
+                    i = line.indexOf('<', e)
+                }
+            }
+        }
+        return 0
+    }
+}
+
+/**
+ * Light markup (reStructuredText, AsciiDoc, Org): headings by their line markers, comments,
+ * directives and inline literals.
+ */
+class LightMarkupLexer(
+    private val headingChars: String,
+    private val commentPrefixes: List<String>,
+    private val directivePrefixes: List<String>,
+) : Lexer {
+    override fun tokenize(line: String, state: Int, out: Tokens): Int {
+        val n = line.length
+        if (n == 0) return 0
+        for (c in commentPrefixes) if (line.startsWith(c)) { out.add(0, n, TokenType.COMMENT); return 0 }
+        for (d in directivePrefixes) if (line.startsWith(d)) { out.add(0, n, TokenType.ANNOTATION); return 0 }
+        val first = line[0]
+        if (first in headingChars) {
+            var j = 0
+            while (j < n && line[j] == first) j++
+            if (j == n && n >= 3) { out.add(0, n, TokenType.MARKUP); return 0 } // reST underline
+            if (j < n && line[j] == ' ') { out.add(0, j, TokenType.MARKUP); out.add(j, n, TokenType.HEADING); return 0 }
+        }
+        var i = 0
+        while (i < n) {
+            val c = line[i]
+            if (c == '`') {
+                val e = line.indexOf('`', i + 1)
+                if (e > i) { out.add(i, e + 1, TokenType.CODE); i = e + 1; continue }
+            }
+            if ((c == '*' || c == '_' || c == '=' || c == '~' || c == '+' || c == '/') && i + 1 < n && line[i + 1] != ' ' && (i == 0 || line[i - 1] == ' ')) {
+                val e = line.indexOf(c, i + 1)
+                if (e > i + 1 && line[e - 1] != ' ') { out.add(i, i + 1, TokenType.MARKUP); out.add(e, e + 1, TokenType.MARKUP); i = e + 1; continue }
+            }
+            if (c == '[' ) {
+                val e = line.indexOf(']', i + 1)
+                if (e > i) { out.add(i, e + 1, TokenType.LINK); i = e + 1; continue }
+            }
+            i++
+        }
+        return 0
+    }
+}

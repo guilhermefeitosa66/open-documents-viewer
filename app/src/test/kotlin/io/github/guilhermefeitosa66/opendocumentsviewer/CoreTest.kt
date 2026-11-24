@@ -117,6 +117,23 @@ class DocumentTypesTest {
     }
 
     @Test
+    fun moreLanguagesAndShebang() {
+        assertEquals(Languages.ZIG, DocumentTypes.detect("main.zig", null).language)
+        assertEquals(Languages.HCL, DocumentTypes.detect("main.tf", null).language)
+        assertEquals(Languages.GROOVY, DocumentTypes.detect("Jenkinsfile", null).language)
+        assertEquals(Languages.CONF, DocumentTypes.detect("Procfile", null).language)
+        assertEquals(Languages.DIFF, DocumentTypes.detect("fix.patch", null).language)
+        val log = DocumentTypes.detect("build.log", null)
+        assertEquals(DocumentKind.PLAIN, log.kind)
+        assertEquals(Languages.LOG, log.language)
+        val plain = DocumentTypes.detect("deploy", null)
+        assertEquals(Languages.PYTHON, DocumentTypes.refineByContent(plain, "#!/usr/bin/env python3\nprint(1)").language)
+        assertEquals(Languages.SHELL, DocumentTypes.refineByContent(plain, "#!/bin/bash\necho").language)
+        assertEquals(Languages.JAVASCRIPT, DocumentTypes.refineByContent(plain, "#!/usr/bin/env -S node --flag\n").language)
+        assertEquals(plain, DocumentTypes.refineByContent(plain, "no shebang"))
+    }
+
+    @Test
     fun imagesAndSvg() {
         assertEquals(DocumentKind.IMAGE, DocumentTypes.detect("photo.JPG", null).kind)
         assertEquals(DocumentKind.IMAGE, DocumentTypes.detect("anim.gif", null).kind)
