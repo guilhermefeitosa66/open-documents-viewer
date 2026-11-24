@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.30.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Changed: New app icon: four tiles on near-black, for slides, spreadsheets, documents and code.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.29.0" date="2026-11-24">
       <description>
         <ul>
