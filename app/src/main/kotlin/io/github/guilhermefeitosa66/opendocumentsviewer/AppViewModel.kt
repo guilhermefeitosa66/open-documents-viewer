@@ -110,7 +110,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun openUri(uri: Uri, mimeHint: String?, external: Boolean, grantFlags: Int = 0, fromPicker: Boolean = false) {
+    fun openUri(
+        uri: Uri,
+        mimeHint: String?,
+        external: Boolean,
+        grantFlags: Int = 0,
+        fromPicker: Boolean = false,
+        folderDocumentId: String? = null,
+        anchor: String? = null,
+    ) {
         openStartedAt = SystemClock.uptimeMillis()
         closeSession()
         viewModelScope.launch {
@@ -122,7 +130,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 external = external,
                 initialFormatted = entry?.formatted ?: true,
                 initialWrap = entry?.wrap,
-                initialPosition = entry?.position ?: ViewPosition(),
+                initialPosition = if (anchor != null) ViewPosition() else entry?.position ?: ViewPosition(),
+                folderDocumentId = folderDocumentId,
+                pendingAnchor = anchor,
             )
             session = s
             s.start({ loader.load(uri, mimeHint) }) { doc -> remember(doc, s, persisted || entry?.persisted == true) }
@@ -178,6 +188,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 openedAt = System.currentTimeMillis(), persisted = true, location = null,
             )
             recents = withContext(Dispatchers.IO) { store.upsert(entry) }
+        }
+    }
+
+    /**
+     * Follows a relative link of [from] inside its granted folder. Returns false when the link cannot
+     * be followed (no folder, outside it, not found).
+     */
+    fun followRelativeLink(from: DocumentSession, link: String) {
+        val f = folder
+        val docId = from.folderDocumentId
+        if (f == null || docId == null) {
+            message = R.string.relative_links_need_folder
+            return
+        }
+        val (path, fragment) = io.github.guilhermefeitosa66.opendocumentsviewer.folder.RelativePath.split(link)
+        viewModelScope.launch {
+            val target = withContext(Dispatchers.IO) { f.resolve(docId, path) }
+            when {
+                target == null -> message = R.string.link_not_found
+                target.isDirectory -> message = R.string.link_is_folder
+                else -> openUri(f.documentUri(target), target.mimeType, external = false, folderDocumentId = target.documentId, anchor = fragment)
+            }
         }
     }
 

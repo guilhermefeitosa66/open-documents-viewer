@@ -73,7 +73,6 @@
     <string name="too_large_to_copy">Too large to copy at once. Select a part instead.</string>
     <string name="copied">Copied</string>
     <string name="error_no_app_for_link">No app can open this link.</string>
-    <string name="relative_links_later">Links to other files need folder access, which comes in the next version.</string>
     <string name="error_no_app">No app can do this.</string>
     <plurals name="files">
         <item quantity="one">%d item</item>
@@ -108,4 +107,10 @@
     <string name="folder_error">Could not list this folder. Open it again from the start screen.</string>
     <string name="no_matches_in_folder">Nothing with this name in the opened folders.</string>
     <string name="enter_folder">Enter %1$s</string>
+    <string name="relative_links_need_folder">To follow links between files, open the folder that holds them (Open folder).</string>
+    <string name="link_not_found">The linked file was not found in this folder.</string>
+    <string name="link_is_folder">This link points to a folder.</string>
+    <string name="open_link_title">Leave the app?</string>
+    <string name="open_link_body">This link opens in another app:</string>
+    <string name="open_link_confirm">Open</string>
 </resources>

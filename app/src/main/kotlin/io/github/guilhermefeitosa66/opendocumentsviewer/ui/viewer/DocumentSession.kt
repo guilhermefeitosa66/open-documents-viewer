@@ -86,6 +86,10 @@ class DocumentSession(
     initialFormatted: Boolean,
     initialWrap: Boolean?,
     private val initialPosition: ViewPosition,
+    /** The document's id inside the granted folder it was opened from, for relative links. */
+    val folderDocumentId: String? = null,
+    /** "#section" to scroll to once the formatted view is ready (a link "other.md#section"). */
+    private var pendingAnchor: String? = null,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -168,6 +172,7 @@ class DocumentSession(
             source = withContext(Dispatchers.Default) { buildSource(doc) }
         }
         load = LoadState.Ready(doc)
+        applyPendingAnchor()
         source?.let(::finishStates)
         (formatted as? Formatted.Json)?.content?.let(::finishStates)
         restorePosition()
@@ -177,6 +182,7 @@ class DocumentSession(
             if (formatted == null && doc.type.kind.hasFormattedView) {
                 formatted = withContext(Dispatchers.Default) { buildFormatted(doc) }
                     .also { f -> (f as? Formatted.Json)?.content?.let(::finishStates) }
+                applyPendingAnchor()
             }
             if (formatted == Formatted.Unavailable) restorePosition()
         }
@@ -256,6 +262,15 @@ class DocumentSession(
 
     /** A list item the formatted view should scroll to (a markdown #anchor link). */
     var jumpTarget by mutableStateOf<Int?>(null)
+
+    private fun applyPendingAnchor() {
+        val a = pendingAnchor ?: return
+        if (formatted !is Formatted.Markdown) return
+        pendingAnchor = null
+        if (mode != ViewMode.FORMATTED) preferFormatted = true
+        restored = true
+        jumpToAnchor(a)
+    }
 
     fun jumpToAnchor(anchor: String): Boolean {
         val f = formatted as? Formatted.Markdown ?: return false

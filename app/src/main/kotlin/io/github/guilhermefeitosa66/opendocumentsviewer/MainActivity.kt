@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.IntentCompat
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.FileTransfer
+import io.github.guilhermefeitosa66.opendocumentsviewer.folder.RelativePath
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.Shareable
 import io.github.guilhermefeitosa66.opendocumentsviewer.recents.RecentEntry
@@ -157,7 +158,7 @@ class MainActivity : ComponentActivity() {
             FolderScreen(
                 folder = folder,
                 onBack = { if (!folder.up()) vm.closeFolder() },
-                onOpenFile = { entry -> vm.openUri(folder.documentUri(entry), entry.mimeType, external = false) },
+                onOpenFile = { entry -> vm.openUri(folder.documentUri(entry), entry.mimeType, external = false, folderDocumentId = entry.documentId) },
             )
             BackHandler {
                 when {
@@ -197,6 +198,21 @@ class MainActivity : ComponentActivity() {
         }
 
         vm.copyProgress?.let { CopyProgressDialog(it) }
+
+        pendingExternalLink?.let { url ->
+            ExternalLinkDialog(
+                url = url,
+                onOpen = {
+                    pendingExternalLink = null
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    } catch (_: Exception) {
+                        vm.message = R.string.error_no_app_for_link
+                    }
+                },
+                onDismiss = { pendingExternalLink = null },
+            )
+        }
 
         val message = vm.message
         LaunchedEffect(message) {
@@ -278,14 +294,8 @@ class MainActivity : ComponentActivity() {
         override fun openLink(url: String, session: DocumentSession) {
             when {
                 url.startsWith("#") -> session.jumpToAnchor(url.removePrefix("#"))
-                url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:") || url.startsWith("tel:") -> {
-                    try {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                    } catch (_: ActivityNotFoundException) {
-                        vm.message = R.string.error_no_app_for_link
-                    }
-                }
-                else -> vm.message = R.string.relative_links_later
+                RelativePath.isRelative(url) -> vm.followRelativeLink(session, url)
+                else -> pendingExternalLink = url
             }
         }
 
@@ -296,6 +306,9 @@ class MainActivity : ComponentActivity() {
             reportFullyDrawn()
         }
     }
+
+    /** A link out of the app (browser, mail...), waiting for the user to confirm. */
+    private var pendingExternalLink by mutableStateOf<String?>(null)
 
     private val saveCopyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val target = result.data?.data
@@ -406,5 +419,22 @@ private fun CopyProgressDialog(progress: Float) {
                 )
             }
         },
+    )
+}
+
+@Composable
+private fun ExternalLinkDialog(url: String, onOpen: () -> Unit, onDismiss: () -> Unit) {
+    val colors = Odv.colors
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.open_link_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.open_link_body), color = colors.ink2)
+                Text(url, fontFamily = io.github.guilhermefeitosa66.opendocumentsviewer.ui.theme.MonoFamily, fontSize = 13.sp, color = colors.ink, maxLines = 4)
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = onOpen) { Text(stringResource(R.string.open_link_confirm)) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

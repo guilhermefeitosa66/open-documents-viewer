@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.0] - 2026-11-24
+
+### Added
+- Relative links in markdown (`docs/setup.md`, `../README.md`, `My%20Notes.md#section`) open the linked file inside
+  the app when it lives in an opened folder; the `#anchor` part scrolls to the heading. Links never leave the granted folder.
+- Links to the web, mail or phone ask for confirmation before leaving the app.
+
 ## [0.3.0] - 2026-11-24
 
 ### Added

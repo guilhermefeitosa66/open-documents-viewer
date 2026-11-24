@@ -92,15 +92,35 @@ class FolderSession(
 
     fun documentUri(entry: FolderEntry): Uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, entry.documentId)
 
+    private val parentOf = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val listed = java.util.concurrent.ConcurrentHashMap<String, List<FolderEntry>>()
+
     private fun load(tree: FolderTree, parentId: String) {
         tree.markLoading(parentId)
         scope.launch {
-            val entries = withContext(Dispatchers.IO) { list(parentId) }
+            val entries = withContext(Dispatchers.IO) { listCached(parentId, refresh = true) }
             if (entries == null) error = true
             tree.setChildren(parentId, entries.orEmpty())
             version++
         }
     }
+
+    private fun listCached(parentId: String, refresh: Boolean = false): List<FolderEntry>? {
+        if (!refresh) listed[parentId]?.let { return it }
+        val entries = list(parentId) ?: return null
+        listed[parentId] = entries
+        for (e in entries) parentOf[e.documentId] = parentId
+        return entries
+    }
+
+    /**
+     * Finds the document a relative link points to ("../docs/setup.md"), starting from the folder
+     * that holds [fromDocumentId]. Never leaves the granted folder. Runs queries: call off the main thread.
+     */
+    fun resolve(fromDocumentId: String, relativePath: String): FolderEntry? =
+        RelativePath.resolve(relativePath, start = parentOf[fromDocumentId] ?: return null, parent = { parentOf[it] }) { dir ->
+            listCached(dir)
+        }
 
     private fun list(parentId: String): List<FolderEntry>? = try {
         val uri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentId)

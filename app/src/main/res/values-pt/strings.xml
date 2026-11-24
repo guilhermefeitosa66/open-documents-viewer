@@ -72,7 +72,6 @@
     <string name="too_large_to_copy">Grande demais para copiar de uma vez. Selecione um trecho.</string>
     <string name="copied">Copiado</string>
     <string name="error_no_app_for_link">Nenhum app abre este link.</string>
-    <string name="relative_links_later">Links para outros arquivos precisam de acesso à pasta, que vem na próxima versão.</string>
     <string name="error_no_app">Nenhum app faz isso.</string>
     <plurals name="files">
         <item quantity="one">%d item</item>
@@ -107,4 +106,10 @@
     <string name="folder_error">Não deu para listar esta pasta. Abra de novo pela tela inicial.</string>
     <string name="no_matches_in_folder">Nada com esse nome nas pastas abertas.</string>
     <string name="enter_folder">Entrar em %1$s</string>
+    <string name="relative_links_need_folder">Para seguir links entre arquivos, abra a pasta que os contém (Abrir pasta).</string>
+    <string name="link_not_found">O arquivo do link não está nesta pasta.</string>
+    <string name="link_is_folder">Este link aponta para uma pasta.</string>
+    <string name="open_link_title">Sair do app?</string>
+    <string name="open_link_body">Este link abre em outro app:</string>
+    <string name="open_link_confirm">Abrir</string>
 </resources>
