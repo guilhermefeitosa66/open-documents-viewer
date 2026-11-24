@@ -4,6 +4,12 @@
     <!-- No permissions at all: files come through the Storage Access Framework or from the
          app that shares them, and nothing ever goes to the network. -->
 
+    <!-- Only to offer "Open in Open PDF Viewer" when that app (same author) is installed. -->
+    <queries>
+        <package android:name="io.github.guilhermefeitosa66.openpdfviewer" />
+        <package android:name="io.github.guilhermefeitosa66.openpdfviewer.debug" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

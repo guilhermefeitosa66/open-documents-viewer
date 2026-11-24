@@ -191,4 +191,5 @@
     <string name="pdf_fit_width">Ajustar à largura</string>
     <string name="pdf_fit_page">Ajustar à página</string>
     <string name="copy">Copiar</string>
+    <string name="open_in_pdf_viewer">Abrir no Open PDF Viewer</string>
 </resources>

@@ -88,6 +88,9 @@ interface ViewerActions {
     fun copyAll(doc: LoadedDocument)
     /** Copies a piece of text (a PDF selection). */
     fun copyText(text: String, label: String)
+    /** Open PDF Viewer's package when it is installed, for "Open in Open PDF Viewer". */
+    val pdfViewerPackage: String? get() = null
+    fun openInPdfViewer(doc: LoadedDocument) {}
     fun share(doc: LoadedDocument)
     fun shareAsText(doc: LoadedDocument)
     fun saveCopy(doc: LoadedDocument)
@@ -426,6 +429,9 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                     DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
                     if (doc.uri != null && doc.bytes == null && doc.type.kind != DocumentKind.PDF) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.encoding_menu)) }, onClick = { menu = false; onEncoding() })
+                    }
+                    if (doc.type.kind == DocumentKind.PDF && doc.uri != null && actions.pdfViewerPackage != null) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.open_in_pdf_viewer)) }, onClick = { menu = false; actions.openInPdfViewer(doc) })
                     }
                     if (session.formatted is Formatted.Pdf && session.mode == ViewMode.FORMATTED) {
                         HorizontalDivider(color = Odv.colors.line)

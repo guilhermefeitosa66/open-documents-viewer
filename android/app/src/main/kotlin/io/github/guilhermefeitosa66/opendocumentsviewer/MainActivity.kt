@@ -432,6 +432,21 @@ class MainActivity : ComponentActivity() {
 
         override fun openSwitcher() = openSwitcher()
 
+        override val pdfViewerPackage: String? get() = this@MainActivity.pdfViewerPackage
+
+        override fun openInPdfViewer(doc: LoadedDocument) {
+            val pkg = this@MainActivity.pdfViewerPackage ?: return
+            val uri = doc.uri ?: return
+            if (!vm.canRead(uri)) { vm.message = R.string.error_permission_body; return }
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                setPackage(pkg)
+                clipData = ClipData.newRawUri(doc.name, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            try { startActivity(intent) } catch (_: ActivityNotFoundException) { vm.message = R.string.error_no_app }
+        }
+
         override fun copyText(text: String, label: String) {
             val cm = getSystemService(ClipboardManager::class.java)
             cm.setPrimaryClip(ClipData.newPlainText(label, text))
@@ -532,6 +547,15 @@ class MainActivity : ComponentActivity() {
     }
 
     /** The text of what is on screen: the pretty JSON when that is shown, the file otherwise. */
+    /** Open PDF Viewer (same author), when installed: the release first, else a debug build. */
+    private val pdfViewerPackage: String? by lazy {
+        listOf("io.github.guilhermefeitosa66.openpdfviewer", "io.github.guilhermefeitosa66.openpdfviewer.debug").firstOrNull { pkg ->
+            // The filters ask for a content: URI as well as the type.
+            val probe = Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("content://probe/document.pdf"), "application/pdf").setPackage(pkg)
+            packageManager.queryIntentActivities(probe, 0).isNotEmpty()
+        }
+    }
+
     private fun currentText(session: DocumentSession, doc: LoadedDocument): String {
         val f = session.formatted
         return if (session.mode == ViewMode.FORMATTED && f is Formatted.Json) f.content.text else doc.text

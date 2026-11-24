@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.32.0] - 2026-11-24
+
+### Added
+- "Open in Open PDF Viewer" in the menu of a PDF, shown only when that app (same author) is installed: it gets the
+  file with a read permission, for its PDF tools. This viewer stays a viewer. The manifest declares the package in
+  `<queries>` (no permission).
+
 ## [0.31.0] - 2026-11-24
 
 ### Added

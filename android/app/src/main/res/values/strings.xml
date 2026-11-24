@@ -192,4 +192,5 @@
     <string name="pdf_fit_width">Fit width</string>
     <string name="pdf_fit_page">Fit page</string>
     <string name="copy">Copy</string>
+    <string name="open_in_pdf_viewer">Open in Open PDF Viewer</string>
 </resources>
