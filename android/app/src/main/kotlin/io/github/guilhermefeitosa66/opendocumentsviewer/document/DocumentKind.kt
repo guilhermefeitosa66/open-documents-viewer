@@ -26,6 +26,12 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     EPUB(hasFormattedView = true, prose = true),
     /** FictionBook 2: XML, formatted as a book. */
     FB2(hasFormattedView = true, prose = true),
+    /** E-mail message (.eml): headers, body and attachments. */
+    EMAIL(hasFormattedView = true, prose = true),
+    /** Contacts (.vcf). */
+    VCARD(hasFormattedView = true, prose = true),
+    /** Calendar (.ics): events and tasks. */
+    ICALENDAR(hasFormattedView = true, prose = true),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -52,6 +58,9 @@ object DocumentTypes {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
+        if (ext == "eml" || ext == "mht" || ext == "mhtml") return DocumentType(DocumentKind.EMAIL, null, "EML")
+        if (ext == "vcf" || ext == "vcard") return DocumentType(DocumentKind.VCARD, null, "VCF")
+        if (ext == "ics" || ext == "ical" || ext == "ifb") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")
         if (ext == "fb2") return DocumentType(DocumentKind.FB2, Languages.XML, "FB2")
         if (ext == "ipynb") return DocumentType(DocumentKind.NOTEBOOK, Languages.JSON, "IPYNB")
         if (ext == "rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
@@ -71,6 +80,9 @@ object DocumentTypes {
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
         val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
+        if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
+        if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")
+        if (m == "text/calendar") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")
         if (m == "application/epub+zip") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (m == "application/x-fictionbook+xml" || m == "application/x-fictionbook") return DocumentType(DocumentKind.FB2, Languages.XML, "FB2")
         if (m == "application/rtf" || m == "text/rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")

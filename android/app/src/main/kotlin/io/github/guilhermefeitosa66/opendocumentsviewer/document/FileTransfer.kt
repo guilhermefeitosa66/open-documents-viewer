@@ -14,6 +14,8 @@ sealed interface Shareable {
 
     data class File(val uri: Uri, override val name: String, val mimeType: String?) : Shareable
     data class Text(val text: String, override val name: String) : Shareable
+    /** Bytes held by the viewer (an e-mail attachment): only saved, never shared. */
+    class Bytes(val bytes: ByteArray, override val name: String, val mimeType: String?) : Shareable
 }
 
 object FileTransfer {
@@ -70,6 +72,7 @@ object FileTransfer {
         type = when (item) {
             is Shareable.File -> mimeFor(item.name, item.mimeType)
             is Shareable.Text -> "text/plain"
+            is Shareable.Bytes -> item.mimeType?.takeIf { it.contains('/') } ?: mimeFor(item.name, null)
         }
         putExtra(Intent.EXTRA_TITLE, item.name)
     }
@@ -83,6 +86,7 @@ object FileTransfer {
         out.use { o ->
             when (item) {
                 is Shareable.Text -> o.write(item.text.toByteArray())
+                is Shareable.Bytes -> copyStream(item.bytes.inputStream(), o, item.bytes.size.toLong(), onProgress)
                 is Shareable.File -> {
                     val input: InputStream = resolver.openInputStream(item.uri) ?: error("cannot read")
                     input.use { copyStream(it, o, totalBytes, onProgress) }

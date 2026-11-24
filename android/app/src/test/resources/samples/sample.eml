@@ -1,0 +1,44 @@
+From: =?UTF-8?Q?Jo=C3=A3o_Horta?= <joao@example.org>
+To: Ana <ana@example.org>
+Cc: team@example.org
+Subject: =?UTF-8?B?UmVjZWl0YXMgZGEgaG9ydGE=?= and
+ more
+Date: Tue, 24 Nov 2026 09:30:00 -0300
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="outer"
+
+This is a multi-part message in MIME format.
+--outer
+Content-Type: multipart/related; boundary="rel"
+
+--rel
+Content-Type: multipart/alternative; boundary="alt"
+
+--alt
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Ol=C3=A1 Ana,
+
+Plain version.
+--alt
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>Ol=C3=A1 <b>Ana</b>,</p><p><img src=3D"cid:leaf@x"></p><scr=
+ipt>alert(1)</script><p>See the <a href=3D"https://example.org">site</a>.</p></body></html>
+--alt--
+--rel
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-ID: <leaf@x>
+
+iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDasKb6QAAAABJRU5ErkJggg==
+--rel--
+--outer
+Content-Type: application/pdf; name="notes.pdf"
+Content-Disposition: attachment; filename*=UTF-8''horta%20notas.pdf
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQgZmFrZSBwZGYgZm9yIHRlc3RzCg==
+--outer--

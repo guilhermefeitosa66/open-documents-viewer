@@ -145,4 +145,27 @@
     <string name="line_endings_mixed">Mixed</string>
     <string name="error_drm_title">This e-book is locked</string>
     <string name="error_drm_body">It is protected with DRM, which this app cannot open. Open it in the app of the store it came from.</string>
+    <string name="mail_from">From</string>
+    <string name="mail_to">To</string>
+    <string name="mail_cc">Cc</string>
+    <string name="mail_date">Date</string>
+    <string name="mail_attachments">Attachments</string>
+    <string name="card_phone">Phone</string>
+    <string name="card_email">Email</string>
+    <string name="card_address">Address</string>
+    <string name="card_organization">Organization</string>
+    <string name="card_title">Job title</string>
+    <string name="card_birthday">Birthday</string>
+    <string name="card_website">Website</string>
+    <string name="card_note">Note</string>
+    <string name="card_unnamed">No name</string>
+    <string name="cal_location">Where</string>
+    <string name="cal_organizer">Organizer</string>
+    <string name="cal_repeats">Repeats</string>
+    <string name="cal_task">task</string>
+    <string name="cal_untitled">(no title)</string>
+    <string name="cal_all_day">all day</string>
+    <string name="kind_email">E-mail</string>
+    <string name="kind_contacts">Contacts</string>
+    <string name="kind_calendar">Calendar</string>
 </resources>

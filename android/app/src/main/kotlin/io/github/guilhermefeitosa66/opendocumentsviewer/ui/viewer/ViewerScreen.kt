@@ -401,6 +401,9 @@ private fun subtitle(session: DocumentSession): String {
     val parts = ArrayList<String>()
     parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF ||
         doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
+        else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
+        else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
+        else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
         else if (doc.type.kind == DocumentKind.NOTEBOOK) "Jupyter" else doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
         DocumentKind.HTML -> "HTML"

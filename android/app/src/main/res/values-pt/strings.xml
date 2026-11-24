@@ -144,4 +144,27 @@
     <string name="line_endings_mixed">Misto</string>
     <string name="error_drm_title">Este e-book está bloqueado</string>
     <string name="error_drm_body">Ele é protegido com DRM, que este app não abre. Abra no app da loja de onde ele veio.</string>
+    <string name="mail_from">De</string>
+    <string name="mail_to">Para</string>
+    <string name="mail_cc">Cc</string>
+    <string name="mail_date">Data</string>
+    <string name="mail_attachments">Anexos</string>
+    <string name="card_phone">Telefone</string>
+    <string name="card_email">E-mail</string>
+    <string name="card_address">Endereço</string>
+    <string name="card_organization">Empresa</string>
+    <string name="card_title">Cargo</string>
+    <string name="card_birthday">Aniversário</string>
+    <string name="card_website">Site</string>
+    <string name="card_note">Nota</string>
+    <string name="card_unnamed">Sem nome</string>
+    <string name="cal_location">Onde</string>
+    <string name="cal_organizer">Organizador</string>
+    <string name="cal_repeats">Repete</string>
+    <string name="cal_task">tarefa</string>
+    <string name="cal_untitled">(sem título)</string>
+    <string name="cal_all_day">dia inteiro</string>
+    <string name="kind_email">E-mail</string>
+    <string name="kind_contacts">Contatos</string>
+    <string name="kind_calendar">Agenda</string>
 </resources>

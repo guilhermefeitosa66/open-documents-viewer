@@ -50,6 +50,7 @@
                 <data android:mimeType="application/xhtml+xml" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="application/epub+zip" />
+                <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/x-fictionbook+xml" />
                 <data android:mimeType="application/x-fictionbook" />
                 <!-- Many file managers send .md, .env, .kt... with this type. Binary files are
@@ -70,6 +71,7 @@
                 <data android:mimeType="application/javascript" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="application/epub+zip" />
+                <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/x-fictionbook+xml" />
                 <data android:mimeType="application/x-fictionbook" />
                 <data android:mimeType="application/octet-stream" />

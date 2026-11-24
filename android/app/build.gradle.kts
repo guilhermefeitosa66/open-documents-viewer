@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 118
-        versionName = "0.19.0"
+        versionCode = 119
+        versionName = "0.20.0"
     }
 
     buildFeatures {

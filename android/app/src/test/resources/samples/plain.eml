@@ -1,0 +1,11 @@
+From: Bob <bob@example.org>
+Subject: Hi
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+
+Olá, first paragraph.
+
+> quoted line
+> another
+
+Bye.

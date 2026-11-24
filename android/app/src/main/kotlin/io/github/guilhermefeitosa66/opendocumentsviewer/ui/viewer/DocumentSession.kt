@@ -71,6 +71,8 @@ sealed interface Formatted {
         val partial: Boolean = false,
         /** A table of contents of its own (e-books); otherwise the outline is built from the headings. */
         val toc: List<OutlineItem>? = null,
+        /** E-mail attachments, saved through links `attachment:<index>`. */
+        val attachments: List<io.github.guilhermefeitosa66.opendocumentsviewer.markdown.MailModel.Attachment> = emptyList(),
     ) : Formatted
     data class Json(val content: TextContent) : Formatted
     data class Table(val table: DelimitedTable) : Formatted
@@ -258,6 +260,12 @@ class DocumentSession(
         return TextContent.build(doc.text, language) { job.isActive }
     }
 
+    private fun headingAnchors(blocks: List<MdBlock>): Map<String, Int> {
+        val anchors = HashMap<String, Int>()
+        blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
+        return anchors
+    }
+
     private suspend fun buildFormatted(doc: LoadedDocument): Formatted {
         val job = kotlinx.coroutines.currentCoroutineContext()
         return when (doc.type.kind) {
@@ -300,6 +308,26 @@ class DocumentSession(
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
             } ?: Formatted.Unavailable
+            DocumentKind.EMAIL -> try {
+                val m = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.MailModel.parse(doc.text, doc.charset)
+                job.ensureActive()
+                val blocks = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.MailModel.blocks(m, FormatLabels.mail)
+                Formatted.Markdown(blocks, headingAnchors(blocks), attachments = m.attachments)
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
+            DocumentKind.VCARD -> try {
+                val blocks = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.CardModel.vcardBlocks(doc.text, FormatLabels.card)
+                if (blocks.isEmpty()) Formatted.Unavailable else Formatted.Markdown(blocks, headingAnchors(blocks))
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
+            DocumentKind.ICALENDAR -> try {
+                val blocks = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.CardModel.icsBlocks(doc.text, FormatLabels.calendar)
+                if (blocks.isEmpty()) Formatted.Unavailable else Formatted.Markdown(blocks, headingAnchors(blocks))
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
             DocumentKind.FB2 -> try {
                 val html = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.Fb2Model.toHtml(doc.text)
                 job.ensureActive()

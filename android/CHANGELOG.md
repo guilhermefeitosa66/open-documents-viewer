@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.20.0] - 2026-11-24
+
+### Added
+- E-mail messages (.eml, also .mht): subject, sender, recipients and date, then the message (HTML shown safely: no
+  scripts, no remote pictures; inline pictures shown) or its plain text, with quoted lines indented. Attachments are
+  listed with their size; tap one to save it to a folder you choose.
+- Contacts (.vcf, vCard 2.1 to 4.0): one card per contact with photo, phones, e-mails, addresses, organization,
+  birthday, website and notes.
+- Calendars (.ics): events and tasks in date order, in your time zone, with place, organizer, repetition and
+  description.
+
 ## [0.19.0] - 2026-11-24
 
 ### Added

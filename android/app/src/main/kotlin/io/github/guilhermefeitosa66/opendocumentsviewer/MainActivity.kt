@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.FormatLabels.load(this)
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             val theme = Themes.byId(vm.themeId)
@@ -461,6 +462,11 @@ class MainActivity : ComponentActivity() {
         override fun openLink(url: String, session: DocumentSession) {
             when {
                 url.startsWith("#") -> session.jumpToAnchor(url.removePrefix("#"))
+                url.startsWith(io.github.guilhermefeitosa66.opendocumentsviewer.markdown.MailModel.ATTACHMENT_SCHEME) -> {
+                    val i = url.substringAfter(':').toIntOrNull()
+                    val a = (session.formatted as? io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.Formatted.Markdown)?.attachments?.getOrNull(i ?: -1)
+                    if (a != null) saveItem(Shareable.Bytes(a.bytes, a.name, a.mimeType))
+                }
                 RelativePath.isRelative(url) -> vm.followRelativeLink(session, url)
                 else -> pendingExternalLink = url
             }
