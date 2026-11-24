@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.5.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: document outline in the sidebar (Ctrl+Shift+L) for Markdown, in the formatted and the source view; a click jumps to the section and the current section follows the scroll.</li>
+        <li>Changed: the sidebar switches between folder, search and outline, and opens without a folder (F9).</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.0" date="2026-11-24">
       <description>
         <ul>

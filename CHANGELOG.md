@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.5.0 (2026-11-24)
+
+- Added: document outline in the sidebar (Ctrl+Shift+L) for Markdown, in the formatted and the source view; a click jumps to the section and the current section follows the scroll.
+- Changed: the sidebar switches between folder, search and outline, and opens without a folder (F9).
+
 ## 0.4.0 (2026-11-24)
 
 - Added: go to file (Ctrl+P) with fuzzy search over the open folder.

@@ -209,6 +209,19 @@ class MarkdownView(Gtk.ScrolledWindow):
         it = self.buffer.get_iter_at_offset(off)
         self.view.scroll_to_iter(it, 0.0, True, 0.0, 0.0)
 
+    def scroll_to_offset(self, offset: int) -> None:
+        it = self.buffer.get_iter_at_offset(offset)
+        mark = self.buffer.create_mark(None, it, True)
+        self.view.scroll_to_mark(mark, 0.0, True, 0.0, 0.0)
+        self.buffer.delete_mark(mark)
+
+    def top_offset(self) -> int:
+        """Buffer offset at the top of the visible area."""
+        rect = self.view.get_visible_rect()
+        found = self.view.get_iter_at_location(rect.x, rect.y + 4)
+        it = found[1] if isinstance(found, tuple) else found
+        return it.get_offset()
+
     def shutdown(self):
         self._cancelled = True
         theme.remove_listener(self._on_theme)

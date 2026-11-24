@@ -122,6 +122,14 @@ CATALOG: dict[str, dict[str, str]] = {
     "Theme: {name}": {"pt": "Tema: {name}", "es": "Tema: {name}"},
     "Background picture: on/off": {"pt": "Imagem de fundo: ligar/desligar",
                                    "es": "Imagen de fondo: activar/desactivar"},
+    # outline
+    "Outline": {"pt": "Sumário", "es": "Índice"},
+    "Outline (Ctrl+Shift+L)": {"pt": "Sumário (Ctrl+Shift+L)", "es": "Índice (Ctrl+Mayús+L)"},
+    "Folder": {"pt": "Pasta", "es": "Carpeta"},
+    "Show sidebar": {"pt": "Mostrar barra lateral", "es": "Mostrar barra lateral"},
+    "Show sidebar (F9)": {"pt": "Mostrar barra lateral (F9)", "es": "Mostrar barra lateral (F9)"},
+    "No outline for this document.": {"pt": "Este documento não tem sumário.",
+                                      "es": "Este documento no tiene índice."},
     # preferences
     "Appearance": {"pt": "Aparência", "es": "Apariencia"},
     "Theme": {"pt": "Tema", "es": "Tema"},

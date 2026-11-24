@@ -157,24 +157,35 @@ class Window(Adw.ApplicationWindow):
         self.tree = FolderTree(self.open_path)
         from odv.searchpanel import SearchPanel
 
+        from odv.outlinepanel import OutlinePanel
+
         self.search_panel = SearchPanel(self.open_at)
+        self.outline_panel = OutlinePanel()
         self.sidebar_stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
         self.sidebar_stack.add_named(self.tree, "files")
         self.sidebar_stack.add_named(self.search_panel, "search")
+        self.sidebar_stack.add_named(self.outline_panel, "outline")
         self.sidebar_title = Adw.WindowTitle(title="")
-        sidebar_header = Adw.HeaderBar(title_widget=self.sidebar_title)
-        self.search_toggle = Gtk.ToggleButton(icon_name="system-search-symbolic",
+        sidebar_header = Adw.HeaderBar(title_widget=self.sidebar_title, show_title=False)
+        switch = Gtk.Box(css_classes=["linked"])
+        self.files_toggle = Gtk.ToggleButton(icon_name="folder-symbolic", tooltip_text=_("Folder"), active=True)
+        self.search_toggle = Gtk.ToggleButton(icon_name="system-search-symbolic", group=self.files_toggle,
                                               tooltip_text=_("Search in folder (Ctrl+Shift+F)"))
-        self.search_toggle.connect("toggled", self._on_search_toggled)
-        sidebar_header.pack_start(self.search_toggle)
+        self.outline_toggle = Gtk.ToggleButton(icon_name="view-list-symbolic", group=self.files_toggle,
+                                               tooltip_text=_("Outline (Ctrl+Shift+L)"))
+        for name, button in (("files", self.files_toggle), ("search", self.search_toggle),
+                             ("outline", self.outline_toggle)):
+            button.connect("toggled", self._on_sidebar_toggled, name)
+            switch.append(button)
+        sidebar_header.pack_start(switch)
         sidebar_view = Adw.ToolbarView(content=self.sidebar_stack)
         sidebar_view.add_top_bar(sidebar_header)
 
         # Content
         self.title = Adw.WindowTitle(title=APP_NAME)
         header = Adw.HeaderBar(title_widget=self.title)
-        self.sidebar_button = Gtk.ToggleButton(icon_name="sidebar-show-symbolic", visible=False,
-                                               tooltip_text=_("Show folder (F9)"))
+        self.sidebar_button = Gtk.ToggleButton(icon_name="sidebar-show-symbolic",
+                                               tooltip_text=_("Show sidebar (F9)"))
         header.pack_start(self.sidebar_button)
         open_button = Adw.SplitButton(label=_("Open"), action_name="win.open-file", tooltip_text=_("Open a file (Ctrl+O)"))
         open_menu = Gio.Menu()
@@ -236,6 +247,7 @@ class Window(Adw.ApplicationWindow):
         self.connect("destroy", lambda w: theme.remove_listener(self._on_theme_changed))
         self._add_pane()
         self._actions()
+        self._sync_sidebar_buttons()
 
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop.connect("drop", self._on_drop)
@@ -269,6 +281,7 @@ class Window(Adw.ApplicationWindow):
         add("search-folder", self.search_folder, ("<Control><Shift>f",))
         add("quick-open", self.quick_open, ("<Control>p",))
         add("command-palette", self.command_palette, ("<Control><Shift>p",))
+        add("outline", self.show_outline, ("<Control><Shift>l",))
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
         self.set_help_overlay(_shortcuts_window())
@@ -452,7 +465,8 @@ class Window(Adw.ApplicationWindow):
             Item(_("Formatted / source"), "Ctrl+E", act("win.toggle-mode")),
             Item(_("Split View"), "Ctrl+\\", act("win.split")),
             Item(_("Other pane"), "Ctrl+K", act("win.focus-other-pane")),
-            Item(_("Show folder"), "F9", act("win.toggle-sidebar")),
+            Item(_("Show sidebar"), "F9", act("win.toggle-sidebar")),
+            Item(_("Outline"), "Ctrl+Shift+L", act("win.outline")),
             Item(_("Reload"), "Ctrl+R", act("win.reload")),
             Item(_("Close tab"), "Ctrl+W", act("win.close-tab")),
             Item(_("Preferences"), "Ctrl+,", act("win.preferences")),
@@ -478,15 +492,33 @@ class Window(Adw.ApplicationWindow):
         self.search_toggle.set_active(True)
         self.search_panel.focus()
 
-    def _on_search_toggled(self, button):
-        self.sidebar_stack.set_visible_child_name("search" if button.get_active() else "files")
-        if button.get_active():
+    def show_outline(self):
+        if self.split_view.get_show_sidebar() and self.outline_toggle.get_active():
+            self.split_view.set_show_sidebar(False)
+            return
+        self.split_view.set_show_sidebar(True)
+        self.outline_toggle.set_active(True)
+
+    def _on_sidebar_toggled(self, button, name):
+        if not button.get_active():
+            return
+        self.sidebar_stack.set_visible_child_name(name)
+        if name == "search":
             self.search_panel.focus()
+
+    def _sync_sidebar_buttons(self):
+        has_folder = self.folder is not None
+        self.files_toggle.set_sensitive(has_folder)
+        self.search_toggle.set_sensitive(has_folder)
+        if not has_folder:
+            self.outline_toggle.set_active(True)
 
     def open_folder(self, path):
         self.folder = path
         self.tree.set_root(path)
         self.search_panel.set_root(path)
+        self.files_toggle.set_active(True)
+        self._sync_sidebar_buttons()
         self.sidebar_title.set_title(os.path.basename(path) or path)
         self.sidebar_title.set_subtitle(tilde(os.path.dirname(path)))
         self.sidebar_button.set_visible(True)
@@ -513,6 +545,8 @@ class Window(Adw.ApplicationWindow):
 
     def _update_title(self):
         doc = self.active_pane.current_doc() if self.active_pane else None
+        if getattr(self, "outline_panel", None) is not None and self.outline_panel.doc is not doc:
+            self.outline_panel.set_doc(doc)
         if doc is not None:
             self.title.set_title(doc.name)
             self.title.set_subtitle(tilde(os.path.dirname(doc.path)))
@@ -592,8 +626,7 @@ class Window(Adw.ApplicationWindow):
         PreferencesDialog().present_for(self)
 
     def toggle_sidebar(self):
-        if self.folder:
-            self.split_view.set_show_sidebar(not self.split_view.get_show_sidebar())
+        self.split_view.set_show_sidebar(not self.split_view.get_show_sidebar())
 
 
 def GObject_BIDIRECTIONAL():
@@ -610,7 +643,8 @@ def _shortcuts_window():
                      ("<Control>w", _("Close tab")), ("<Control>r", _("Reload"))],
         _("View"): [("<Control>e", _("Formatted / source")), ("<Control>f", _("Find")),
                     ("<Control>backslash", _("Split View")), ("<Control>k", _("Other pane")),
-                    ("F9", _("Show folder")), ("<Control><Shift>f", _("Search in folder")),
+                    ("F9", _("Show sidebar")), ("<Control><Shift>l", _("Outline")),
+                    ("<Control><Shift>f", _("Search in folder")),
                     ("<Control>p", _("Go to file")), ("<Control><Shift>p", _("Run a command")),
                     ("<Control>comma", _("Preferences")),
                     ("<Control>Page_Down", _("Next tab")), ("<Control>Page_Up", _("Previous tab"))],

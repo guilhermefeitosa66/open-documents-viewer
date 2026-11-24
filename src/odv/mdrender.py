@@ -34,10 +34,19 @@ class Link:
 
 
 @dataclass
+class Heading:
+    level: int
+    title: str
+    offset: int  # in the formatted buffer
+    line: int  # 1-based, in the source
+
+
+@dataclass
 class Doc:
     ops: list = field(default_factory=list)
     links: list[Link] = field(default_factory=list)
     headings: dict[str, int] = field(default_factory=dict)  # slug -> offset
+    outline: list[Heading] = field(default_factory=list)
     length: int = 0
 
 
@@ -162,7 +171,10 @@ class _Builder:
             if t == "heading_open":
                 level = int(tok.tag[1])
                 inline = tokens[i + 1]
-                self.doc.headings[slugify(self.plain(inline), self.slugs)] = self.doc.length
+                title = self.plain(inline)
+                self.doc.headings[slugify(title, self.slugs)] = self.doc.length
+                line = (tok.map[0] + 1) if tok.map else 1
+                self.doc.outline.append(Heading(level, title, self.doc.length, line))
                 self.block.append(f"h{level}")
             elif t == "heading_close":
                 self.text("\n")

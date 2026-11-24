@@ -390,3 +390,11 @@ def test_fuzzy_needs_order_and_limits():
     assert fuzzy.score("wodniw", "window") is None
     assert fuzzy.rank("", FILES) == FILES[:50]
     assert len(fuzzy.rank("o", FILES * 30, limit=10)) == 10
+
+
+def test_markdown_outline():
+    doc = mdrender.build("# Title\n\ntext\n\n## One\n\nmore\n\n### Deep `code`\n\n## Two\n")
+    assert [(h.level, h.title, h.line) for h in doc.outline] == [
+        (1, "Title", 1), (2, "One", 5), (3, "Deep code", 9), (2, "Two", 11)]
+    offsets = [h.offset for h in doc.outline]
+    assert offsets == sorted(offsets) and offsets[0] == 0

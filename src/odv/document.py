@@ -34,6 +34,8 @@ class DocumentPage(Gtk.Box):
         "loaded": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "mode-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
         "changed-on-disk": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "outline-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "position-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None,
@@ -55,6 +57,9 @@ class DocumentPage(Gtk.Box):
         self.closed = False
         self._restore_scroll = scroll
         self._goto = goto  # (line, needle) to show once the source view is ready
+        self._outline = []  # odv.mdrender.Heading-like entries: level, title, offset, line
+        self._md_doc = None
+        self._position_timer = 0
         self._ready: set[str] = set()
         self._monitor = None
         self._change_timer = 0
@@ -142,21 +147,72 @@ class DocumentPage(Gtk.Box):
         self.emit("changed-on-disk")
         return False
 
+    # -- outline ----------------------------------------------------------------
+    def _set_outline(self, entries) -> None:
+        self._outline = list(entries)
+        self.emit("outline-changed")
+
+    def outline(self) -> list:
+        return self._outline
+
+    def jump_to(self, entry) -> None:
+        view = self.views.get(self.mode)
+        if self.mode == "formatted" and hasattr(view, "scroll_to_offset"):
+            view.scroll_to_offset(entry.offset)
+        else:
+            self.goto(entry.line, select=False)
+
+    def outline_position(self) -> int:
+        """Index of the outline entry the reader is in, or -1."""
+        if not self._outline:
+            return -1
+        view = self.views.get(self.mode)
+        if view is None:
+            return -1
+        if self.mode == "formatted" and hasattr(view, "top_offset"):
+            here, key = view.top_offset(), (lambda e: e.offset)
+        elif hasattr(view, "view"):
+            rect = view.view.get_visible_rect()
+            found = view.view.get_iter_at_location(rect.x, rect.y + 4)
+            it = found[1] if isinstance(found, tuple) else found
+            here, key = it.get_line() + 1, (lambda e: e.line)
+        else:
+            return -1
+        index = -1
+        for i, entry in enumerate(self._outline):
+            if key(entry) <= here:
+                index = i
+            else:
+                break
+        return index
+
+    def _on_scrolled(self, _adj):
+        if not self._outline or self._position_timer:
+            return
+        self._position_timer = GLib.timeout_add(120, self._emit_position)
+
+    def _emit_position(self):
+        self._position_timer = 0
+        if not self.closed:
+            self.emit("position-changed")
+        return False
+
     def _view_ready(self, mode: str) -> None:
         self._ready.add(mode)
         if mode == "source" and self._goto:
             self._apply_goto()
 
-    def goto(self, line: int, needle: str | None = None) -> None:
-        """Show ``line`` (1-based) in the source view, selecting ``needle`` on it."""
-        self._goto = (line, needle)
+    def goto(self, line: int, needle: str | None = None, select: bool = True) -> None:
+        """Show ``line`` (1-based) in the source view, selecting ``needle`` on it
+        (or the whole line; nothing with ``select=False``)."""
+        self._goto = (line, needle, select)
         if self.mode != "source":
             self.set_mode("source")
         if "source" in self._ready:
             self._apply_goto()
 
     def _apply_goto(self):
-        line, needle = self._goto
+        line, needle, select = (tuple(self._goto) + (True,))[:3]
         self._goto = None
         view = self.views.get("source")
         if view is None:
@@ -170,11 +226,13 @@ class DocumentPage(Gtk.Box):
         match = it.forward_search(needle, Gtk.TextSearchFlags.CASE_INSENSITIVE, end) if needle else None
         if match:
             buf.select_range(match[0], match[1])
-        else:
+        elif select:
             buf.select_range(it, end)
+        # A search result sits a third of the way down; an outline jump at the top.
+        yalign = 0.3 if select or needle else 0.0
         mark = buf.create_mark(None, it, True)
-        tv.scroll_to_mark(mark, 0.1, True, 0.0, 0.3)
-        GLib.timeout_add(120, lambda: (tv.scroll_to_mark(mark, 0.1, True, 0.0, 0.3), buf.delete_mark(mark),
+        tv.scroll_to_mark(mark, 0.0, True, 0.0, yalign)
+        GLib.timeout_add(120, lambda: (tv.scroll_to_mark(mark, 0.0, True, 0.0, yalign), buf.delete_mark(mark),
                                        False)[2])
 
     def scroll_position(self) -> float:
@@ -232,7 +290,7 @@ class DocumentPage(Gtk.Box):
         def work():
             tf = read_text(self.path)
             doc = None
-            if self.kind.kind == "markdown" and self.mode == "formatted":
+            if self.kind.kind == "markdown":  # parsed even for the source view: the outline
                 from odv import mdrender
 
                 doc = mdrender.build(tf.text)
@@ -243,7 +301,11 @@ class DocumentPage(Gtk.Box):
             if self.closed:
                 return
             self._text, doc = result
-            self._build_text_view(self.mode, doc)
+            if doc is not None:
+                self._md_doc = doc
+                if self.mode != "formatted":
+                    self._set_outline(doc.outline)
+            self._build_text_view(self.mode, doc if self.mode == "formatted" else None)
 
         def failed(err):
             self._reading = False
@@ -268,6 +330,7 @@ class DocumentPage(Gtk.Box):
             return
         tf = self._text
         if mode == "formatted" and self.kind.kind == "markdown":
+            doc = doc or self._md_doc
             if doc is None:
                 # Toggled to formatted after the source was read: parse now.
                 def work():
@@ -281,6 +344,7 @@ class DocumentPage(Gtk.Box):
 
             view = MarkdownView(self.path, self._open_path)
             self._add_view(mode, view)
+            self._set_outline(doc.outline)
             view.set_doc(doc, self._first_content, self._loaded)
         else:
             from odv.views.source import SourceView
@@ -291,6 +355,8 @@ class DocumentPage(Gtk.Box):
 
     def _add_view(self, mode, view):
         self.views[mode] = view
+        if hasattr(view, "get_vadjustment"):
+            view.get_vadjustment().connect("value-changed", self._on_scrolled)
         self.stack.add_child(view)
         if self.mode == mode:
             self.stack.set_visible_child(view)
@@ -393,6 +459,9 @@ class DocumentPage(Gtk.Box):
 
     def shutdown(self) -> None:
         self.closed = True
+        if self._position_timer:
+            GLib.source_remove(self._position_timer)
+            self._position_timer = 0
         if self._monitor is not None:
             self._monitor.cancel()
             self._monitor = None

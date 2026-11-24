@@ -440,3 +440,39 @@ def test_quick_open_and_command_palette(tmp_path):
     assert r["opened"] == "parser.py"
     assert r["command"] == "Theme: Dracula"
     assert r["theme"] == "dracula"
+
+
+def test_outline_panel(tmp_path):
+    md = tmp_path / "long.md"
+    parts = []
+    for i in range(1, 9):
+        parts.append(f"## Section {i}\n\n" + "".join(f"Paragraph {i}.{j} with some words.\n\n" for j in range(30)))
+    md.write_text("# Long\n\n" + "".join(parts))
+
+    def scenario(win, r):
+        win.open_path(str(md))
+        yield 1.2
+        win.show_outline()
+        yield 0.3
+        panel = win.outline_panel
+        rows = []
+        i = 0
+        while (row := panel.list.get_row_at_index(i)) is not None:
+            rows.append(row._entry.title)
+            i += 1
+        r["rows"] = rows
+        doc = win.active_pane.current_doc()
+        panel._on_row(None, panel.list.get_row_at_index(6))  # Section 6
+        yield 0.6
+        r["formatted_pos"] = doc.outline_position()
+        r["selected"] = panel.list.get_selected_row().get_index() if panel.list.get_selected_row() else None
+        doc.set_mode("source")
+        yield 0.8
+        panel._on_row(None, panel.list.get_row_at_index(3))  # Section 3
+        yield 0.6
+        r["source_pos"] = doc.outline_position()
+
+    r = run_app(scenario)
+    assert r["rows"] == ["Long"] + [f"Section {i}" for i in range(1, 9)]
+    assert r["formatted_pos"] == 6 and r["selected"] == 6
+    assert r["source_pos"] == 3
