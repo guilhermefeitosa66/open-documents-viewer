@@ -79,15 +79,17 @@ class Pane(Gtk.Box):
                 return page
         return None
 
-    def open(self, path, mode=None, select=True, line=None, needle=None):
+    def open(self, path, mode=None, select=True, line=None, needle=None, anchor=None):
         path = os.path.abspath(path)
         page = self.find_page(path)
         goto = (line, needle) if line else None
         if page is None:
-            doc = DocumentPage(path, self.window.open_path, "source" if goto else mode, goto=goto)
+            doc = DocumentPage(path, self.window.open_path, "source" if goto else mode, goto=goto, anchor=anchor)
             page = self._append(doc)
         elif goto:
             page.get_child().goto(line, needle)
+        elif anchor:
+            page.get_child().go_to_anchor(anchor)
         if select:
             self.view.set_selected_page(page)
         return page.get_child()
@@ -418,7 +420,7 @@ class Window(Adw.ApplicationWindow):
             view.set_selected_page(view.get_nth_page((view.get_page_position(page) + step) % n))
 
     # -- opening --------------------------------------------------------------
-    def open_path(self, path, pane=None):
+    def open_path(self, path, pane=None, anchor=None):
         path = os.path.abspath(os.path.expanduser(path))
         if os.path.isdir(path):
             self.open_folder(path)
@@ -427,7 +429,7 @@ class Window(Adw.ApplicationWindow):
             toast = Adw.Toast(title=_("Not found: {path}").format(path=GLib.markup_escape_text(tilde(path))))
             self._toast(toast)
             return
-        (pane or self.active_pane).open(path)
+        (pane or self.active_pane).open(path, anchor=anchor)
         recents.add(path)
         self._update_stack()
 

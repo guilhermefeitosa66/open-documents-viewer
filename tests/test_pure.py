@@ -398,3 +398,28 @@ def test_markdown_outline():
         (1, "Title", 1), (2, "One", 5), (3, "Deep code", 9), (2, "Two", 11)]
     offsets = [h.offset for h in doc.outline]
     assert offsets == sorted(offsets) and offsets[0] == 0
+
+
+# -- links --------------------------------------------------------------------
+
+from odv import links  # noqa: E402
+
+
+def test_link_resolution(tmp_path):
+    doc = tmp_path / "docs" / "a.md"
+    doc.parent.mkdir()
+    doc.write_text("x")
+    (tmp_path / "docs" / "b.md").write_text("y")
+    (tmp_path / "img").mkdir()
+    r = lambda href: links.resolve(href, str(doc))  # noqa: E731
+    assert r("#usage") == ("anchor", None, "usage")
+    assert r("b.md") == ("local", str(tmp_path / "docs" / "b.md"), None)
+    assert r("b.md#install%20notes") == ("local", str(tmp_path / "docs" / "b.md"), "install notes")
+    assert r("../img") == ("local", str(tmp_path / "img"), None)
+    assert r("nope.md") == ("missing", "nope.md", None)
+    assert r("https://libre-apps.org") == ("external", "https://libre-apps.org", None)
+    assert r("mailto:a@b.c") == ("external", "mailto:a@b.c", None)
+    assert r("//example.org/x") == ("external", "https://example.org/x", None)
+    assert r("javascript:alert(1)") == ("ignored", None, None)
+    assert r("") == ("ignored", None, None)
+    assert r(f"file://{tmp_path}/docs/b.md") == ("local", str(tmp_path / "docs" / "b.md"), None)

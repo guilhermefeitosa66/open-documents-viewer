@@ -39,7 +39,7 @@ class DocumentPage(Gtk.Box):
     }
 
     def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None,
-                 goto: tuple | None = None):
+                 goto: tuple | None = None, anchor: str | None = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("document-area")  # always solid, never the background picture
         self.path = os.path.abspath(path)
@@ -59,6 +59,7 @@ class DocumentPage(Gtk.Box):
         self._goto = goto  # (line, needle) to show once the source view is ready
         self._outline = []  # odv.mdrender.Heading-like entries: level, title, offset, line
         self._md_doc = None
+        self._anchor = anchor
         self._position_timer = 0
         self._ready: set[str] = set()
         self._monitor = None
@@ -112,6 +113,8 @@ class DocumentPage(Gtk.Box):
             self._loaded_sent = True
             after_next_paint(self, lambda: self.emit("loaded"))
             self._watch()
+            if self._anchor:
+                GLib.timeout_add(60, lambda: (self.go_to_anchor(self._anchor), False)[1])
             if self._restore_scroll:
                 self._scroll_to(self._restore_scroll, tries=40)
 
@@ -196,6 +199,19 @@ class DocumentPage(Gtk.Box):
         if not self.closed:
             self.emit("position-changed")
         return False
+
+    def go_to_anchor(self, anchor: str) -> None:
+        """Scroll to a heading anchor (Markdown: the GitHub-style slug)."""
+        self._anchor = None
+        if not self.has_formatted:
+            return
+        if self.mode != "formatted":
+            self.set_mode("formatted")
+        view = self.views.get("formatted")
+        if view is not None and hasattr(view, "scroll_to_heading") and self._loaded_sent:
+            view.scroll_to_heading(anchor)
+        else:
+            self._anchor = anchor
 
     def _view_ready(self, mode: str) -> None:
         self._ready.add(mode)

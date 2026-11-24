@@ -130,6 +130,13 @@ CATALOG: dict[str, dict[str, str]] = {
     "Show sidebar (F9)": {"pt": "Mostrar barra lateral (F9)", "es": "Mostrar barra lateral (F9)"},
     "No outline for this document.": {"pt": "Este documento não tem sumário.",
                                       "es": "Este documento no tiene índice."},
+    # links
+    "Open this link?": {"pt": "Abrir este link?", "es": "¿Abrir este enlace?"},
+    "It opens outside the app:\n{uri}": {"pt": "Ele abre fora do app:\n{uri}", "es": "Se abre fuera de la app:\n{uri}"},
+    "Cancel": {"pt": "Cancelar", "es": "Cancelar"},
+    "Open Link": {"pt": "Abrir link", "es": "Abrir enlace"},
+    "Link target not found: {target}": {"pt": "Destino do link não encontrado: {target}",
+                                        "es": "No se encontró el destino del enlace: {target}"},
     # preferences
     "Appearance": {"pt": "Aparência", "es": "Apariencia"},
     "Theme": {"pt": "Tema", "es": "Tema"},

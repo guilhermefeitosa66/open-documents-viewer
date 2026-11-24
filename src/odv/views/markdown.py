@@ -5,12 +5,11 @@ list of insert operations, applied here under a time budget per idle step.
 """
 
 import bisect
-import os
-from urllib.parse import unquote, urlparse
 
 from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
 from odv import theme
+from odv.i18n import _
 
 MAX_WIDTH = 820
 
@@ -171,10 +170,14 @@ class MarkdownView(Gtk.ScrolledWindow):
         return None
 
     def _on_motion(self, _ctrl, x, y):
-        hand = self._link_at(x, y) is not None
+        link = self._link_at(x, y)
+        hand = link is not None
         if hand != self._hand:
             self._hand = hand
             self.view.set_cursor(Gdk.Cursor.new_from_name("pointer" if hand else "text"))
+        tip = link.href if link else None
+        if tip != self.view.get_tooltip_text():
+            self.view.set_tooltip_text(tip)
 
     def _on_click(self, gesture, n_press, x, y):
         if n_press != 1 or self.buffer.get_has_selection():
@@ -184,30 +187,30 @@ class MarkdownView(Gtk.ScrolledWindow):
             self.follow(link.href)
 
     def follow(self, href: str) -> None:
-        if not href:
-            return
-        if href.startswith("#"):
-            self.scroll_to_heading(unquote(href[1:]))
-            return
-        parsed = urlparse(href)
-        if parsed.scheme in ("", "file"):
-            target = unquote(parsed.path)
-            if not os.path.isabs(target):
-                target = os.path.join(os.path.dirname(self.path), target)
-            if os.path.exists(target):
-                self._open_path(os.path.normpath(target))
-                return
-        if parsed.scheme:
-            Gtk.UriLauncher.new(href).launch(self.get_root(), None, None, None)
+        """Follow a link: ``#anchor`` scrolls, a local file opens in a tab (at
+        its anchor, if any), anything else asks before opening the browser."""
+        from odv.links import resolve
 
-    def scroll_to_heading(self, slug: str) -> None:
+        kind, target, anchor = resolve(href, self.path)
+        if kind == "anchor":
+            self.scroll_to_heading(anchor)
+        elif kind == "local":
+            self._open_path(target, anchor=anchor)
+        elif kind == "missing":
+            root = self.get_root()
+            if hasattr(root, "toast"):
+                root.toast(_("Link target not found: {target}").format(target=target))
+        elif kind == "external":
+            confirm_external(self.get_root(), target)
+
+    def scroll_to_heading(self, slug: str) -> bool:
         if not self._doc:
-            return
+            return False
         off = self._doc.headings.get(slug.lower())
         if off is None:
-            return
-        it = self.buffer.get_iter_at_offset(off)
-        self.view.scroll_to_iter(it, 0.0, True, 0.0, 0.0)
+            return False
+        self.scroll_to_offset(off)
+        return True
 
     def scroll_to_offset(self, offset: int) -> None:
         it = self.buffer.get_iter_at_offset(offset)
@@ -225,3 +228,21 @@ class MarkdownView(Gtk.ScrolledWindow):
     def shutdown(self):
         self._cancelled = True
         theme.remove_listener(self._on_theme)
+
+
+def confirm_external(window, uri: str) -> None:
+    """Ask before handing a link to the browser (or mail client)."""
+    dialog = Adw.AlertDialog(heading=_("Open this link?"),
+                             body=_("It opens outside the app:\n{uri}").format(uri=uri))
+    dialog.add_response("cancel", _("Cancel"))
+    dialog.add_response("open", _("Open Link"))
+    dialog.set_response_appearance("open", Adw.ResponseAppearance.SUGGESTED)
+    dialog.set_default_response("open")
+    dialog.set_close_response("cancel")
+
+    def done(dlg, result):
+        if dlg.choose_finish(result) == "open":
+            Gtk.UriLauncher.new(uri).launch(window, None, None, None)
+
+    dialog.choose(window, None, done)
+    return dialog

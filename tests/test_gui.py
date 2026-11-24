@@ -476,3 +476,33 @@ def test_outline_panel(tmp_path):
     assert r["rows"] == ["Long"] + [f"Section {i}" for i in range(1, 9)]
     assert r["formatted_pos"] == 6 and r["selected"] == 6
     assert r["source_pos"] == 3
+
+
+def test_links_between_files_and_external(tmp_path):
+    other = tmp_path / "other.md"
+    other.write_text("# Other\n\n" + "".join(f"## Part {i}\n\n" + "words\n\n" * 40 for i in range(1, 6)))
+    main = tmp_path / "main.md"
+    main.write_text("# Main\n\nGo to [part four](other.md#part-4) or [the web](https://libre-apps.org).\n")
+
+    def scenario(win, r):
+        win.open_path(str(main))
+        yield 1.0
+        view = win.active_pane.current_doc().views["formatted"]
+        view.follow("other.md#part-4")
+        yield 1.5
+        doc = win.active_pane.current_doc()
+        r["opened"] = (doc.name, len(win.active_pane.docs()))
+        r["section"] = doc.outline()[doc.outline_position()].title
+        view.follow("missing.md")
+        yield 0.3
+        view.follow("https://libre-apps.org")
+        yield 0.5
+        dialog = win.get_visible_dialog()
+        r["dialog"] = type(dialog).__name__ if dialog else None
+        if dialog:
+            dialog.close()
+
+    r = run_app(scenario)
+    assert r["opened"] == ("other.md", 2)
+    assert r["section"] == "Part 4"
+    assert r["dialog"] == "AlertDialog"

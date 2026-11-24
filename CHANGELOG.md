@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.6.0 (2026-11-24)
+
+- Added: links to another file with an anchor (other.md#section) open that file at the section.
+- Added: web and mail links ask before opening outside the app; broken links say so; hovering a link shows where it goes.
+
 ## 0.5.0 (2026-11-24)
 
 - Added: document outline in the sidebar (Ctrl+Shift+L) for Markdown, in the formatted and the source view; a click jumps to the section and the current section follows the scroll.
