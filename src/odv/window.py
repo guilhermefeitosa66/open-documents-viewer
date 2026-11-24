@@ -59,7 +59,8 @@ class Pane(Gtk.Box):
         tab_menu = Gio.Menu()
         for label, action in ((_("Copy Path"), "win.copy-path"), (_("Show in Folder"), "win.show-in-folder"),
                               (_("Open With…"), "win.open-with"), (_("Save a Copy…"), "win.save-copy"),
-                              (_("Print…"), "win.print"), (_("Properties"), "win.properties")):
+                              (_("Print…"), "win.print"), (_("Reopen with Encoding…"), "win.reopen-encoding"),
+                              (_("Properties"), "win.properties")):
             tab_menu.append(label, action)
         self.view.set_menu_model(tab_menu)
         # The tab menu acts on the tab it was opened on.
@@ -323,7 +324,7 @@ class Window(Adw.ApplicationWindow):
         add("focus-mode", self.toggle_focus_mode, ("<Control><Shift>Return",))
         for name, accels in (("copy-path", ("<Control><Alt>c",)), ("show-in-folder", ()), ("open-with", ()),
                              ("save-copy", ("<Control><Shift>s",)), ("print", ("<Control><Alt>p",)),
-                             ("properties", ("<Alt>Return",))):
+                             ("properties", ("<Alt>Return",)), ("reopen-encoding", ())):
             add(name, lambda n=name: self.file_action(n), accels)
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
@@ -575,6 +576,7 @@ class Window(Adw.ApplicationWindow):
             Item(_("Save a Copy…"), "Ctrl+Shift+S", act("win.save-copy")),
             Item(_("Print…"), "Ctrl+Alt+P", act("win.print")),
             Item(_("Properties"), "Alt+Enter", act("win.properties")),
+            Item(_("Reopen with Encoding…"), "", act("win.reopen-encoding")),
             Item(_("Zoom in"), "Ctrl++", act("win.zoom-in")),
             Item(_("Zoom out"), "Ctrl+-", act("win.zoom-out")),
             Item(_("Normal size"), "Ctrl+0", act("win.zoom-reset")),
@@ -590,6 +592,7 @@ class Window(Adw.ApplicationWindow):
         ]
         if doc is None:
             needs_doc = {"win.find", "win.toggle-mode", "win.reload", "win.close-tab", "win.copy-path",
+                         "win.reopen-encoding",
                          "win.show-in-folder", "win.open-with", "win.save-copy", "win.print", "win.properties"}
             items = [i for i in items if getattr(i.run, "action", None) not in needs_doc]
         names = [(themes.DEFAULT_ID, "libre-apps")] + [(t["id"], t["name"]) for t in themes.catalogue()]
@@ -610,7 +613,8 @@ class Window(Adw.ApplicationWindow):
             return None
         return {"copy-path": fileactions.copy_path, "show-in-folder": fileactions.show_in_folder,
                 "open-with": fileactions.open_with, "save-copy": fileactions.save_copy,
-                "print": fileactions.print_doc, "properties": fileactions.show_properties}[name](self, doc)
+                "print": fileactions.print_doc, "properties": fileactions.show_properties,
+                "reopen-encoding": fileactions.choose_encoding}[name](self, doc)
 
     # -- comfort ----------------------------------------------------------------
     def _zoom(self, direction):

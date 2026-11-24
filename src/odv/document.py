@@ -40,7 +40,7 @@ class DocumentPage(Gtk.Box):
     }
 
     def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None,
-                 goto: tuple | None = None, anchor: str | None = None):
+                 goto: tuple | None = None, anchor: str | None = None, encoding: str | None = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("document-area")  # always solid, never the background picture
         self.path = os.path.abspath(path)
@@ -62,6 +62,7 @@ class DocumentPage(Gtk.Box):
         self._outline = []  # odv.mdrender.Heading-like entries: level, title, offset, line
         self._md_doc = None
         self._anchor = anchor
+        self.forced_encoding = encoding
         self._position_timer = 0
         self._ready: set[str] = set()
         self._monitor = None
@@ -248,6 +249,7 @@ class DocumentPage(Gtk.Box):
             view.scroll_to_heading(anchor)
         else:
             self._anchor = anchor
+        self.forced_encoding = encoding
 
     def _view_ready(self, mode: str) -> None:
         self._ready.add(mode)
@@ -345,7 +347,7 @@ class DocumentPage(Gtk.Box):
         self._reading = True
 
         def work():
-            tf = read_text(self.path)
+            tf = read_text(self.path, encoding=self.forced_encoding)
             doc = None
             if self.kind.rich:  # parsed even for the source view: the outline
                 from odv.formats import build_rich
@@ -563,9 +565,10 @@ class DocumentPage(Gtk.Box):
         return False
 
     # -- lifecycle ------------------------------------------------------------
-    def reload(self, keep_scroll: bool = False) -> "DocumentPage":
+    def reload(self, keep_scroll: bool = False, encoding: str | None = None) -> "DocumentPage":
         return DocumentPage(self.path, self._open_path, self.mode,
-                            scroll=self.scroll_position() if keep_scroll else None)
+                            scroll=self.scroll_position() if keep_scroll else None,
+                            encoding=encoding or self.forced_encoding)
 
     def shutdown(self) -> None:
         self.closed = True

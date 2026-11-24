@@ -653,3 +653,28 @@ def test_csv_encoding_detection(tmp_path):
     assert ix.encoding == "cp1252" and ix.delimiter == ";"
     assert ix.row(1) == ["São Luís", "MA"]
     ix.close()
+
+
+# -- encodings ------------------------------------------------------------------------
+
+
+def test_utf16_without_bom(tmp_path):
+    for codec in ("utf-16-le", "utf-16-be"):
+        p = tmp_path / f"{codec}.txt"
+        p.write_bytes("Olá, mundo\nsegunda linha\n".encode(codec))
+        tf = textio.read_text(str(p))
+        assert tf.text.startswith("Olá, mundo") and tf.encoding == codec
+    assert textio.looks_binary(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
+
+
+def test_forced_encoding_and_line_endings(tmp_path):
+    p = tmp_path / "f.txt"
+    p.write_bytes("ação\r\nlinha\r\n".encode("utf-8"))
+    tf = textio.read_text(str(p))
+    assert tf.text.startswith("ação") and tf.line_endings == "CRLF"
+    assert textio.read_text(str(p), encoding="cp1252").text.startswith("aÃ§Ã£o")
+    assert textio.line_endings("a\nb\n") == "LF" and textio.line_endings("a\rb") == "CR"
+    assert textio.line_endings("a\nb\r\n") == "Mixed" and textio.line_endings("one") == "None"
+    import codecs
+
+    assert all(codecs.lookup(codec) for codec, _ in textio.ENCODINGS)

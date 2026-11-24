@@ -226,6 +226,12 @@ CATALOG: dict[str, dict[str, str]] = {
     "Could not read the structure{where}: {error}. Showing the source.": {
         "pt": "Não foi possível ler a estrutura{where}: {error}. Mostrando o código-fonte.",
         "es": "No se pudo leer la estructura{where}: {error}. Se muestra el código fuente."},
+    # encodings
+    "Reopen with Encoding": {"pt": "Reabrir com codificação", "es": "Reabrir con codificación"},
+    "Reopen with Encoding…": {"pt": "Reabrir com codificação…", "es": "Reabrir con codificación…"},
+    "Line endings": {"pt": "Finais de linha", "es": "Finales de línea"},
+    "None (one line)": {"pt": "Nenhum (uma linha)", "es": "Ninguno (una línea)"},
+    "Mixed": {"pt": "Misturados", "es": "Mezclados"},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

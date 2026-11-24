@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.17.0 (2026-11-24)
+
+- Added: Reopen with Encoding (tab menu and command palette) with 23 encodings, from UTF-16 to Shift_JIS and Windows-1251.
+- Added: UTF-16 files without a byte-order mark are recognised as text; Properties show the line endings (LF, CRLF, CR or mixed).
+
 ## 0.16.0 (2026-11-24)
 
 - Added: click a column header to sort a CSV/TSV table (numbers as numbers, empty cells last), in a thread with a progress bar; the file is never changed and the # column keeps the original row numbers.

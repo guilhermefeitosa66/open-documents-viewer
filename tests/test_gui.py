@@ -857,3 +857,31 @@ def test_table_sorting(tmp_path):
     assert r["desc"] == [1, 3, 2]
     assert r["by_name"] == ["apple", "banana", "cherry"] and r["copied_row"] == 2
     assert r["original"] == [1, 2, 3]
+
+
+def test_reopen_with_encoding(tmp_path):
+    from odv import fileactions
+
+    path = tmp_path / "accents.txt"
+    path.write_bytes("ação\r\n".encode("utf-8"))
+
+    def scenario(win, r):
+        win.open_path(str(path))
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["before"] = buffer_text(doc).strip()
+        rows = dict(fileactions.properties(doc.path, doc._text.encoding, 1, doc._text.line_endings))
+        r["props"] = (rows["Encoding"], rows["Line endings"])
+        dialog = fileactions.choose_encoding(win, doc)
+        yield 0.3
+        listbox = dialog.get_child().get_content().get_child().get_child().get_child()
+        row = next(listbox.get_row_at_index(i) for i in range(30)
+                   if listbox.get_row_at_index(i)._codec == "cp1252")
+        listbox.emit("row-activated", row)
+        yield from settle(win)
+        doc2 = win.active_pane.current_doc()
+        r["after"] = (buffer_text(doc2).strip(), doc2.forced_encoding, len(win.active_pane.docs()))
+
+    r = run_app(scenario)
+    assert r["before"] == "ação" and r["props"] == ("utf-8", "CRLF")
+    assert r["after"] == ("aÃ§Ã£o", "cp1252", 1)
