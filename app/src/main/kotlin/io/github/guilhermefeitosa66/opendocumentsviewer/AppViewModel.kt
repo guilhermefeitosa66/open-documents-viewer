@@ -257,6 +257,43 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         split = null
     }
 
+    /**
+     * Reloads the shown documents whose file changed (size or date), e.g. after editing it in
+     * another app. Called when the app comes back and when the provider reports a change.
+     */
+    fun checkForChanges() {
+        val sessions = listOfNotNull(session, split?.takeIf { it.doc?.uri != null })
+        for (s in sessions) {
+            val doc = s.doc ?: continue
+            val uri = doc.uri ?: continue
+            viewModelScope.launch {
+                val (size, modified) = withContext(Dispatchers.IO) { loader.stamp(uri) }
+                val changed = (size >= 0 && doc.size >= 0 && size != doc.size) || (modified > 0 && doc.modified > 0 && modified != doc.modified)
+                if (changed) s.reload { loader.load(uri, doc.mimeType) }
+            }
+        }
+    }
+
+    private var observer: android.database.ContentObserver? = null
+    private var observedUri: Uri? = null
+
+    /** Listens to the provider for the shown document, when the provider sends notifications. */
+    fun observe(uri: Uri?) {
+        if (uri == observedUri) return
+        observer?.let { context.contentResolver.unregisterContentObserver(it) }
+        observer = null
+        observedUri = uri
+        if (uri == null) return
+        val o = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) = checkForChanges()
+        }
+        try {
+            context.contentResolver.registerContentObserver(uri, false, o)
+            observer = o
+        } catch (_: Exception) {
+        }
+    }
+
     fun closeTab(key: String) {
         loaded.remove(key)?.let { s ->
             savePosition(s)
@@ -430,6 +467,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        observe(null)
         split?.close()
         loaded.values.forEach { it.close() }
         loaded.clear()

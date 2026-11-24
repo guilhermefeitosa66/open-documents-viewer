@@ -120,4 +120,5 @@
     <string name="split_pick_title">Mostrar ao lado deste</string>
     <string name="wide_empty">Escolha um documento à esquerda.</string>
     <string name="outline">Sumário</string>
+    <string name="file_updated">Arquivo mudou: atualizado</string>
 </resources>

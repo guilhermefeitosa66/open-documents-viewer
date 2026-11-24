@@ -296,6 +296,39 @@ class DocumentSession(
         return true
     }
 
+    /** Incremented after each reload because the file changed (the UI shows a short notice). */
+    var reloadCount by mutableIntStateOf(0)
+        private set
+    private var reloading = false
+
+    /**
+     * Reads the file again and swaps the content in place, keeping the view mode, the search and
+     * the reading position. The old content stays on screen until the new one is ready.
+     */
+    fun reload(loader: suspend () -> Result<LoadedDocument>) {
+        if (reloading || load !is LoadState.Ready) return
+        reloading = true
+        val pos = position()
+        scope.launch {
+            try {
+                val doc = withContext(Dispatchers.IO) { loader() }.getOrNull() ?: return@launch
+                val newSource = withContext(Dispatchers.Default) { buildSource(doc) }
+                val newFormatted = if (doc.type.kind.hasFormattedView) withContext(Dispatchers.Default) { buildFormatted(doc) } else null
+                load = LoadState.Ready(doc)
+                source = newSource
+                formatted = newFormatted
+                finishStates(newSource)
+                (newFormatted as? Formatted.Json)?.content?.let(::finishStates)
+                delay(16)
+                activeList.scrollToItem(pos.item, pos.offset)
+                if (searchOpen) runSearch()
+                reloadCount++
+            } finally {
+                reloading = false
+            }
+        }
+    }
+
     fun position(): ViewPosition = ViewPosition(activeList.firstVisibleItemIndex, activeList.firstVisibleItemScrollOffset)
 
     fun toggleMode() {

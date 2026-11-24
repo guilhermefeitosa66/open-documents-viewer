@@ -126,6 +126,11 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    override fun onStart() {
+        super.onStart()
+        vm.checkForChanges()
+    }
+
     override fun onStop() {
         super.onStop()
         vm.savePosition()
@@ -152,6 +157,8 @@ class MainActivity : ComponentActivity() {
     private fun App() {
         val session = vm.session
         var switcher by remember { mutableStateOf(false) }
+        val shownUri = session?.doc?.uri
+        LaunchedEffect(shownUri) { vm.observe(shownUri) }
         var splitPicking by remember { mutableStateOf(false) }
         // Tablets, open foldables and wide landscape: list beside the document, and split view.
         val wide = LocalConfiguration.current.screenWidthDp >= WIDE_DP

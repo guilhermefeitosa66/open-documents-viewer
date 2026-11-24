@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.8.0] - 2026-11-24
+
+### Added
+- The shown document reloads when its file changes (size or last-modified date differ when the app comes back, or the
+  provider reports a change). View mode, search and reading position are kept; a short "File changed: updated" notice appears.
+
 ## [0.7.0] - 2026-11-24
 
 ### Added

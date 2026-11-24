@@ -21,6 +21,8 @@ class LoadedDocument(
     /** The file was larger than [DocumentLoader.MAX_BYTES]: only the start is shown. */
     val truncated: Boolean,
     val location: String?,
+    /** Last-modified time from the provider (0 when unknown): with [size], detects changes. */
+    val modified: Long = 0,
 )
 
 sealed interface LoadFailure {
@@ -54,6 +56,33 @@ class DocumentLoader(private val context: Context) {
         if (name == null) name = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "document"
         val mime = try { resolver.getType(uri) } catch (_: Exception) { null }
         return Meta(name!!, size, mime, location(uri))
+    }
+
+    /**
+     * Size and last-modified time, as cheaply as the provider allows. Used on return to the app
+     * to notice that the file changed.
+     */
+    fun stamp(uri: Uri): Pair<Long, Long> {
+        if (uri.scheme == ContentResolver.SCHEME_FILE) {
+            val f = java.io.File(uri.path ?: return -1L to 0L)
+            return f.length() to f.lastModified()
+        }
+        var size = -1L
+        var modified = 0L
+        try {
+            resolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (c.moveToFirst() && !c.isNull(0)) size = c.getLong(0)
+            }
+        } catch (_: Exception) {
+        }
+        try {
+            resolver.query(uri, arrayOf(DocumentsContract.Document.COLUMN_LAST_MODIFIED), null, null, null)?.use { c ->
+                if (c.moveToFirst() && !c.isNull(0)) modified = c.getLong(0)
+            }
+        } catch (_: Exception) {
+            // Not a documents provider: size alone has to do.
+        }
+        return size to modified
     }
 
     /** A short, human name for where the file lives: its folder, or the app that shared it. */
@@ -115,6 +144,7 @@ class DocumentLoader(private val context: Context) {
                 type = DocumentTypes.detect(meta.name, mime),
                 truncated = truncated,
                 location = meta.location,
+                modified = stamp(uri).second,
             )
         )
     }

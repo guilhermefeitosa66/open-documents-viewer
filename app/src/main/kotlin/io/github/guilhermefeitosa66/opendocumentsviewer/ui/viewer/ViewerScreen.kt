@@ -163,6 +163,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
 
     Box(Modifier.fillMaxSize()) {
         if (doc.truncated) TruncatedBanner(Modifier.align(Alignment.TopCenter))
+        ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
         when (session.mode) {
             ViewMode.SOURCE -> {
                 val src = session.source
@@ -557,6 +558,23 @@ private fun OutlineSheet(session: DocumentSession, onDismiss: () -> Unit) {
                     maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+/** "Updated" for a moment after the file changed and was reloaded. */
+@Composable
+private fun ReloadNotice(count: Int, modifier: Modifier) {
+    if (count == 0) return
+    var visible by remember(count) { mutableStateOf(true) }
+    LaunchedEffect(count) {
+        kotlinx.coroutines.delay(2500)
+        visible = false
+    }
+    androidx.compose.animation.AnimatedVisibility(visible, modifier.padding(top = 8.dp)) {
+        val colors = Odv.colors
+        Surface(color = colors.pill, contentColor = colors.onPill, shape = RoundedCornerShape(50), shadowElevation = 3.dp) {
+            Text(stringResource(R.string.file_updated), Modifier.padding(horizontal = 14.dp, vertical = 8.dp), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
