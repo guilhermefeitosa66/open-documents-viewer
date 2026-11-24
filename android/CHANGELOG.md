@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.32.1] - 2026-11-24
+
+### Fixed
+- "Open with" and "Share" now offer the app for the same file types: the share target was missing several code and
+  data types, and both now also list RTF, Jupyter notebooks, EPUB, Office templates and macro-enabled files,
+  OpenDocument templates and Apple iWork types. Files that arrive without a name are recognized from those types too.
+
 ## [0.32.0] - 2026-11-24
 
 ### Added

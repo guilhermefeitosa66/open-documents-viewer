@@ -138,6 +138,15 @@ object DocumentTypes {
         if (m == "application/vnd.oasis.opendocument.graphics" || m == "application/vnd.oasis.opendocument.graphics-template") return DocumentType(DocumentKind.ODP, null, "ODG")
         if (m == "application/vnd.ms-powerpoint") return DocumentType(DocumentKind.PPT, null, "PPT")
         if (m == "application/vnd.ms-excel") return DocumentType(DocumentKind.XLS, null, "XLS")
+        when (m) {
+            "application/x-ipynb+json" -> return DocumentType(DocumentKind.NOTEBOOK, Languages.JSON, "IPYNB")
+            "application/vnd.apple.pages", "application/x-iwork-pages-sffpages" -> return DocumentType(DocumentKind.IWORK, null, "PAGE")
+            "application/vnd.apple.numbers", "application/x-iwork-numbers-sffnumbers" -> return DocumentType(DocumentKind.IWORK, null, "NUMB")
+            "application/vnd.apple.keynote", "application/x-iwork-keynote-sffkey" -> return DocumentType(DocumentKind.IWORK, null, "KEY")
+            "application/vnd.ms-word.template.macroenabled.12" -> return DocumentType(DocumentKind.DOCX, null, "DOCX")
+            "application/vnd.ms-excel.template.macroenabled.12" -> return DocumentType(DocumentKind.XLSX, null, "XLSX")
+            "application/vnd.ms-powerpoint.slideshow.macroenabled.12", "application/vnd.ms-powerpoint.template.macroenabled.12" -> return DocumentType(DocumentKind.PPTX, null, "PPTX")
+        }
         if (m == "application/pdf" || m == "application/x-pdf") return DocumentType(DocumentKind.PDF, null, "PDF")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")

@@ -78,9 +78,25 @@
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.template" />
                 <data android:mimeType="application/x-fictionbook+xml" />
                 <data android:mimeType="application/x-fictionbook" />
+                <data android:mimeType="application/rtf" />
+                <data android:mimeType="application/x-ipynb+json" />
+                <data android:mimeType="application/vnd.ms-word.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.template" />
+                <data android:mimeType="application/vnd.ms-excel.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.template" />
+                <data android:mimeType="application/vnd.ms-powerpoint.slideshow.macroenabled.12" />
+                <data android:mimeType="application/vnd.ms-powerpoint.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.graphics-template" />
+                <data android:mimeType="application/vnd.apple.pages" />
+                <data android:mimeType="application/vnd.apple.numbers" />
+                <data android:mimeType="application/vnd.apple.keynote" />
+                <data android:mimeType="text/vcard" />
+                <data android:mimeType="text/calendar" />
+                <data android:mimeType="application/octet-stream" />
                 <!-- Many file managers send .md, .env, .kt... with this type. Binary files are
                      detected and refused with a clear message. -->
-                <data android:mimeType="application/octet-stream" />
             </intent-filter>
 
             <!-- Share a file, or plain text, to read it here. -->
@@ -89,11 +105,22 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/*" />
                 <data android:mimeType="application/json" />
+                <data android:mimeType="application/x-ndjson" />
                 <data android:mimeType="application/xml" />
                 <data android:mimeType="application/yaml" />
                 <data android:mimeType="application/x-yaml" />
+                <data android:mimeType="application/toml" />
                 <data android:mimeType="application/x-sh" />
+                <data android:mimeType="application/x-shellscript" />
                 <data android:mimeType="application/javascript" />
+                <data android:mimeType="application/x-javascript" />
+                <data android:mimeType="application/typescript" />
+                <data android:mimeType="application/sql" />
+                <data android:mimeType="application/x-sql" />
+                <data android:mimeType="application/x-python" />
+                <data android:mimeType="application/x-httpd-php" />
+                <data android:mimeType="application/x-subrip" />
+                <data android:mimeType="application/xhtml+xml" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="application/epub+zip" />
                 <data android:mimeType="message/rfc822" />
@@ -118,6 +145,22 @@
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.template" />
                 <data android:mimeType="application/x-fictionbook+xml" />
                 <data android:mimeType="application/x-fictionbook" />
+                <data android:mimeType="application/rtf" />
+                <data android:mimeType="application/x-ipynb+json" />
+                <data android:mimeType="application/vnd.ms-word.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.template" />
+                <data android:mimeType="application/vnd.ms-excel.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.template" />
+                <data android:mimeType="application/vnd.ms-powerpoint.slideshow.macroenabled.12" />
+                <data android:mimeType="application/vnd.ms-powerpoint.template.macroenabled.12" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.graphics-template" />
+                <data android:mimeType="application/vnd.apple.pages" />
+                <data android:mimeType="application/vnd.apple.numbers" />
+                <data android:mimeType="application/vnd.apple.keynote" />
+                <data android:mimeType="text/vcard" />
+                <data android:mimeType="text/calendar" />
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
