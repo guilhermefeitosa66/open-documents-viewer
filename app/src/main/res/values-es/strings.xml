@@ -89,4 +89,10 @@
     <string name="background_image">Imagen de fondo</string>
     <string name="background_image_desc">Solo aparece en la pantalla de inicio. Los documentos siempre van sobre color sólido.</string>
     <string name="background_none">Este tema no tiene imagen.</string>
+    <string name="share_as_text">Compartir como texto</string>
+    <string name="save_copy">Guardar una copia…</string>
+    <string name="copy_saving">Guardando una copia…</string>
+    <string name="copy_saved">Copia guardada</string>
+    <string name="copy_failed">No se pudo guardar la copia.</string>
+    <string name="more_options_for">Más opciones para %1$s</string>
 </resources>

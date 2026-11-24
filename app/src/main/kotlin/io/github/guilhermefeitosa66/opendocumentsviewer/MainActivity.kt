@@ -53,7 +53,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.IntentCompat
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.FileTransfer
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.Shareable
 import io.github.guilhermefeitosa66.opendocumentsviewer.recents.RecentEntry
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.home.HomeScreen
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.home.RecentRow
@@ -148,6 +150,8 @@ class MainActivity : ComponentActivity() {
                 onOpenRecent = vm::openRecent,
                 onRemove = vm::removeRecent,
                 onClearAll = vm::clearRecents,
+                onShareRecent = { shareItem(shareableOf(it)) },
+                onSaveRecent = { saveItem(shareableOf(it)) },
             )
         } else {
             val base = 16f
@@ -164,6 +168,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        vm.copyProgress?.let { CopyProgressDialog(it) }
 
         val message = vm.message
         LaunchedEffect(message) {
@@ -225,20 +231,13 @@ class MainActivity : ComponentActivity() {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) vm.message = R.string.copied
         }
 
-        override fun share(doc: LoadedDocument) {
-            val send = Intent(Intent.ACTION_SEND).apply {
-                if (doc.uri != null) {
-                    type = doc.mimeType ?: "text/plain"
-                    putExtra(Intent.EXTRA_STREAM, doc.uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                } else {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, doc.text.take(MAX_CLIP_CHARS))
-                }
-                putExtra(Intent.EXTRA_SUBJECT, doc.name)
-            }
-            startChooser(send, getString(R.string.share))
+        override fun share(doc: LoadedDocument) = shareItem(shareableOf(doc))
+
+        override fun shareAsText(doc: LoadedDocument) {
+            startChooser(FileTransfer.shareIntent(shareableOf(doc), asText = true, text = doc.text), getString(R.string.share_as_text))
         }
+
+        override fun saveCopy(doc: LoadedDocument) = saveItem(shareableOf(doc))
 
         override fun openWith(doc: LoadedDocument) {
             val uri = doc.uri ?: return
@@ -268,6 +267,39 @@ class MainActivity : ComponentActivity() {
         override fun onFirstContent() {
             vm.onFirstContent()
             reportFullyDrawn()
+        }
+    }
+
+    private val saveCopyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val target = result.data?.data
+        if (result.resultCode == RESULT_OK && target != null) vm.saveTo(target)
+    }
+
+    private fun shareableOf(doc: LoadedDocument): Shareable =
+        doc.uri?.let { Shareable.File(it, doc.name, doc.mimeType) } ?: Shareable.Text(doc.text, doc.name)
+
+    private fun shareableOf(entry: RecentEntry): Shareable = Shareable.File(Uri.parse(entry.uri), entry.name, entry.mimeType)
+
+    /** Shares the file itself (WhatsApp, Gmail, Drive...), if this app can still read it. */
+    fun shareItem(item: Shareable) {
+        if (item is Shareable.File && !vm.canRead(item.uri)) {
+            vm.message = R.string.error_permission_body
+            return
+        }
+        startChooser(FileTransfer.shareIntent(item), getString(R.string.share))
+    }
+
+    /** "Save a copy...": the user picks a folder, then the file is streamed there. */
+    fun saveItem(item: Shareable) {
+        if (item is Shareable.File && !vm.canRead(item.uri)) {
+            vm.message = R.string.error_permission_body
+            return
+        }
+        vm.prepareSave(item)
+        try {
+            saveCopyLauncher.launch(FileTransfer.createDocumentIntent(item))
+        } catch (_: ActivityNotFoundException) {
+            vm.message = R.string.error_no_picker
         }
     }
 
@@ -329,4 +361,23 @@ private fun QuickSwitcher(
             }
         }
     }
+}
+
+@Composable
+private fun CopyProgressDialog(progress: Float) {
+    val colors = Odv.colors
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        title = { Text(stringResource(R.string.copy_saving)) },
+        text = {
+            if (progress < 0f) {
+                androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth(), color = colors.accent, trackColor = colors.paper2)
+            } else {
+                androidx.compose.material3.LinearProgressIndicator(
+                    progress = { progress }, modifier = Modifier.fillMaxWidth(), color = colors.accent, trackColor = colors.paper2,
+                )
+            }
+        },
+    )
 }

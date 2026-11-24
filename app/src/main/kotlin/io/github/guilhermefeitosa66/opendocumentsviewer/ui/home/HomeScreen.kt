@@ -79,6 +79,8 @@ fun HomeScreen(
     onOpenRecent: (RecentEntry) -> Unit,
     onRemove: (RecentEntry) -> Unit,
     onClearAll: () -> Unit,
+    onShareRecent: (RecentEntry) -> Unit,
+    onSaveRecent: (RecentEntry) -> Unit,
     onSettings: () -> Unit,
     /** Asset of the theme's background image, or null for a plain color. */
     background: String?,
@@ -146,7 +148,11 @@ fun HomeScreen(
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
                 items(recents, key = { it.uri }) { entry ->
                     SwipeToRemove(onRemove = { onRemove(entry) }) {
-                        RecentRow(entry, current = false, onClick = { onOpenRecent(entry) }, container = if (image != null) veil else null)
+                        RecentRow(
+                            entry, current = false, onClick = { onOpenRecent(entry) },
+                            container = if (image != null) veil else null,
+                            trailing = { RecentMenu(entry, onShareRecent, onSaveRecent, onRemove) },
+                        )
                     }
                 }
             }
@@ -196,7 +202,13 @@ private fun SwipeToRemove(onRemove: () -> Unit, content: @Composable () -> Unit)
 }
 
 @Composable
-fun RecentRow(entry: RecentEntry, current: Boolean, onClick: () -> Unit, container: Color? = null) {
+fun RecentRow(
+    entry: RecentEntry,
+    current: Boolean,
+    onClick: () -> Unit,
+    container: Color? = null,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     val colors = Odv.colors
     val type = remember(entry.name, entry.mimeType) { DocumentTypes.detect(entry.name, entry.mimeType) }
     val (bg, fg) = badgeColors(type.kind, colors)
@@ -209,7 +221,7 @@ fun RecentRow(entry: RecentEntry, current: Boolean, onClick: () -> Unit, contain
             .clip(RoundedCornerShape(16.dp))
             .background(container ?: if (current) colors.paper2 else colors.paper)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(start = 12.dp, end = if (trailing != null) 0.dp else 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -221,6 +233,7 @@ fun RecentRow(entry: RecentEntry, current: Boolean, onClick: () -> Unit, contain
             Text(recentMeta(entry), fontSize = 13.sp, color = colors.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (current) Text(stringResource(R.string.open_now), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.accentInk)
+        trailing?.invoke()
     }
 }
 
@@ -275,3 +288,23 @@ private fun AboutDialog(onDismiss: () -> Unit) {
 
 /** The calango in the color that reads on the current theme. */
 fun calangoFor(colors: OdvColors): Int = if (colors.dark) R.drawable.calango_ochre else R.drawable.calango
+
+@Composable
+private fun RecentMenu(
+    entry: RecentEntry,
+    onShare: (RecentEntry) -> Unit,
+    onSave: (RecentEntry) -> Unit,
+    onRemove: (RecentEntry) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Filled.MoreVert, stringResource(R.string.more_options_for, entry.name), tint = Odv.colors.ink2)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { open = false; onShare(entry) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { open = false; onSave(entry) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_recents)) }, onClick = { open = false; onRemove(entry) })
+        }
+    }
+}

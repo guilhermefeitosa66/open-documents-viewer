@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.2.0] - 2026-11-24
+
+### Added
+- Share the file itself (real MIME type and name, read grant through the chooser) from the viewer and from each recent file's menu.
+- "Share as text" for text files up to ~100 KB.
+- "Save a copy…": the user picks a folder (Storage Access Framework); the file is streamed there with progress.
+- Clear message when the permission lent by another app has expired.
+
 ## [0.1.0] - 2026-11-24
 
 ### Added

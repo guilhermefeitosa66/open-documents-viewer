@@ -14,6 +14,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentLoader
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentTypes
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.FileTransfer
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.Shareable
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
 import io.github.guilhermefeitosa66.opendocumentsviewer.recents.RecentEntry
 import io.github.guilhermefeitosa66.opendocumentsviewer.recents.RecentsStore
@@ -58,6 +60,43 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setBackground(enabled: Boolean) {
         backgroundEnabled = enabled
         prefs.edit().putBoolean(KEY_BACKGROUND, enabled).apply()
+    }
+
+    /** Fraction of a "Save a copy" in progress (-1 = size unknown), or null when none runs. */
+    var copyProgress by mutableStateOf<Float?>(null)
+        private set
+    private var pendingSave: Shareable? = null
+
+    fun prepareSave(item: Shareable) {
+        pendingSave = item
+    }
+
+    fun saveTo(target: Uri) {
+        val item = pendingSave ?: return
+        pendingSave = null
+        copyProgress = -1f
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val size = (item as? Shareable.File)?.let { loader.meta(it.uri).size } ?: -1L
+                    FileTransfer.copy(context.contentResolver, item, target, size) { p -> copyProgress = p }
+                }
+            }
+            copyProgress = null
+            message = when {
+                result.isSuccess -> R.string.copy_saved
+                result.exceptionOrNull() is SecurityException -> R.string.error_permission_body
+                else -> R.string.copy_failed
+            }
+        }
+    }
+
+    /** Whether the app can still read [uri] (permissions lent by other apps expire). */
+    fun canRead(uri: Uri): Boolean = try {
+        context.contentResolver.openFileDescriptor(uri, "r")?.close()
+        true
+    } catch (_: Exception) {
+        false
     }
 
     private var openStartedAt = 0L

@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.guilhermefeitosa66.opendocumentsviewer.R
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentKind
+import io.github.guilhermefeitosa66.opendocumentsviewer.document.FileTransfer
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadFailure
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
 import io.github.guilhermefeitosa66.opendocumentsviewer.formats.Dotenv
@@ -85,6 +86,8 @@ interface ViewerActions {
     fun openSwitcher()
     fun copyAll(doc: LoadedDocument)
     fun share(doc: LoadedDocument)
+    fun shareAsText(doc: LoadedDocument)
+    fun saveCopy(doc: LoadedDocument)
     fun openWith(doc: LoadedDocument)
     fun openLink(url: String, session: DocumentSession)
     fun zoom(prose: Boolean, factor: Float)
@@ -268,6 +271,10 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, onInfo: () 
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.copy_all)) }, onClick = { menu = false; actions.copyAll(doc) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { menu = false; actions.share(doc) })
+                    if (doc.uri != null && doc.text.length <= FileTransfer.SHARE_AS_TEXT_MAX_CHARS) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.share_as_text)) }, onClick = { menu = false; actions.shareAsText(doc) })
+                    }
+                    DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { menu = false; actions.saveCopy(doc) })
                     if (doc.uri != null) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.open_with)) }, onClick = { menu = false; actions.openWith(doc) })
                     }

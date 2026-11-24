@@ -89,4 +89,10 @@
     <string name="background_image">Imagem de fundo</string>
     <string name="background_image_desc">Aparece só na tela inicial. O documento fica sempre sobre cor sólida.</string>
     <string name="background_none">Este tema não tem imagem.</string>
+    <string name="share_as_text">Compartilhar como texto</string>
+    <string name="save_copy">Salvar uma cópia…</string>
+    <string name="copy_saving">Salvando uma cópia…</string>
+    <string name="copy_saved">Cópia salva</string>
+    <string name="copy_failed">Não deu para salvar a cópia.</string>
+    <string name="more_options_for">Mais opções para %1$s</string>
 </resources>
