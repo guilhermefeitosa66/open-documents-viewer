@@ -32,6 +32,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     DOC(hasFormattedView = true, prose = true),
     /** OpenDocument text (.odt/.ott/.fodt): same model as DOCX. */
     ODT(hasFormattedView = true, prose = true),
+    /** Spreadsheets: Excel 2007+ (.xlsx/.xlsm/.xltx), shown as a grid. */
+    XLSX(hasFormattedView = true, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -65,6 +67,7 @@ object DocumentTypes {
         }
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
+        if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
         if (ext == "doc" || ext == "dot") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (ext in setOf("odt", "ott", "fodt")) return DocumentType(DocumentKind.ODT, null, "ODT")
         if (ext == "eml" || ext == "mht" || ext == "mhtml") return DocumentType(DocumentKind.EMAIL, null, "EML")
@@ -96,6 +99,9 @@ object DocumentTypes {
         if (m == "application/vnd.oasis.opendocument.text" || m == "application/vnd.oasis.opendocument.text-template" ||
             m == "application/vnd.oasis.opendocument.text-flat-xml"
         ) return DocumentType(DocumentKind.ODT, null, "ODT")
+        if (m == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || m == "application/vnd.ms-excel.sheet.macroenabled.12" ||
+            m == "application/vnd.openxmlformats-officedocument.spreadsheetml.template"
+        ) return DocumentType(DocumentKind.XLSX, null, "XLSX")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")

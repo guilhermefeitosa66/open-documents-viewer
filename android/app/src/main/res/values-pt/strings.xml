@@ -168,4 +168,8 @@
     <string name="kind_contacts">Contatos</string>
     <string name="kind_calendar">Agenda</string>
     <string name="partial_text_only">Texto simples de um documento antigo do Word: formatação e imagens não são mostradas.</string>
+    <string name="close">Fechar</string>
+    <string name="sheet_charts">Gráficos (não desenhados): %1$s</string>
+    <string name="sheet_truncated">Esta planilha é muito grande: só a primeira parte é mostrada.</string>
+    <string name="kind_spreadsheet">Planilha</string>
 </resources>

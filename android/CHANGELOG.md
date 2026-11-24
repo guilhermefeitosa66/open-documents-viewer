@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.24.0] - 2026-11-24
+
+### Added
+- Excel workbooks (.xlsx, .xlsm, .xltx): one tab per sheet (hidden sheets left out), a grid that only draws the rows
+  and columns on screen, the values saved in the file (formulas are never recalculated) with their number, date,
+  currency and percent formats, bold/italic/underline/strikethrough, text and fill colors, borders, alignment,
+  wrapped text, merged cells, column widths and row heights, frozen rows and columns, hidden rows and columns.
+  Tap a cell to see its reference, shown value, saved value and formula. Charts are listed by title (not drawn).
+  Search finds rows of the sheet shown; the source view is the sheets as tab-separated text.
+- Measured (release build, emulator): a 50,000 × 10 sheet (3.6 MB) opens in 2.7 s.
+
 ## [0.23.0] - 2026-11-24
 
 ### Added

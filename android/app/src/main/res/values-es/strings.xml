@@ -168,4 +168,8 @@
     <string name="kind_contacts">Contactos</string>
     <string name="kind_calendar">Calendario</string>
     <string name="partial_text_only">Texto simple de un documento antiguo de Word: no se muestran el formato ni las imágenes.</string>
+    <string name="close">Cerrar</string>
+    <string name="sheet_charts">Gráficos (no dibujados): %1$s</string>
+    <string name="sheet_truncated">Esta hoja es muy grande: solo se muestra la primera parte.</string>
+    <string name="kind_spreadsheet">Hoja de cálculo</string>
 </resources>

@@ -224,6 +224,9 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     TableView(f.table, session, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
+                is Formatted.Sheet -> {
+                    SheetView(f.wb, session, session.formattedList, fontSize, matches, current, padding)
+                }
                 is Formatted.Tree -> {
                     val pretty = session.prettyJson
                     if (session.jsonAsText && session.kind == DocumentKind.JSON) {
@@ -406,6 +409,7 @@ private fun subtitle(session: DocumentSession): String {
         doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
         else if (doc.type.kind == DocumentKind.DOCX || doc.type.kind == DocumentKind.DOC) "Word"
         else if (doc.type.kind == DocumentKind.ODT) "OpenDocument"
+        else if (doc.type.kind == DocumentKind.XLSX) "Excel"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -420,7 +424,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }

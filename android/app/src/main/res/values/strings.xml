@@ -169,4 +169,8 @@
     <string name="kind_contacts">Contacts</string>
     <string name="kind_calendar">Calendar</string>
     <string name="partial_text_only">Plain text from an older Word document: formatting and pictures are not shown.</string>
+    <string name="close">Close</string>
+    <string name="sheet_charts">Charts (not drawn): %1$s</string>
+    <string name="sheet_truncated">This sheet is very large: only its first part is shown.</string>
+    <string name="kind_spreadsheet">Spreadsheet</string>
 </resources>

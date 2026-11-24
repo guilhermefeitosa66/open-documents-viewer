@@ -79,6 +79,8 @@ sealed interface Formatted {
     data class Env(val lines: List<EnvLine>) : Formatted
     data class Svg(val svg: com.caverock.androidsvg.SVG) : Formatted
     data class Tree(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeDocument) : Formatted
+    /** Spreadsheets (XLSX, ODS, XLS): a grid per sheet. */
+    data class Sheet(val wb: io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook) : Formatted
     /** The formatted view could not be built (invalid JSON...): the source is shown instead. */
     data object Unavailable : Formatted
 }
@@ -308,6 +310,7 @@ class DocumentSession(
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
             } ?: Formatted.Unavailable
+            DocumentKind.XLSX -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { Formatted.Sheet(it) } ?: Formatted.Unavailable
             DocumentKind.DOCX, DocumentKind.ODT, DocumentKind.DOC -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.Result)?.let { r ->
                 val anchors = HashMap(headingAnchors(r.blocks))
                 anchors.putAll(r.anchors)
@@ -431,6 +434,9 @@ class DocumentSession(
             treeExpanded = io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.initialExpanded(f.doc)
         }
         val oldTable = (formatted as? Formatted.Table)?.table
+        if (f is Formatted.Sheet && (sheetIndex >= f.wb.sheets.size || f.wb.sheets[sheetIndex].hidden)) {
+            sheetIndex = f.wb.sheets.indexOfFirst { !it.hidden }.coerceAtLeast(0)
+        }
         formatted = f
         // A reload brings a new table: keep the chosen order, sorted again from the new rows.
         if (f is Formatted.Table && oldTable != null && f.table !== oldTable) {
@@ -441,6 +447,24 @@ class DocumentSession(
 
     fun toggleNode(id: Int) {
         treeExpanded = if (id in treeExpanded) treeExpanded - id else treeExpanded + id
+    }
+
+    // ---- Spreadsheets ------------------------------------------------------------------
+
+    var sheetIndex by mutableStateOf(0)
+        private set
+    /** Tapped cell (row, column), shown with its value and formula. */
+    var selectedCell by mutableStateOf<Pair<Int, Int>?>(null)
+    val sheetLayout: SheetLayout? by derivedStateOf {
+        (formatted as? Formatted.Sheet)?.wb?.sheets?.getOrNull(sheetIndex)?.let { SheetLayout(it) }
+    }
+
+    fun selectSheet(i: Int) {
+        if (i == sheetIndex) return
+        sheetIndex = i
+        selectedCell = null
+        scope.launch { formattedList.scrollToItem(0) }
+        if (searchOpen) runSearch()
     }
 
     // ---- Table (CSV/TSV) -----------------------------------------------------------------
@@ -582,6 +606,7 @@ class DocumentSession(
         val firstVisible = activeList.firstVisibleItemIndex
         val treeLinesSnapshot = treeLines
         val shownRows = tableRows ?: (formatted as? Formatted.Table)?.table?.rows.orEmpty()
+        val sheetSnapshot = sheetLayout
         searchJob = scope.launch {
             if (debounce) delay(150)
             searching = true
@@ -595,6 +620,7 @@ class DocumentSession(
                         is Formatted.Markdown -> TextSearch.search(f.blocks.map { it.plainText }, q, opts, active)
                         is Formatted.Table -> TextSearch.search(shownRows.map { it.joinToString("  ") }, q, opts, active)
                         is Formatted.Env -> TextSearch.search(f.lines.map(::envText), q, opts, active)
+                        is Formatted.Sheet -> sheetSnapshot?.let { TextSearch.search(it.searchLines(f.wb), q, opts, active) }
                         is Formatted.Tree -> TextSearch.search(treeLinesSnapshot.map { (it.node.key ?: "") + " " + (it.node.value ?: "") }, q, opts, active)
                         else -> null
                     }

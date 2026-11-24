@@ -52,6 +52,8 @@
                 <data android:mimeType="application/epub+zip" />
                 <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/msword" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.ms-excel.sheet.macroenabled.12" />
                 <data android:mimeType="application/vnd.oasis.opendocument.text" />
                 <data android:mimeType="application/vnd.oasis.opendocument.text-template" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
@@ -79,6 +81,8 @@
                 <data android:mimeType="application/epub+zip" />
                 <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/msword" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.ms-excel.sheet.macroenabled.12" />
                 <data android:mimeType="application/vnd.oasis.opendocument.text" />
                 <data android:mimeType="application/vnd.oasis.opendocument.text-template" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
