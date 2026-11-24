@@ -782,3 +782,21 @@ def test_notebook_file():
     assert r["outline"] == ["Notebook title", "Results"]
     assert r["pictures"] == 1
     assert r["source"] == "{"
+
+
+def test_custom_languages_and_shebang():
+    files = ["sample.log", "schema.graphql", "subs.srt", "script-noext"]
+
+    def scenario(win, r):
+        for f in files:
+            win.open_path(os.path.join(FIX, f))
+        yield from settle(win)
+        langs = {}
+        for doc in win.active_pane.docs():
+            lang = doc.views["source"].buffer.get_language()
+            langs[doc.name] = lang.get_id() if lang else None
+        r["langs"] = langs
+
+    r = run_app(scenario)
+    assert r["langs"] == {"sample.log": "odv-log", "schema.graphql": "odv-graphql", "subs.srt": "odv-subtitles",
+                          "script-noext": "python3"}

@@ -69,6 +69,10 @@ def scheme_xml(theme):
     for style, key in (("def:link-text", "link"), ("def:link-destination", "link")):
         lines.append(f'  <style name="{style}" foreground="{ui[key]}" underline="single"/>')
     lines.append(f'  <style name="def:link-symbol" foreground="{syn["punctuation"]}"/>')
+    # Log levels and diagnostics (odv-log and others) use the theme's status colours.
+    lines.append(f'  <style name="def:error" foreground="{ui["error"]}" bold="true"/>')
+    lines.append(f'  <style name="def:warning" foreground="{ui["warning"]}" bold="true"/>')
+    lines.append(f'  <style name="def:note" foreground="{ui["success"]}"/>')
     for style, role in SYNTAX_MAP.items():
         extra = ' italic="true"' if role == "comment" else (' bold="true"' if role == "keyword" else "")
         lines.append(f'  <style name="{style}" foreground="{syn[role]}"{extra}/>')

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- GraphQL schemas and queries. -->
+<language id="odv-graphql" name="GraphQL" version="2.0" _section="Source">
+  <metadata>
+    <property name="globs">*.graphql;*.gql;*.graphqls</property>
+    <property name="line-comment-start">#</property>
+  </metadata>
+  <styles>
+    <style id="comment" name="Comment" map-to="def:comment"/>
+    <style id="string" name="String" map-to="def:string"/>
+    <style id="keyword" name="Keyword" map-to="def:keyword"/>
+    <style id="type" name="Type" map-to="def:type"/>
+    <style id="variable" name="Variable" map-to="def:identifier"/>
+    <style id="directive" name="Directive" map-to="def:preprocessor"/>
+    <style id="constant" name="Constant" map-to="def:special-constant"/>
+    <style id="number" name="Number" map-to="def:number"/>
+  </styles>
+  <definitions>
+    <context id="odv-graphql">
+      <include>
+        <context id="comment" style-ref="comment" end-at-line-end="true">
+          <start>#</start>
+        </context>
+        <context id="block-string" style-ref="string">
+          <start>"""</start>
+          <end>"""</end>
+        </context>
+        <context id="string" style-ref="string" end-at-line-end="true">
+          <start>"</start>
+          <end>"</end>
+          <include>
+            <context id="escape" style-ref="string">
+              <match>\\.</match>
+            </context>
+          </include>
+        </context>
+        <context id="keyword" style-ref="keyword">
+          <keyword>query</keyword><keyword>mutation</keyword><keyword>subscription</keyword>
+          <keyword>fragment</keyword><keyword>on</keyword><keyword>type</keyword>
+          <keyword>interface</keyword><keyword>union</keyword><keyword>enum</keyword>
+          <keyword>input</keyword><keyword>scalar</keyword><keyword>schema</keyword>
+          <keyword>extend</keyword><keyword>directive</keyword><keyword>implements</keyword>
+          <keyword>repeatable</keyword>
+        </context>
+        <context id="constant" style-ref="constant">
+          <keyword>true</keyword><keyword>false</keyword><keyword>null</keyword>
+        </context>
+        <context id="type" style-ref="type">
+          <keyword>Int</keyword><keyword>Float</keyword><keyword>String</keyword>
+          <keyword>Boolean</keyword><keyword>ID</keyword>
+        </context>
+        <context id="variable" style-ref="variable">
+          <match>\$[_A-Za-z][_0-9A-Za-z]*</match>
+        </context>
+        <context id="directive" style-ref="directive">
+          <match>@[_A-Za-z][_0-9A-Za-z]*</match>
+        </context>
+        <context id="number" style-ref="number">
+          <match extended="true">-?\b\d+(\.\d+)?([eE][+-]?\d+)?\b</match>
+        </context>
+      </include>
+    </context>
+  </definitions>
+</language>

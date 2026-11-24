@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.14.0 (2026-11-24)
+
+- Added: highlighting for logs (levels coloured), GraphQL and subtitles (.srt, .vtt), and recognition of many more file names: Jenkinsfile, Procfile, Vue, Svelte, plist, HCL, .editorconfig, Gemfile, systemd units, gettext and others.
+- Added: scripts without an extension are highlighted from their #! line.
+
 ## 0.13.0 (2026-11-24)
 
 - Added: images open in the viewer: PNG, JPEG, animated GIF, WebP, BMP, ICO, TIFF, AVIF/HEIC when their loader is installed, and SVG (with its XML one click away); fit, zoom, drag to pan, an info strip, and Left/Right through the images of the folder.

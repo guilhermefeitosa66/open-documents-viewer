@@ -572,3 +572,23 @@ def test_notebook_v3_and_empty():
 
     assert _flat(ipynb.build(json.dumps(v3))).startswith("In [4]:\n1+1\n")
     assert ipynb.build('{"cells": []}').ops == []
+
+
+@pytest.mark.parametrize("name,lang", [
+    ("Jenkinsfile", "groovy"), ("Procfile", "yaml"), (".editorconfig", "ini"), ("App.vue", "html"),
+    ("Page.svelte", "html"), ("schema.graphql", "odv-graphql"), ("movie.srt", "odv-subtitles"),
+    ("talk.vtt", "odv-subtitles"), ("app.log", "odv-log"), ("Info.plist", "xml"), ("vars.hcl", "terraform"),
+    ("pt_BR.po", "gettext-translation"), ("events.ndjson", "json"), ("Gemfile", "ruby"), ("go.mod", "go"),
+    ("unit.service", "ini"), (".env.production", "sh"),
+])
+def test_more_languages(name, lang):
+    assert filetypes.classify(name).lang == lang
+
+
+@pytest.mark.parametrize("line,lang", [
+    ("#!/usr/bin/env python3", "python3"), ("#!/bin/bash", "sh"), ("#!/usr/bin/env -S node --no-warnings", "js"),
+    ("#!/usr/bin/python3.12", "python3"), ("#!/usr/bin/env ruby", "ruby"), ("#!/usr/bin/env FOO=1 perl", "perl"),
+    ("# not a shebang", None), ("#!/usr/bin/unknown", None), ("#!", None),
+])
+def test_shebang(line, lang):
+    assert filetypes.lang_from_shebang(line) == lang

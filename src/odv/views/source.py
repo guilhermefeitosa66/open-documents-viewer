@@ -24,8 +24,10 @@ def gtksource():
             from gi.repository import GtkSource
 
             GtkSource.init()
-            GtkSource.StyleSchemeManager.get_default().append_search_path(
-                os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "styles"))
+            data = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+            GtkSource.StyleSchemeManager.get_default().append_search_path(os.path.join(data, "styles"))
+            lm = GtkSource.LanguageManager.get_default()
+            lm.set_search_path(lm.get_search_path() + [os.path.join(data, "language-specs")])
             _gs = GtkSource
         except (ImportError, ValueError):
             _gs = False
@@ -145,8 +147,16 @@ class SourceView(Gtk.Box):
             self.buffer.set_style_scheme(scheme)
 
     def set_text(self, text: str, on_first, on_done) -> None:
-        if gtksource():
+        gs = gtksource()
+        if gs:
             self.buffer.set_highlight_syntax(len(text) <= HIGHLIGHT_LIMIT)
+            if self.buffer.get_language() is None:
+                from odv.filetypes import lang_from_shebang
+
+                lang_id = lang_from_shebang(text[:200].split("\n", 1)[0])
+                lang = gs.LanguageManager.get_default().get_language(lang_id) if lang_id else None
+                if lang is not None:
+                    self.buffer.set_language(lang)
         self._cancel = feed_buffer(self.buffer, split_chunks(text), on_first, on_done)
 
     def shutdown(self) -> None:

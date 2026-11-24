@@ -10,7 +10,7 @@ LIB="$DESTDIR/usr/lib/open-documents-viewer"
 mkdir -p "$LIB"
 # Sources only: no __pycache__, no editor leftovers.
 (cd src && find odv -type f \( -name '*.py' -o -name '*.svg' -o -name '*.xml' -o -name '*.png' \
-  -o -name '*.json' \) -not -path '*/__pycache__/*' -print) | while read -r f; do
+  -o -name '*.json' -o -name '*.lang' \) -not -path '*/__pycache__/*' -print) | while read -r f; do
   install -Dm644 "src/$f" "$LIB/$f"
 done
 # Every file the app reads at run time must have made it.
@@ -20,6 +20,9 @@ for theme in pastel dracula kitty neon; do
   done
 done
 test -f "$LIB/odv/data/themes/themes.json" || { echo "stage.sh: missing themes.json" >&2; exit 1; }
+for lang in odv-log odv-graphql odv-subtitles; do
+  test -f "$LIB/odv/data/language-specs/$lang.lang" || { echo "stage.sh: missing $lang.lang" >&2; exit 1; }
+done
 install -Dm755 packaging/common/open-documents-viewer "$DESTDIR/usr/bin/open-documents-viewer"
 install -Dm644 "packaging/common/$ID.desktop" "$DESTDIR/usr/share/applications/$ID.desktop"
 install -Dm644 "packaging/common/$ID.metainfo.xml" "$DESTDIR/usr/share/metainfo/$ID.metainfo.xml"

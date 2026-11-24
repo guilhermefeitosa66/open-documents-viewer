@@ -26,6 +26,35 @@ LANG_BY_EXT = {
     ".kts": "kotlin",
     ".gradle": "groovy",
     ".lock": "toml",
+    ".vue": "html",
+    ".svelte": "html",
+    ".astro": "html",
+    ".graphql": "odv-graphql",
+    ".gql": "odv-graphql",
+    ".graphqls": "odv-graphql",
+    ".srt": "odv-subtitles",
+    ".vtt": "odv-subtitles",
+    ".log": "odv-log",
+    ".plist": "xml",
+    ".svgz": "xml",
+    ".xaml": "xml",
+    ".csproj": "xml",
+    ".hcl": "terraform",
+    ".tfvars": "terraform",
+    ".po": "gettext-translation",
+    ".pot": "gettext-translation",
+    ".jsonl": "json",
+    ".ndjson": "json",
+    ".geojson": "json",
+    ".webmanifest": "json",
+    ".tsv-schema": "json",
+    ".zsh": "sh",
+    ".bash": "sh",
+    ".ksh": "sh",
+    ".service": "ini",
+    ".socket": "ini",
+    ".timer": "ini",
+    ".container": "ini",
 }
 LANG_BY_NAME = {
     "dockerfile": "docker",
@@ -39,7 +68,63 @@ LANG_BY_NAME = {
     ".zshrc": "sh",
     ".profile": "sh",
     "pkgbuild": "sh",
+    "jenkinsfile": "groovy",
+    "procfile": "yaml",
+    ".editorconfig": "ini",
+    ".gitattributes": "sh",
+    ".gitmodules": "ini",
+    ".gitconfig": "ini",
+    ".npmrc": "ini",
+    ".prettierrc": "json",
+    ".eslintrc": "json",
+    ".babelrc": "json",
+    "gemfile": "ruby",
+    "rakefile": "ruby",
+    "vagrantfile": "ruby",
+    "podfile": "ruby",
+    "brewfile": "ruby",
+    "justfile": "makefile",
+    "meson.build": "meson",
+    "meson_options.txt": "meson",
+    "pipfile": "toml",
+    "pyproject.toml": "toml",
+    "go.mod": "go",
+    ".bash_profile": "sh",
+    ".bash_aliases": "sh",
+    ".zprofile": "sh",
+    ".zshenv": "sh",
+    ".xinitrc": "sh",
+    "apkbuild": "sh",
 }
+
+# Interpreters named in a "#!" first line -> language id.
+SHEBANG = {
+    "python": "python3", "python3": "python3", "python2": "python", "sh": "sh", "bash": "sh", "zsh": "sh",
+    "dash": "sh", "ksh": "sh", "ash": "sh", "fish": "fish", "node": "js", "nodejs": "js", "deno": "typescript",
+    "bun": "js", "perl": "perl", "ruby": "ruby", "php": "php", "lua": "lua", "Rscript": "r", "tclsh": "tcl",
+    "wish": "tcl", "awk": "awk", "gawk": "awk", "make": "makefile", "julia": "julia", "groovy": "groovy",
+    "scala": "scala", "pwsh": "powershell", "elixir": "elixir", "guile": "scheme", "racket": "scheme",
+    "sbcl": "commonlisp", "ocaml": "ocaml", "runghc": "haskell", "swift": "swift", "kotlin": "kotlin",
+}
+
+
+def lang_from_shebang(first_line: str) -> str | None:
+    """The language of a script from its "#!" line, if we know the interpreter."""
+    if not first_line.startswith("#!"):
+        return None
+    parts = first_line[2:].strip().split()
+    if not parts:
+        return None
+    prog = parts[0].rsplit("/", 1)[-1]
+    if prog == "env":
+        args = [p for p in parts[1:] if not p.startswith("-") and "=" not in p]
+        if not args:
+            return None
+        prog = args[0].rsplit("/", 1)[-1]
+    if prog in SHEBANG:
+        return SHEBANG[prog]
+    base = prog.rstrip("0123456789.")  # python3.12, ruby3.2…
+    return SHEBANG.get(base)
 
 CODE_EXT = {
     ".py", ".pyi", ".dart", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".kt", ".kts",
@@ -123,7 +208,7 @@ def classify(path: str) -> Kind:
     if lower in LANG_BY_NAME:
         return Kind("text", LANG_BY_NAME[lower])
     if ext in LANG_BY_EXT:
-        return Kind("text", LANG_BY_EXT[ext])
+        return Kind("text", LANG_BY_EXT[ext], wrap=ext in WRAP_EXT or ext in (".srt", ".vtt"))
     wrap = ext in WRAP_EXT or (ext == "" and lower in {"license", "copying", "readme", "authors", "notice"})
     return Kind("text", None, wrap=wrap)
 

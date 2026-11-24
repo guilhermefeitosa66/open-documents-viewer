@@ -12,6 +12,9 @@
   <style name="def:link-text" foreground="#9CCFF0" underline="single"/>
   <style name="def:link-destination" foreground="#9CCFF0" underline="single"/>
   <style name="def:link-symbol" foreground="#A595AF"/>
+  <style name="def:error" foreground="#F28FA0" bold="true"/>
+  <style name="def:warning" foreground="#F6C1A0" bold="true"/>
+  <style name="def:note" foreground="#A6E3C4"/>
   <style name="def:keyword" foreground="#C7A6F2" bold="true"/>
   <style name="def:statement" foreground="#C7A6F2" bold="true"/>
   <style name="def:preprocessor" foreground="#C7A6F2" bold="true"/>
