@@ -23,7 +23,7 @@ AppDir:
     name: Open Documents Viewer
     icon: io.github.guilhermefeitosa66.OpenDocumentsViewer
     # Kept in step with src/odv/__init__.py; build.sh refuses a mismatch.
-    version: "0.14.0"
+    version: "0.15.0"
     exec: usr/bin/odv-launcher
   runtime:
     env:
@@ -44,6 +44,7 @@ AppDir:
       - python3-gi-cairo
       - python3-cairo
       - python3-markdown-it
+      - python3-yaml
       - libgtk-4-1
       - libadwaita-1-0
       - libgtksourceview-5-0

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.15.0 (2026-11-24)
+
+- Added: JSON, NDJSON, YAML and XML open as a collapsible tree, with the selected node's path ($.a.b[2] or /a/b[3]) shown and copyable, and find inside the tree; invalid data falls back to the source at the error line.
+- Changed: those formats now open in the tree view (the source is one click or Ctrl+E away).
+
 ## 0.14.0 (2026-11-24)
 
 - Added: highlighting for logs (levels coloured), GraphQL and subtitles (.srt, .vtt), and recognition of many more file names: Jenkinsfile, Procfile, Vue, Svelte, plist, HCL, .editorconfig, Gemfile, systemd units, gettext and others.

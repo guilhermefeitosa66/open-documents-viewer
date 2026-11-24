@@ -24,6 +24,12 @@ _COMMON = """
 .row-number { color: @odv_dim; }
 .welcome-hint { color: @odv_small_dim; }
 .image-info { padding: 4px 10px; border-radius: 8px; }
+.data-tree { font-family: monospace; }
+.tree-key { font-weight: bold; }
+.tree-string { color: @odv_data; }
+.tree-number { color: @odv_code; }
+.tree-constant { color: @odv_markdown; }
+.tree-container { color: @odv_dim; }
 .image-toolbar { padding: 2px; border-radius: 10px; }
 .document-area { background-color: @view_bg_color; }
 tabbar .box { background: @odv_tabbar; }

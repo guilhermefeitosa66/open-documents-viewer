@@ -109,12 +109,12 @@ def test_markdown_formatted_then_source():
 
 
 def test_code_and_config_files_open_in_source():
-    files = ["sample.py", "sample.json", ".env"]
+    files = ["sample.py", "sample.toml", ".env"]
 
     def scenario(win, r):
         for f in files:
             win.open_path(os.path.join(FIX, f))
-        yield 1.5
+        yield from settle(win)
         r["docs"] = [(d.name, d.mode, buffer_text(d)) for d in win.active_pane.docs()]
         r["switch_visible"] = win.active_pane.mode_switch.get_visible()
 
@@ -800,3 +800,30 @@ def test_custom_languages_and_shebang():
     r = run_app(scenario)
     assert r["langs"] == {"sample.log": "odv-log", "schema.graphql": "odv-graphql", "subs.srt": "odv-subtitles",
                           "script-noext": "python3"}
+
+
+def test_data_trees():
+    def scenario(win, r):
+        for f in ("sample.yaml", "sample.xml", "broken.json"):
+            win.open_path(os.path.join(FIX, f))
+        yield from settle(win)
+        docs = {d.name: d for d in win.active_pane.docs()}
+        yaml_doc = docs["sample.yaml"]
+        tree = yaml_doc.views["formatted"]
+        r["yaml_rows"] = tree.tree.get_n_items()
+        win.active_pane.view.set_selected_page(win.active_pane.find_page(yaml_doc.path))
+        yaml_doc.start_search()
+        yaml_doc.search_entry.set_text("find me")
+        yield 0.5
+        r["path"] = tree.path_label.get_label()
+        xml_tree = docs["sample.xml"].views["formatted"]
+        xml_tree.reveal(["library", "book", 1, "title"])
+        r["xml_path"] = xml_tree.path_label.get_label()
+        broken = docs["broken.json"]
+        r["broken"] = (broken.mode, broken.banner.get_revealed(), "line 4" in broken.banner.get_title())
+
+    r = run_app(scenario)
+    assert r["yaml_rows"] >= 3
+    assert r["path"] == "$.items[1].note"
+    assert r["xml_path"] == "/library/book[2]/title"
+    assert r["broken"] == ("source", True, True)

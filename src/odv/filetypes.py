@@ -5,6 +5,11 @@ import os
 MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
+# Structured data with a tree view: extension -> (parser kind, source language).
+TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
+            ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),
+            ".yml": ("yaml", "yaml"), ".xml": ("xml", "xml"), ".plist": ("xml", "xml"),
+            ".xsd": ("xml", "xml"), ".gpx": ("xml", "xml"), ".kml": ("xml", "xml")}
 # What GdkPixbuf can usually decode; the image view reports a missing loader.
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".jpe", ".gif", ".webp", ".bmp", ".ico", ".cur", ".tif", ".tiff",
              ".avif", ".heic", ".heif", ".jxl", ".svg", ".svgz", ".tga", ".pnm", ".pbm", ".pgm", ".ppm",
@@ -166,7 +171,7 @@ class Kind:
 
     @property
     def has_formatted(self) -> bool:
-        return self.rich or self.kind in ("delimited", "image")
+        return self.rich or self.kind in ("delimited", "image", "tree")
 
     @property
     def has_source(self) -> bool:
@@ -175,7 +180,7 @@ class Kind:
 
     @property
     def formatted_label(self) -> str:
-        return {"delimited": "Table", "image": "Image"}.get(self.kind, "Formatted")
+        return {"delimited": "Table", "image": "Image", "tree": "Tree"}.get(self.kind, "Formatted")
 
 
 def is_env_file(name: str) -> bool:
@@ -201,6 +206,8 @@ def classify(path: str) -> Kind:
         return Kind("rtf", None, wrap=True)
     if ext == ".ipynb":
         return Kind("notebook", "json")
+    if ext in TREE_EXT:
+        return Kind("tree", TREE_EXT[ext][1], delimiter=TREE_EXT[ext][0])
     if ext in IMAGE_EXT:
         return Kind("image", "xml" if ext in (".svg", ".svgz") else None)
     if is_env_file(name):

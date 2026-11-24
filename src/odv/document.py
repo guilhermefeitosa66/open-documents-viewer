@@ -67,6 +67,7 @@ class DocumentPage(Gtk.Box):
         self._monitor = None
         self._change_timer = 0
         self.deleted = False
+        self._note = None  # a message that stays in the banner (e.g. data that could not be read)
 
         self.banner = Adw.Banner(revealed=False)
         self.banner.connect("button-clicked", self._on_banner_button)
@@ -331,6 +332,8 @@ class DocumentPage(Gtk.Box):
             self._build_table()
         elif mode == "formatted" and self.kind.kind == "image":
             self._build_image()
+        elif mode == "formatted" and self.kind.kind == "tree" and self._text is not None:
+            self._build_tree()
         elif self._text is not None:
             self._build_text_view(mode)
         else:
@@ -359,6 +362,9 @@ class DocumentPage(Gtk.Box):
                 self._md_doc = doc
                 if self.mode != "formatted":
                     self._set_outline(doc.outline)
+            if self.mode == "formatted" and self.kind.kind == "tree":
+                self._build_tree()
+                return
             self._build_text_view(self.mode, doc if self.mode == "formatted" else None)
 
         def failed(err):
@@ -416,6 +422,29 @@ class DocumentPage(Gtk.Box):
             self.stack.set_visible_child(view)
         self._update_banner()
 
+    def _build_tree(self):
+        from odv.views.tree import TreeView
+
+        view = TreeView(self.kind.delimiter)  # the parser kind: json, ndjson, yaml, xml
+        view.connect("loaded", lambda v: (self._first_content(), self._loaded()))
+        view.connect("failed", self._on_tree_failed)
+        self._add_view("formatted", view)
+        view.load(self._text.text)
+
+    def _on_tree_failed(self, view, message, line):
+        # Not valid data: show the source at the problem, with a discreet note.
+        self.views.pop("formatted", None)
+        self.stack.remove(view)
+        self.has_formatted = False
+        self.mode = "source"
+        self.emit("mode-changed")
+        where = _(" (line {line})").format(line=line) if line else ""
+        self._note = _("Could not read the structure{where}: {error}. Showing the source.").format(
+            where=where, error=message)
+        self._show("source")
+        if line:
+            self._goto = (line, None, True)
+
     def _build_image(self):
         from odv.views.image import ImageView
 
@@ -456,6 +485,11 @@ class DocumentPage(Gtk.Box):
         self._loaded()
 
     def _update_banner(self):
+        if self._note:
+            self.banner.set_title(self._note)
+            self.banner.set_button_label(None)
+            self.banner.set_revealed(True)
+            return
         view = self.views.get(self.mode)
         tf = self._text
         if self.mode == "source" and tf is not None and tf.truncated:
@@ -490,6 +524,12 @@ class DocumentPage(Gtk.Box):
     def find(self, forward: bool, from_selection_start: bool = False) -> bool:
         needle = self.search_entry.get_text()
         view = self.views.get(self.mode)
+        if view is not None and hasattr(view, "reveal"):  # the data tree
+            if not needle:
+                self._set_found(True)
+                return False
+            view.find(needle, forward, self._set_found)
+            return True
         if view is not None and hasattr(view, "columnview"):
             if not needle:
                 self._set_found(True)

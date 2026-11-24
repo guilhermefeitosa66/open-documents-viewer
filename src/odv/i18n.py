@@ -218,6 +218,14 @@ CATALOG: dict[str, dict[str, str]] = {
     "Fit to window (F)": {"pt": "Ajustar à janela (F)", "es": "Ajustar a la ventana (F)"},
     "Actual size (1)": {"pt": "Tamanho real (1)", "es": "Tamaño real (1)"},
     "Fit": {"pt": "Ajustada", "es": "Ajustada"},
+    # data tree
+    "Tree": {"pt": "Árvore", "es": "Árbol"},
+    "Copy the node path (Ctrl+C)": {"pt": "Copiar o caminho do nó (Ctrl+C)",
+                                    "es": "Copiar la ruta del nodo (Ctrl+C)"},
+    " (line {line})": {"pt": " (linha {line})", "es": " (línea {line})"},
+    "Could not read the structure{where}: {error}. Showing the source.": {
+        "pt": "Não foi possível ler a estrutura{where}: {error}. Mostrando o código-fonte.",
+        "es": "No se pudo leer la estructura{where}: {error}. Se muestra el código fuente."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

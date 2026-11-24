@@ -592,3 +592,42 @@ def test_more_languages(name, lang):
 ])
 def test_shebang(line, lang):
     assert filetypes.lang_from_shebang(line) == lang
+
+
+# -- data trees ---------------------------------------------------------------------
+
+from odv.formats import treedata  # noqa: E402
+
+
+def test_tree_parsing():
+    data = treedata.parse("json", open(os.path.join(FIX, "sample.json")).read())
+    assert data["list"] == [1, 2, 3]
+    yaml_data = treedata.parse("yaml", open(os.path.join(FIX, "sample.yaml")).read())
+    assert yaml_data["items"][1]["note"] == "find me here"
+    xml = treedata.parse("xml", open(os.path.join(FIX, "sample.xml")).read())
+    lib = xml["library"]
+    assert lib["@name"] == "home" and lib["book"][1]["title"] == "Iracema" and lib["book"][0]["@id"] == "1"
+    assert treedata.parse("ndjson", open(os.path.join(FIX, "sample.ndjson")).read())[1] == {"id": 2, "ok": False}
+    with pytest.raises(treedata.ParseError) as err:
+        treedata.parse("json", open(os.path.join(FIX, "broken.json")).read())
+    assert err.value.line == 4
+
+
+def test_tree_paths_preview_search():
+    assert treedata.path_string(["items", 1, "note"], "json") == "$.items[1].note"
+    assert treedata.path_string(["a b", 0], "yaml") == '$["a b"][0]'
+    assert treedata.path_string(["library", "book", 1, "title"], "xml") == "/library/book[2]/title"
+    assert treedata.preview({"a": 1}) == "{1}" and treedata.preview([1, 2]) == "[2]"
+    assert treedata.preview(None) == "null" and treedata.preview(True) == "true"
+    assert treedata.preview("x" * 300).endswith('…"')
+    data = {"name": "odv", "items": [{"id": 1}, {"note": "find ME here", "id": 2}]}
+    assert treedata.search(data, "find me") == [["items", 1, "note"]]
+    assert treedata.search(data, "id") == [["items", 0, "id"], ["items", 1, "id"]]
+
+
+def test_xml_entity_bomb_is_refused():
+    bomb = ('<?xml version="1.0"?><!DOCTYPE l [<!ENTITY a "aaaaaaaaaa">'
+            + "".join(f'<!ENTITY {chr(98 + i)} "{("&" + chr(97 + i) + ";") * 10}">' for i in range(8))
+            + ']><l>&i;</l>')
+    with pytest.raises(treedata.ParseError):
+        treedata.parse("xml", bomb)

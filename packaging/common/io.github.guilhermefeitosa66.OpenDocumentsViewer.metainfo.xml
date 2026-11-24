@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.15.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: JSON, NDJSON, YAML and XML open as a collapsible tree, with the selected node's path ($.a.b[2] or /a/b[3]) shown and copyable, and find inside the tree; invalid data falls back to the source at the error line.</li>
+        <li>Changed: those formats now open in the tree view (the source is one click or Ctrl+E away).</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.14.0" date="2026-11-24">
       <description>
         <ul>

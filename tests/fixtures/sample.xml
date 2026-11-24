@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<library name="home">
+  <book id="1"><title>Dom Casmurro</title></book>
+  <book id="2"><title>Iracema</title></book>
+  <!-- a comment -->
+</library>
