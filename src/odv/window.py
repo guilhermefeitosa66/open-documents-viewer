@@ -79,12 +79,15 @@ class Pane(Gtk.Box):
                 return page
         return None
 
-    def open(self, path, mode=None, select=True):
+    def open(self, path, mode=None, select=True, line=None, needle=None):
         path = os.path.abspath(path)
         page = self.find_page(path)
+        goto = (line, needle) if line else None
         if page is None:
-            doc = DocumentPage(path, self.window.open_path, mode)
+            doc = DocumentPage(path, self.window.open_path, "source" if goto else mode, goto=goto)
             page = self._append(doc)
+        elif goto:
+            page.get_child().goto(line, needle)
         if select:
             self.view.set_selected_page(page)
         return page.get_child()
@@ -150,11 +153,21 @@ class Window(Adw.ApplicationWindow):
         self.panes: list[Pane] = []
         self.active_pane = None
 
-        # Sidebar
+        # Sidebar: the folder tree, or find in folder
         self.tree = FolderTree(self.open_path)
+        from odv.searchpanel import SearchPanel
+
+        self.search_panel = SearchPanel(self.open_at)
+        self.sidebar_stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
+        self.sidebar_stack.add_named(self.tree, "files")
+        self.sidebar_stack.add_named(self.search_panel, "search")
         self.sidebar_title = Adw.WindowTitle(title="")
         sidebar_header = Adw.HeaderBar(title_widget=self.sidebar_title)
-        sidebar_view = Adw.ToolbarView(content=self.tree)
+        self.search_toggle = Gtk.ToggleButton(icon_name="system-search-symbolic",
+                                              tooltip_text=_("Search in folder (Ctrl+Shift+F)"))
+        self.search_toggle.connect("toggled", self._on_search_toggled)
+        sidebar_header.pack_start(self.search_toggle)
+        sidebar_view = Adw.ToolbarView(content=self.sidebar_stack)
         sidebar_view.add_top_bar(sidebar_header)
 
         # Content
@@ -253,6 +266,7 @@ class Window(Adw.ApplicationWindow):
         add("prev-tab", lambda: self._cycle(-1), ("<Control>Page_Up", "<Control><Shift>Tab"))
         add("focus-other-pane", self.focus_other_pane, ("<Control>k",))
         add("preferences", self.show_preferences, ("<Control>comma",))
+        add("search-folder", self.search_folder, ("<Control><Shift>f",))
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
         self.set_help_overlay(_shortcuts_window())
@@ -402,9 +416,28 @@ class Window(Adw.ApplicationWindow):
         recents.add(path)
         self._update_stack()
 
+    def open_at(self, path, line, needle=None):
+        """Open ``path`` in the source view at ``line``, selecting ``needle``."""
+        self.active_pane.open(path, line=line, needle=needle)
+        recents.add(path)
+        self._update_stack()
+
+    def search_folder(self):
+        if not self.folder:
+            return
+        self.split_view.set_show_sidebar(True)
+        self.search_toggle.set_active(True)
+        self.search_panel.focus()
+
+    def _on_search_toggled(self, button):
+        self.sidebar_stack.set_visible_child_name("search" if button.get_active() else "files")
+        if button.get_active():
+            self.search_panel.focus()
+
     def open_folder(self, path):
         self.folder = path
         self.tree.set_root(path)
+        self.search_panel.set_root(path)
         self.sidebar_title.set_title(os.path.basename(path) or path)
         self.sidebar_title.set_subtitle(tilde(os.path.dirname(path)))
         self.sidebar_button.set_visible(True)
@@ -528,7 +561,8 @@ def _shortcuts_window():
                      ("<Control>w", _("Close tab")), ("<Control>r", _("Reload"))],
         _("View"): [("<Control>e", _("Formatted / source")), ("<Control>f", _("Find")),
                     ("<Control>backslash", _("Split View")), ("<Control>k", _("Other pane")),
-                    ("F9", _("Show folder")), ("<Control>comma", _("Preferences")),
+                    ("F9", _("Show folder")), ("<Control><Shift>f", _("Search in folder")),
+                    ("<Control>comma", _("Preferences")),
                     ("<Control>Page_Down", _("Next tab")), ("<Control>Page_Up", _("Previous tab"))],
     }
     for title, items in groups.items():

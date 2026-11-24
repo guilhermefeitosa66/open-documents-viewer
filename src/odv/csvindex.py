@@ -5,6 +5,7 @@ The file is memory-mapped and only the byte offset of each row is kept
 index runs in a worker thread and can be cancelled. Pure Python: no GTK.
 """
 
+import bisect
 import csv
 import io
 import mmap
@@ -105,6 +106,34 @@ class CsvIndex:
         if len(self._cache) > 4096:
             self._cache.popitem(last=False)
         return cells
+
+    def row_of_offset(self, offset: int) -> int:
+        """The row containing byte ``offset`` (0 = the header)."""
+        return max(0, bisect.bisect_right(self.offsets, offset) - 1)
+
+    def find(self, needle: str, start_row: int = 1, forward: bool = True) -> int | None:
+        """The first data row after (or before) ``start_row`` whose raw text
+        contains ``needle``, ignoring case; wraps around. None if absent.
+        Scans the mapped bytes with a regex, so it is fast on huge files."""
+        if not needle or not self.size:
+            return None
+        pattern = re.compile(re.escape(needle.encode("utf-8")), re.IGNORECASE)
+        mm, n_rows = self._mm, self.rows_indexed
+        if n_rows < 2:
+            return None
+        first_data = self.offsets[1]
+        if forward:
+            begin = self.offsets[min(start_row + 1, n_rows)] if start_row + 1 < n_rows else first_data
+            m = pattern.search(mm, begin) or pattern.search(mm, first_data, begin)
+            return self.row_of_offset(m.start()) if m else None
+        end = self.offsets[max(start_row, 1)]
+        last = None
+        for m in pattern.finditer(mm, first_data, end):
+            last = m
+        if last is None:
+            for m in pattern.finditer(mm, end):
+                last = m
+        return self.row_of_offset(last.start()) if last else None
 
     def close(self) -> None:
         self.cancelled = True

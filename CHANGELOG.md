@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.3.0 (2026-11-24)
+
+- Added: find in CSV/TSV tables (Ctrl+F), fast on files with millions of rows.
+- Added: search in the open folder (Ctrl+Shift+F), respecting .gitignore and skipping binary files; results grouped by file open at the line.
+
 ## 0.2.0 (2026-11-24)
 
 - Added: files reload when they change on disk, keeping the scroll position; a banner says when a file was deleted (Preferences can turn it off).

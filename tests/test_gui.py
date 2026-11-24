@@ -344,3 +344,61 @@ def test_interface_in_portuguese():
         assert r["switch"] == "Formatado"
     finally:
         i18n.set_language("en")
+
+
+def test_find_in_table():
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.csv"))
+        yield 1.0
+        doc = win.active_pane.current_doc()
+        win.find()
+        doc.search_entry.set_text("recife")
+        yield 0.8
+        r["mode"] = doc.mode
+        sel = doc.views["formatted"].selection.get_selection()
+        r["row"] = sel.get_nth(0) if sel.get_size() else None
+        r["red"] = doc.search_entry.has_css_class("error")
+        doc.search_entry.set_text("nowhere")
+        yield 0.8
+        r["red2"] = doc.search_entry.has_css_class("error")
+
+    r = run_app(scenario)
+    assert r["mode"] == "formatted"  # the table stays a table
+    assert r["row"] == 1 and not r["red"]
+    assert r["red2"]
+
+
+def test_search_in_folder_opens_at_the_line(tmp_path):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "guide.md").write_text("# Guide\n\nintro\n\nThe magic word is here.\n")
+    (tmp_path / "other.py").write_text("print('nothing')\n")
+
+    def scenario(win, r):
+        win.open_folder(str(tmp_path))
+        yield 0.3
+        win.search_folder()
+        win.search_panel.entry.set_text("magic")
+        for _ in range(30):
+            yield 0.2
+            if win.search_panel.status.get_label().endswith("files."):
+                break
+        r["status"] = win.search_panel.status.get_label()
+        rows = []
+        i = 0
+        while (row := win.search_panel.list.get_row_at_index(i)) is not None:
+            rows.append(getattr(row, "_target", None))
+            i += 1
+        r["targets"] = rows
+        win.search_panel._on_row(None, win.search_panel.list.get_row_at_index(1))
+        yield 1.0
+        doc = win.active_pane.current_doc()
+        buf = doc.views["source"].buffer
+        b = buf.get_selection_bounds()
+        r["doc"] = (doc.name, doc.mode)
+        r["selected"] = (b[0].get_line() + 1, buf.get_text(b[0], b[1], False)) if b else None
+
+    r = run_app(scenario)
+    assert r["status"] == "1 matches in 1 files."
+    assert r["targets"] == [None, (str(tmp_path / "docs" / "guide.md"), 5)]
+    assert r["doc"] == ("guide.md", "source")
+    assert r["selected"] == (5, "magic")

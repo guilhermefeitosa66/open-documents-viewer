@@ -23,7 +23,7 @@ AppDir:
     name: Open Documents Viewer
     icon: io.github.guilhermefeitosa66.OpenDocumentsViewer
     # Kept in step with src/odv/__init__.py; build.sh refuses a mismatch.
-    version: "0.2.0"
+    version: "0.3.0"
     exec: usr/bin/odv-launcher
   runtime:
     env:

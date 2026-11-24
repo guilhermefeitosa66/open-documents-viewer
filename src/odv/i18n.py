@@ -97,6 +97,21 @@ CATALOG: dict[str, dict[str, str]] = {
     "This file was deleted or moved. What you see is the last version read.": {
         "pt": "Este arquivo foi apagado ou movido. O que você vê é a última versão lida.",
         "es": "Este archivo se borró o se movió. Lo que ves es la última versión leída."},
+    # find in folder
+    "Search in folder": {"pt": "Buscar na pasta", "es": "Buscar en la carpeta"},
+    "Search in folder (Ctrl+Shift+F)": {"pt": "Buscar na pasta (Ctrl+Shift+F)",
+                                        "es": "Buscar en la carpeta (Ctrl+Mayús+F)"},
+    "Type at least 2 characters.": {"pt": "Digite pelo menos 2 caracteres.",
+                                    "es": "Escribe al menos 2 caracteres."},
+    "Searching…": {"pt": "Buscando…", "es": "Buscando…"},
+    "No matches.": {"pt": "Nada encontrado.", "es": "Sin resultados."},
+    "{hits} matches in {files} files…": {"pt": "{hits} resultados em {files} arquivos…",
+                                         "es": "{hits} resultados en {files} archivos…"},
+    "{hits} matches in {files} files.": {"pt": "{hits} resultados em {files} arquivos.",
+                                         "es": "{hits} resultados en {files} archivos."},
+    "{hits} matches in {files} files (showing the first ones).": {
+        "pt": "{hits} resultados em {files} arquivos (mostrando os primeiros).",
+        "es": "{hits} resultados en {files} archivos (mostrando los primeros)."},
     # preferences
     "Appearance": {"pt": "Aparência", "es": "Apariencia"},
     "Theme": {"pt": "Tema", "es": "Tema"},

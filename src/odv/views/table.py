@@ -161,6 +161,30 @@ class TableView(Gtk.ScrolledWindow):
             lines.append("\t".join(self.index.row(bitset.get_nth(k) + 1)))
         self.get_clipboard().set("\n".join(lines))
 
+    def find(self, needle: str, forward: bool, on_result) -> None:
+        """Select the next row containing ``needle``; ``on_result(found)``."""
+        if self.index is None or not needle:
+            on_result(False)
+            return
+        selected = self.selection.get_selection()
+        current = selected.get_nth(0) + 1 if selected.get_size() else 0
+        index = self.index
+
+        def work():
+            row = index.find(needle, current, forward)
+            GLib.idle_add(lambda: (self._show_row(row, on_result), False)[1])
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _show_row(self, row, on_result):
+        if row is None or row < 1 or row > self.model.n:
+            on_result(False)
+            return
+        position = row - 1
+        self.selection.select_item(position, True)
+        self.columnview.scroll_to(position, None, Gtk.ListScrollFlags.FOCUS | Gtk.ListScrollFlags.SELECT, None)
+        on_result(True)
+
     def shutdown(self):
         if self.index:
             self.index.cancelled = True

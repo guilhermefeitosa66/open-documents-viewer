@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.3.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: find in CSV/TSV tables (Ctrl+F), fast on files with millions of rows.</li>
+        <li>Added: search in the open folder (Ctrl+Shift+F), respecting .gitignore and skipping binary files; results grouped by file open at the line.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-24">
       <description>
         <ul>

@@ -296,3 +296,70 @@ def test_translate():
         assert i18n._("not in the catalogue") == "not in the catalogue"
     finally:
         i18n.set_language("en")
+
+
+# -- search -------------------------------------------------------------------
+
+from odv import foldersearch  # noqa: E402
+
+
+def test_csv_find_wraps_and_goes_back(tmp_path):
+    p = tmp_path / "f.csv"
+    p.write_text("id,city\n1,Teresina\n2,Recife\n3,Natal\n4,RECIFE\n")
+    ix = CsvIndex(str(p))
+    ix.build()
+    assert ix.find("recife", 0) == 2
+    assert ix.find("recife", 2) == 4
+    assert ix.find("recife", 4) == 2  # wraps
+    assert ix.find("recife", 4, forward=False) == 2
+    assert ix.find("recife", 2, forward=False) == 4  # wraps backwards
+    assert ix.find("city", 0) is None  # the header is not a data row
+    assert ix.find("nowhere", 0) is None
+    ix.close()
+
+
+def _tree(root):
+    (root / "src").mkdir()
+    (root / "build").mkdir()
+    (root / "src" / "a.py").write_text("x = 1\nNeedle here\nnothing\n")
+    (root / "src" / "b.txt").write_text("no match\n")
+    (root / "build" / "out.txt").write_text("needle in an ignored folder\n")
+    (root / "notes.log").write_text("needle in an ignored file\n")
+    (root / "image.bin").write_bytes(b"\x00\x01needle")
+    (root / ".gitignore").write_text("build/\n*.log\n")
+
+
+def test_folder_search_respects_gitignore(tmp_path):
+    _tree(tmp_path)
+    results, truncated = foldersearch.search(str(tmp_path), "NEEDLE")
+    assert not truncated
+    assert [os.path.relpath(r.path, tmp_path) for r in results] == [os.path.join("src", "a.py")]
+    hit = results[0].hits[0]
+    assert hit.line == 2 and hit.text[hit.column:hit.column + 6] == "Needle"
+
+
+def test_folder_search_uses_git_when_present(tmp_path):
+    import shutil
+    import subprocess
+
+    if not shutil.which("git"):
+        pytest.skip("git not installed")
+    _tree(tmp_path)
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    files = [os.path.relpath(f, tmp_path) for f in foldersearch.list_files(str(tmp_path))]
+    assert os.path.join("build", "out.txt") not in files and "notes.log" not in files
+    assert os.path.join("src", "a.py") in files
+
+
+def test_folder_search_snippet_of_long_line(tmp_path):
+    (tmp_path / "long.txt").write_text("x" * 500 + "needle" + "y" * 500 + "\n")
+    results, _ = foldersearch.search(str(tmp_path), "needle")
+    hit = results[0].hits[0]
+    assert len(hit.text) <= foldersearch.SNIPPET + 1
+    assert hit.text[hit.column:hit.column + 6] == "needle"
+
+
+def test_folder_search_cancel(tmp_path):
+    _tree(tmp_path)
+    with pytest.raises(foldersearch.Cancelled):
+        foldersearch.search(str(tmp_path), "needle", cancelled=lambda: True)

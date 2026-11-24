@@ -44,6 +44,7 @@ def main():
     ap.add_argument("--theme")
     ap.add_argument("--no-background", action="store_true")
     ap.add_argument("--prefs", action="store_true")
+    ap.add_argument("--search", help="search this text in the folder")
     ap.add_argument("--size", default="1280x800")
     ap.add_argument("--wait", type=float, default=2.0)
     ap.add_argument("files", nargs="*")
@@ -63,6 +64,13 @@ def main():
         if args.no_background:
             theme.set_background(False)
         win = app.get_active_window()
+        if args.search:
+            def search():
+                win.search_folder()
+                win.search_panel.entry.set_text(args.search)
+                return False
+
+            GLib.timeout_add(400, search)
         if args.prefs:
             GLib.timeout_add(500, lambda: (win.show_preferences(), False)[1])
         if args.folder:

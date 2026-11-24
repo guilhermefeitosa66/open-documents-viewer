@@ -36,7 +36,8 @@ class DocumentPage(Gtk.Box):
         "changed-on-disk": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None):
+    def __init__(self, path: str, open_path, mode: str | None = None, scroll: float | None = None,
+                 goto: tuple | None = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("document-area")  # always solid, never the background picture
         self.path = os.path.abspath(path)
@@ -53,6 +54,8 @@ class DocumentPage(Gtk.Box):
         self.views: dict[str, Gtk.Widget] = {}
         self.closed = False
         self._restore_scroll = scroll
+        self._goto = goto  # (line, needle) to show once the source view is ready
+        self._ready: set[str] = set()
         self._monitor = None
         self._change_timer = 0
         self.deleted = False
@@ -138,6 +141,41 @@ class DocumentPage(Gtk.Box):
         self.deleted = False
         self.emit("changed-on-disk")
         return False
+
+    def _view_ready(self, mode: str) -> None:
+        self._ready.add(mode)
+        if mode == "source" and self._goto:
+            self._apply_goto()
+
+    def goto(self, line: int, needle: str | None = None) -> None:
+        """Show ``line`` (1-based) in the source view, selecting ``needle`` on it."""
+        self._goto = (line, needle)
+        if self.mode != "source":
+            self.set_mode("source")
+        if "source" in self._ready:
+            self._apply_goto()
+
+    def _apply_goto(self):
+        line, needle = self._goto
+        self._goto = None
+        view = self.views.get("source")
+        if view is None:
+            return
+        tv, buf = view.view, view.buffer
+        found = buf.get_iter_at_line(max(0, line - 1))
+        it = found[1] if isinstance(found, tuple) else found
+        end = it.copy()
+        if not end.ends_line():
+            end.forward_to_line_end()
+        match = it.forward_search(needle, Gtk.TextSearchFlags.CASE_INSENSITIVE, end) if needle else None
+        if match:
+            buf.select_range(match[0], match[1])
+        else:
+            buf.select_range(it, end)
+        mark = buf.create_mark(None, it, True)
+        tv.scroll_to_mark(mark, 0.1, True, 0.0, 0.3)
+        GLib.timeout_add(120, lambda: (tv.scroll_to_mark(mark, 0.1, True, 0.0, 0.3), buf.delete_mark(mark),
+                                       False)[2])
 
     def scroll_position(self) -> float:
         view = self.views.get(self.mode)
@@ -249,7 +287,7 @@ class DocumentPage(Gtk.Box):
 
             view = SourceView(self.path, self.kind.lang, self.kind.wrap)
             self._add_view(mode, view)
-            view.set_text(tf.text, self._first_content, self._loaded)
+            view.set_text(tf.text, self._first_content, lambda: (self._loaded(), self._view_ready("source")))
 
     def _add_view(self, mode, view):
         self.views[mode] = view
@@ -308,8 +346,6 @@ class DocumentPage(Gtk.Box):
 
     # -- find -----------------------------------------------------------------
     def start_search(self) -> None:
-        if self.kind.kind == "delimited" and self.mode == "formatted":
-            self.set_mode("source")
         self.search_bar.set_search_mode(True)
         self.search_entry.grab_focus()
 
@@ -317,9 +353,19 @@ class DocumentPage(Gtk.Box):
         view = self.views.get(self.mode)
         return getattr(view, "view", None) if view is not None and hasattr(view, "buffer") else None
 
+    def _set_found(self, found: bool) -> None:
+        (self.search_entry.remove_css_class if found else self.search_entry.add_css_class)("error")
+
     def find(self, forward: bool, from_selection_start: bool = False) -> bool:
-        tv = self._text_view()
         needle = self.search_entry.get_text()
+        view = self.views.get(self.mode)
+        if view is not None and hasattr(view, "columnview"):
+            if not needle:
+                self._set_found(True)
+                return False
+            view.find(needle, forward, self._set_found)
+            return True
+        tv = self._text_view()
         if tv is None or not needle:
             self.search_entry.remove_css_class("error")
             return False
