@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.35.1 (2026-11-24)
+
+- Changed: README with the table of supported formats and new screenshots, store and package descriptions that mention PDF and office files, F5 in the shortcuts window.
+
 ## 0.35.0 (2026-11-24)
 
 - Added: a Flatpak build (GNOME 50 runtime): offline, read-only access to your files, PDF and every format included; the faithful view (LibreOffice) is not offered inside the sandbox.

@@ -819,7 +819,8 @@ def _shortcuts_window():
     section = Gtk.ShortcutsSection(section_name="main", visible=True)
     groups = {
         _("Files"): [("<Control>o", _("Open file")), ("<Control><Shift>o", _("Open folder")),
-                     ("<Control>w", _("Close tab")), ("<Control>r", _("Reload"))],
+                     ("<Control>w", _("Close tab")), ("<Control>r", _("Reload")),
+                     ("F5", _("Present the slides"))],
         _("View"): [("<Control>e", _("Formatted / source")), ("<Control>f", _("Find")),
                     ("<Control>backslash", _("Split View")), ("<Control>k", _("Other pane")),
                     ("F9", _("Show sidebar")), ("<Control><Shift>l", _("Outline")),

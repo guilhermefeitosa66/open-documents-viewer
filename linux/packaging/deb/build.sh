@@ -27,11 +27,12 @@ Depends: python3 (>= 3.10), python3-gi (>= 3.42), python3-gi-cairo, python3-yaml
 Recommends: python3-msoffcrypto-tool, adwaita-icon-theme, librsvg2-common, webp-pixbuf-loader, heif-gdk-pixbuf, libavif-gdk-pixbuf
 Maintainer: Guilherme Feitosa <guilhermefeitosa66@gmail.com>
 Homepage: https://libre-apps.org
-Description: fast, read-only viewer for Markdown, text, code and data files
- Opens documents fast and only shows them: Markdown rendered with native
- widgets (with a switch to the source), code and config files with syntax
- highlighting, CSV/TSV as tables of any size. Folder tree, tabs and split
- view. Offline, no account, no tracking.
+Description: fast, read-only viewer for documents, PDF, office files, code and data
+ Opens documents fast and only shows them: PDF, Word/Excel/PowerPoint and
+ OpenDocument files, e-books, Markdown, HTML and notebooks drawn with native
+ widgets, code and config files with syntax highlighting, CSV/TSV as tables
+ of any size. Folder tree, tabs and split view. Offline, no account, no
+ tracking.
 CONTROL
 
 # Bytecode is compiled on the user's machine, for the python3 that is there:

@@ -19,6 +19,9 @@ changes the license of the app.
 | [msoffcrypto-tool](https://github.com/nolze/msoffcrypto-tool) and its dependency [cryptography](https://github.com/pyca/cryptography) (optional) | MIT; Apache-2.0 OR BSD-3-Clause | Opening password-protected Word/Excel/PowerPoint files, in memory |
 | GdkPixbuf loaders: [webp-pixbuf-loader](https://github.com/aruiz/webp-pixbuf-loader), libheif's, libavif's (optional) | LGPL-2.0-or-later, LGPL-3.0-or-later, BSD-2-Clause | WebP, HEIF and AVIF images |
 
+Optional, not shipped and not linked: [LibreOffice](https://www.libreoffice.org)
+(MPL-2.0), when installed, is run as a separate program for the faithful view.
+
 Tests only (not shipped): [xlwt](https://github.com/python-excel/xlwt) (BSD-3-Clause) writes sample .xls files; [qpdf](https://github.com/qpdf/qpdf) (Apache-2.0) encrypts a sample PDF.
 
 The AppImage also carries the Ubuntu 24.04 packages these depend on (GLib,

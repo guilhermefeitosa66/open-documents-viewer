@@ -306,6 +306,7 @@ CATALOG: dict[str, dict[str, str]] = {
     "Next slide": {"pt": "Próximo slide", "es": "Diapositiva siguiente"},
     "Notes": {"pt": "Notas", "es": "Notas"},
     "Present (F5)": {"pt": "Apresentar (F5)", "es": "Presentar (F5)"},
+    "Present the slides": {"pt": "Apresentar os slides", "es": "Presentar las diapositivas"},
     "No notes for this slide.": {"pt": "Este slide não tem notas.", "es": "Esta diapositiva no tiene notas."},
     "This presentation has no slides.": {"pt": "Esta apresentação não tem slides.",
                                          "es": "Esta presentación no tiene diapositivas."},
@@ -344,9 +345,9 @@ CATALOG: dict[str, dict[str, str]] = {
     "This presentation is password-protected.": {"pt": "Esta apresentação está protegida por senha.",
                                                  "es": "Esta presentación está protegida con contraseña."},
     # about
-    "A fast, read-only viewer for Markdown, text, code and data files.": {
-        "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",
-        "es": "Un visor rápido, de solo lectura, para Markdown, texto, código y datos."},
+    "A fast, read-only viewer for documents, PDF, office files, code and data.": {
+        "pt": "Um visualizador rápido, só de leitura, para documentos, PDF, arquivos de escritório, código e dados.",
+        "es": "Un visor rápido, de solo lectura, para documentos, PDF, archivos de oficina, código y datos."},
     "Fast, offline, read-only. No ads, no account, no tracking.": {
         "pt": "Rápido, offline, só leitura. Sem anúncio, sem conta, sem rastreamento.",
         "es": "Rápido, sin conexión, solo lectura. Sin anuncios, sin cuenta, sin rastreo."},

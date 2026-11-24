@@ -4,17 +4,18 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
   <name>Open Documents Viewer</name>
-  <summary>Fast, read-only viewer for Markdown, text, code and data files</summary>
+  <summary>Fast, read-only viewer for documents, PDF, office files, code and data</summary>
   <developer id="io.github.guilhermefeitosa66">
     <name>Guilherme Feitosa</name>
   </developer>
   <description>
     <p>Open Documents Viewer opens documents fast and only shows them: nothing is edited, nothing leaves your computer.</p>
     <ul>
-      <li>Markdown rendered with native widgets, with a one-click switch to the source</li>
-      <li>Syntax highlighting for code and config files: JSON, YAML, TOML, INI, XML, .env and more</li>
-      <li>CSV and TSV as tables, even with millions of rows</li>
-      <li>Open a folder and browse it in a tree, open many files in tabs, split the window in two</li>
+      <li>PDF with thumbnails, bookmarks, find, text selection and printing</li>
+      <li>Word, Excel and PowerPoint files, old and new, and their OpenDocument counterparts, drawn natively; a faithful view through LibreOffice when it is installed</li>
+      <li>E-books, Markdown, HTML, notebooks, mail, contacts and calendars, rendered safely with native widgets</li>
+      <li>Syntax highlighting for code and config files, CSV and TSV tables with millions of rows, JSON, YAML and XML trees, images</li>
+      <li>Open a folder and browse it in a tree, open many files in tabs, split the window in two, find across the folder</li>
     </ul>
     <p>No ads, no account, no tracking. Part of libre-apps.</p>
   </description>
@@ -27,6 +28,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.35.1" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Changed: README with the table of supported formats and new screenshots, store and package descriptions that mention PDF and office files, F5 in the shortcuts window.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.35.0" date="2026-11-24">
       <description>
         <ul>

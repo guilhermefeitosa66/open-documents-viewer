@@ -16,7 +16,7 @@ class Application(Adw.Application):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
         self.bench = Bench(t0)
         self.set_option_context_parameter_string("[FILE|FOLDER…]")
-        self.set_option_context_summary(_("A fast, read-only viewer for Markdown, text, code and data files."))
+        self.set_option_context_summary(_("A fast, read-only viewer for documents, PDF, office files, code and data."))
         self.add_main_option("version", ord("v"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              "Show the version and quit", None)
         self.add_main_option("new-window", ord("n"), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
