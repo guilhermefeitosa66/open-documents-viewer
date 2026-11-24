@@ -173,7 +173,7 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
-        if (earlyType.kind == DocumentKind.XLSX || earlyType.kind == DocumentKind.ODS) {
+        if (earlyType.kind == DocumentKind.XLSX || earlyType.kind == DocumentKind.ODS || earlyType.kind == DocumentKind.XLS) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
@@ -181,6 +181,7 @@ class DocumentLoader(private val context: Context) {
             val bytes = read.bytes.copyOf(read.length)
             val wb = try {
                 if (earlyType.kind == DocumentKind.ODS) io.github.guilhermefeitosa66.opendocumentsviewer.formats.OdsReader.read(bytes)
+                else if (earlyType.kind == DocumentKind.XLS) io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsReader.read(bytes)
                 else io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsxReader.read(bytes)
             } catch (e: Exception) {
                 return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))

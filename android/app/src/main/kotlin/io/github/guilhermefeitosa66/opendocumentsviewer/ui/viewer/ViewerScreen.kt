@@ -409,7 +409,7 @@ private fun subtitle(session: DocumentSession): String {
         doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
         else if (doc.type.kind == DocumentKind.DOCX || doc.type.kind == DocumentKind.DOC) "Word"
         else if (doc.type.kind == DocumentKind.ODT || doc.type.kind == DocumentKind.ODS) "OpenDocument"
-        else if (doc.type.kind == DocumentKind.XLSX) "Excel"
+        else if (doc.type.kind == DocumentKind.XLSX || doc.type.kind == DocumentKind.XLS) "Excel"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -424,7 +424,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }

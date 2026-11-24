@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.26.0] - 2026-11-24
+
+### Added
+- Excel 97–2003 workbooks (.xls, .xlt) in the sheet grid, read with no library (own BIFF8 reader; Excel 5/95 best
+  effort): values and formula results as saved, number/date/currency formats, fonts (bold, italic, underline,
+  strikethrough, colors), fills, borders, alignment, wrapping, merged cells, column widths, hidden sheets, rows and
+  columns, frozen panes. Formula text is not shown (only its result). Password-protected files get a clear message.
+
 ## [0.25.0] - 2026-11-24
 
 ### Added

@@ -310,7 +310,7 @@ class DocumentSession(
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
             } ?: Formatted.Unavailable
-            DocumentKind.XLSX, DocumentKind.ODS -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { Formatted.Sheet(it) } ?: Formatted.Unavailable
+            DocumentKind.XLSX, DocumentKind.ODS, DocumentKind.XLS -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { Formatted.Sheet(it) } ?: Formatted.Unavailable
             DocumentKind.DOCX, DocumentKind.ODT, DocumentKind.DOC -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.Result)?.let { r ->
                 val anchors = HashMap(headingAnchors(r.blocks))
                 anchors.putAll(r.anchors)
