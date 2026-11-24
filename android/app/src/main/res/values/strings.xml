@@ -22,7 +22,7 @@
     <string name="source_code">Source code</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_body">A fast, offline, read-only viewer for text documents. No ads, no account, no network. Part of libre-apps.</string>
-    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), PDFium (BSD-3-Clause / Apache 2.0, with the licenses of its parts in the app), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
     <string name="back">Back</string>
     <string name="switch_document">Switch document</string>
     <string name="all_recents">All recent files</string>
@@ -187,4 +187,9 @@
     <string name="password_open">Open</string>
     <string name="macros_never_run">This file has macros. They are never run here.</string>
     <string name="iwork_preview">Only the preview picture this file carries is shown: open it in Pages, Numbers or Keynote for the whole document.</string>
+    <string name="pdf_go_to_page">Go to page…</string>
+    <string name="pdf_pages">Pages</string>
+    <string name="pdf_fit_width">Fit width</string>
+    <string name="pdf_fit_page">Fit page</string>
+    <string name="copy">Copy</string>
 </resources>

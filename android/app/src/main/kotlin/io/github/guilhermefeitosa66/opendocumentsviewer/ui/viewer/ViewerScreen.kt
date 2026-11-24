@@ -86,6 +86,8 @@ interface ViewerActions {
     fun back()
     fun openSwitcher()
     fun copyAll(doc: LoadedDocument)
+    /** Copies a piece of text (a PDF selection). */
+    fun copyText(text: String, label: String)
     fun share(doc: LoadedDocument)
     fun shareAsText(doc: LoadedDocument)
     fun saveCopy(doc: LoadedDocument)
@@ -230,6 +232,13 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     TableView(f.table, session, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
+                is Formatted.Pdf -> {
+                    PdfView(
+                        f, session, session.formattedList, matches, current, padding,
+                        onLink = { actions.openLink(it, session) },
+                        onCopy = { actions.copyText(it, doc.name) },
+                    )
+                }
                 is Formatted.Slides -> {
                     SlideView(f.pres, session, session.doc?.bytes, current, padding, LocalReading.current)
                 }
@@ -314,6 +323,10 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
     val doc = session.doc
     var menu by remember { mutableStateOf(false) }
     var showOutline by remember { mutableStateOf(false) }
+    var goToPage by remember { mutableStateOf(false) }
+    (session.formatted as? Formatted.Pdf)?.let { f ->
+        if (goToPage) GoToPageDialog(f.doc.pageCount, onDismiss = { goToPage = false }) { p -> goToPage = false; session.pdfGrid = false; session.pdfJump = p to 0f }
+    }
     val reading = LocalReading.current
     if (showOutline) OutlineSheet(session, onDismiss = { showOutline = false })
     Row(
@@ -411,8 +424,15 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                         )
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
-                    if (doc.uri != null && doc.bytes == null) {
+                    if (doc.uri != null && doc.bytes == null && doc.type.kind != DocumentKind.PDF) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.encoding_menu)) }, onClick = { menu = false; onEncoding() })
+                    }
+                    if (session.formatted is Formatted.Pdf && session.mode == ViewMode.FORMATTED) {
+                        HorizontalDivider(color = Odv.colors.line)
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_go_to_page)) }, onClick = { menu = false; goToPage = true })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_pages)) }, onClick = { menu = false; session.pdfGrid = !session.pdfGrid })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_width)) }, onClick = { menu = false; session.pdfZoom = 1f })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_page)) }, onClick = { menu = false; session.pdfFitPage() })
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })
                 }
@@ -431,6 +451,7 @@ private fun subtitle(session: DocumentSession): String {
         else if (doc.type.kind == DocumentKind.ODT || doc.type.kind == DocumentKind.ODS || doc.type.kind == DocumentKind.ODP) "OpenDocument"
         else if (doc.type.kind == DocumentKind.XLSX || doc.type.kind == DocumentKind.XLS) "Excel"
         else if (doc.type.kind == DocumentKind.PPTX || doc.type.kind == DocumentKind.PPT) "PowerPoint"
+        else if (doc.type.kind == DocumentKind.PDF) "PDF"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -445,7 +466,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS && doc.type.kind != DocumentKind.PPTX && doc.type.kind != DocumentKind.ODP && doc.type.kind != DocumentKind.PPT) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC && doc.type.kind != DocumentKind.XLSX && doc.type.kind != DocumentKind.ODS && doc.type.kind != DocumentKind.XLS && doc.type.kind != DocumentKind.PPTX && doc.type.kind != DocumentKind.ODP && doc.type.kind != DocumentKind.PPT && doc.type.kind != DocumentKind.PDF) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }
@@ -687,6 +708,27 @@ private fun InfoDialog(doc: LoadedDocument, session: DocumentSession, onDismiss:
                 doc.mimeType?.let { line(R.string.info_mime, it) }
             }
         },
+    )
+}
+
+/** "Go to page…" for PDFs. */
+@Composable
+private fun GoToPageDialog(count: Int, onDismiss: () -> Unit, onGo: (Int) -> Unit) {
+    var text by remember { mutableStateOf("") }
+    val n = text.toIntOrNull()?.takeIf { it in 1..count }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.pdf_go_to_page)) },
+        text = {
+            androidx.compose.material3.OutlinedTextField(
+                value = text, onValueChange = { v -> text = v.filter(Char::isDigit).take(6) }, singleLine = true,
+                label = { Text("1 – $count") },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Go),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onGo = { n?.let { onGo(it - 1) } }),
+            )
+        },
+        confirmButton = { TextButton(onClick = { n?.let { onGo(it - 1) } }, enabled = n != null) { Text(stringResource(R.string.ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 

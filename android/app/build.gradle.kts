@@ -3,18 +3,38 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val pdfium = rootProject.file("pdfium/prebuilt")
+if (!pdfium.resolve("include/fpdfview.h").exists()) {
+    throw GradleException("PDFium binaries missing. Run tools/fetch-pdfium.sh first.")
+}
+
 android {
     namespace = "io.github.guilhermefeitosa66.opendocumentsviewer"
     compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         // Fixed after the first publication.
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 129
-        versionName = "0.30.0"
+        versionCode = 130
+        versionName = "0.31.0"
+        externalNativeBuild {
+            cmake { arguments += listOf("-DANDROID_STL=c++_static") }
+        }
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
+
+    // PDF: PDFium (BSD-3-Clause / Apache-2.0) behind an own JNI layer, loaded only when a PDF opens.
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+    sourceSets["main"].jniLibs.srcDirs(pdfium.resolve("jniLibs"))
+    sourceSets["main"].assets.srcDirs("src/main/assets", pdfium.resolve("assets"))
 
     buildFeatures {
         compose = true

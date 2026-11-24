@@ -21,7 +21,7 @@
     <string name="source_code">Código fuente</string>
     <string name="about_version">Versión %1$s</string>
     <string name="about_body">Un visor de documentos de texto rápido, sin conexión y de solo lectura. Sin anuncios, sin cuenta, sin red. Parte de libre-apps.</string>
-    <string name="about_licenses">Licencia Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose y AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Licencia Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), PDFium (BSD-3-Clause / Apache 2.0, with the licenses of its parts in the app), JetBrains Mono (SIL OFL 1.1), Jetpack Compose y AndroidX (Apache 2.0).</string>
     <string name="back">Atrás</string>
     <string name="switch_document">Cambiar de documento</string>
     <string name="all_recents">Todos los recientes</string>
@@ -186,4 +186,9 @@
     <string name="password_open">Abrir</string>
     <string name="macros_never_run">Este archivo tiene macros. Aquí nunca se ejecutan.</string>
     <string name="iwork_preview">Solo se muestra la imagen de vista previa que trae el archivo: ábrelo en Pages, Numbers o Keynote para ver el documento completo.</string>
+    <string name="pdf_go_to_page">Ir a la página…</string>
+    <string name="pdf_pages">Páginas</string>
+    <string name="pdf_fit_width">Ajustar al ancho</string>
+    <string name="pdf_fit_page">Ajustar a la página</string>
+    <string name="copy">Copiar</string>
 </resources>

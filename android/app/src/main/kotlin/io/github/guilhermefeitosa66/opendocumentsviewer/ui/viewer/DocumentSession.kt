@@ -79,6 +79,8 @@ sealed interface Formatted {
     data class Env(val lines: List<EnvLine>) : Formatted
     data class Svg(val svg: com.caverock.androidsvg.SVG) : Formatted
     data class Tree(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeDocument) : Formatted
+    /** PDF pages (PDFium). */
+    data class Pdf(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfDocument, val outline: List<io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOutlineItem>) : Formatted
     /** Presentations (PPTX, ODP, PPT): slides drawn on a canvas. */
     data class Slides(val pres: io.github.guilhermefeitosa66.opendocumentsviewer.formats.Presentation) : Formatted
     /** Spreadsheets (XLSX, ODS, XLS): a grid per sheet. */
@@ -140,6 +142,7 @@ class DocumentSession(
     /** Headings of the formatted view (markdown now; other formats add theirs). */
     val outline: List<OutlineItem> by derivedStateOf {
         when (val f = formatted) {
+            is Formatted.Pdf -> f.outline.filter { it.page >= 0 }.map { OutlineItem(it.level + 1, it.title, it.page) }
             is Formatted.Slides -> f.pres.slides.mapIndexedNotNull { i, s -> s.title.takeIf { it.isNotBlank() }?.let { OutlineItem(1, "${i + 1}. $it", i) } }
             is Formatted.Markdown -> f.toc?.takeIf { it.isNotEmpty() } ?: f.blocks.mapIndexedNotNull { i, b ->
                 (b as? MdBlock.Heading)?.let { OutlineItem(it.level, it.content.text, i) }
@@ -151,6 +154,11 @@ class DocumentSession(
     fun jumpToOutline(item: OutlineItem) {
         if (mode != ViewMode.FORMATTED) preferFormatted = true
         if (formatted is Formatted.Slides) { slideGrid = false; slideJump = item.item; return }
+        (formatted as? Formatted.Pdf)?.let { f ->
+            pdfGrid = false
+            pdfJump = item.item to (f.outline.firstOrNull { it.page == item.item && it.title == item.title }?.offset ?: 0f)
+            return
+        }
         jumpTarget = item.item
     }
 
@@ -242,7 +250,8 @@ class DocumentSession(
         restorePosition()
         onShown(doc)
         scope.launch {
-            if (source == null) source = withContext(Dispatchers.Default) { buildSource(doc) }.also(::finishStates)
+            // A PDF's text is extracted only when the source view is asked for.
+            if (source == null && doc.type.kind != DocumentKind.PDF) source = withContext(Dispatchers.Default) { buildSource(doc) }.also(::finishStates)
             if (formatted == null && doc.type.kind.hasFormattedView) {
                 assignFormatted(withContext(Dispatchers.Default) { buildFormatted(doc) }
                     .also { f -> (f as? Formatted.Json)?.content?.let(::finishStates) })
@@ -265,7 +274,25 @@ class DocumentSession(
         }
     }
 
+    /** Text of every page, for the source view and "Copy all". */
+    suspend fun pdfText(): String? {
+        val f = formatted as? Formatted.Pdf ?: return null
+        return buildString {
+            for (i in 0 until f.doc.pageCount) {
+                if (i > 0) append("\n")
+                append("— ").append(i + 1).append(" —\n")
+                append(PdfText.clean(f.doc.text(i)).trimEnd()).append('\n')
+            }
+        }
+    }
+
     private suspend fun buildSource(doc: LoadedDocument): TextContent {
+        if (doc.type.kind == DocumentKind.PDF) {
+            val pdf = (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentLoader.PdfModel)?.doc
+            val text = pdf?.let { p -> buildString { for (i in 0 until p.pageCount) { if (i > 0) append('\n'); append("— ").append(i + 1).append(" —\n").append(PdfText.clean(p.text(i)).trimEnd()).append('\n') } } }.orEmpty()
+            val job = kotlinx.coroutines.currentCoroutineContext()
+            return TextContent.build(text, null) { job.isActive }
+        }
         val language = doc.type.language ?: when (doc.type.kind) {
             DocumentKind.CSV -> when (Delimited.detectDelimiter(doc.text)) {
                 ';' -> Languages.CSV_SEMICOLON
@@ -327,6 +354,7 @@ class DocumentSession(
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
             } ?: Formatted.Unavailable
+            DocumentKind.PDF -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.document.DocumentLoader.PdfModel)?.let { Formatted.Pdf(it.doc, it.outline) } ?: Formatted.Unavailable
             DocumentKind.PPTX, DocumentKind.ODP, DocumentKind.PPT -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Presentation)?.let { Formatted.Slides(it) } ?: Formatted.Unavailable
             DocumentKind.XLSX, DocumentKind.ODS, DocumentKind.XLS -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.formats.Workbook)?.let { Formatted.Sheet(it) } ?: Formatted.Unavailable
             DocumentKind.DOCX, DocumentKind.ODT, DocumentKind.DOC -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.Result)?.let { r ->
@@ -452,6 +480,7 @@ class DocumentSession(
             treeExpanded = io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.initialExpanded(f.doc)
         }
         val oldTable = (formatted as? Formatted.Table)?.table
+        if (f is Formatted.Pdf && formatted is Formatted.Pdf && (formatted as Formatted.Pdf).doc !== f.doc) closePdf(formatted)
         if (f is Formatted.Sheet && (sheetIndex >= f.wb.sheets.size || f.wb.sheets[sheetIndex].hidden)) {
             sheetIndex = f.wb.sheets.indexOfFirst { !it.hidden }.coerceAtLeast(0)
         }
@@ -465,6 +494,26 @@ class DocumentSession(
 
     fun toggleNode(id: Int) {
         treeExpanded = if (id in treeExpanded) treeExpanded - id else treeExpanded + id
+    }
+
+    // ---- PDF ---------------------------------------------------------------------------
+
+    /** 1 = page width fits the screen. */
+    var pdfZoom by mutableStateOf(1f)
+    var pdfGrid by mutableStateOf(false)
+    var pdfSelection by mutableStateOf<PdfSelection?>(null)
+    /** (page, normalized offset) to show (links, outline, "Go to page"). */
+    var pdfJump by mutableStateOf<Pair<Int, Float>?>(null)
+    var pdfPage by mutableStateOf(0)
+    /** (height, page width at zoom 1) in px, for "Fit page". */
+    var pdfViewport: Pair<Float, Float>? = null
+
+    /** Zoom so that a whole page fits the screen height. */
+    fun pdfFitPage() {
+        val f = formatted as? Formatted.Pdf ?: return
+        val (h, w) = pdfViewport ?: return
+        val s = f.doc.pageSizes.getOrNull(pdfPage) ?: return
+        pdfZoom = (h / (w * s.height / s.width)).coerceIn(0.2f, 1f)
     }
 
     // ---- Presentations -----------------------------------------------------------------
@@ -592,6 +641,10 @@ class DocumentSession(
 
     fun toggleMode() {
         preferFormatted = !preferFormatted
+        val d = doc
+        if (!preferFormatted && source == null && d?.type?.kind == DocumentKind.PDF) {
+            scope.launch { source = withContext(Dispatchers.Default) { buildSource(d) }.also(::finishStates) }
+        }
         if (searchOpen) runSearch()
     }
 
@@ -646,6 +699,7 @@ class DocumentSession(
                         is Formatted.Markdown -> TextSearch.search(f.blocks.map { it.plainText }, q, opts, active)
                         is Formatted.Table -> TextSearch.search(shownRows.map { it.joinToString("  ") }, q, opts, active)
                         is Formatted.Env -> TextSearch.search(f.lines.map(::envText), q, opts, active)
+                        is Formatted.Pdf -> TextSearch.search((0 until f.doc.pageCount).map { f.doc.text(it) }, q, opts, active)
                         is Formatted.Slides -> TextSearch.search(f.pres.slides.map { it.text() + "\n" + it.notes }, q, opts, active)
                         is Formatted.Sheet -> sheetSnapshot?.let { TextSearch.search(it.searchLines(f.wb), q, opts, active) }
                         is Formatted.Tree -> TextSearch.search(treeLinesSnapshot.map { (it.node.key ?: "") + " " + (it.node.value ?: "") }, q, opts, active)
@@ -677,6 +731,12 @@ class DocumentSession(
 
     fun close() {
         scope.cancel()
+        closePdf(formatted)
+    }
+
+    private fun closePdf(f: Formatted?) {
+        val pdf = (f as? Formatted.Pdf)?.doc ?: return
+        kotlinx.coroutines.CoroutineScope(Dispatchers.Default).launch { pdf.close() }
     }
 
     companion object {

@@ -2,6 +2,20 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.31.0] - 2026-11-24
+
+### Added
+- PDF, with PDFium behind an own read-only JNI layer (copied from Open PDF Viewer and trimmed; the library loads only
+  when a PDF opens): continuous scrolling, pinch and double-tap zoom with sideways scrolling, fit width and fit page,
+  "Go to page…", a grid of page thumbnails, search with highlights that scrolls to each match, long press to select
+  a word and drag to extend it, then copy; the document's bookmarks as the outline; links inside the document and to
+  the web (with the usual confirmation); password-protected PDFs ask for the password. The source view shows the
+  extracted text, page by page, and "Copy all" copies it. Files are read from the file descriptor; a provider that
+  only gives a pipe is read into memory (never copied to storage).
+
+### Changed
+- The APK now carries PDFium for arm64-v8a, armeabi-v7a and x86_64: release APK 21.6 MB (was 2.2 MB).
+
 ## [0.30.0] - 2026-11-24
 
 ### Added

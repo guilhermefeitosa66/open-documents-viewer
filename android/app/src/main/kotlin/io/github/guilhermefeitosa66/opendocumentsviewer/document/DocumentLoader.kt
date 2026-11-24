@@ -208,6 +208,10 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
+        if (earlyType.kind == DocumentKind.PDF) {
+            stream.close()
+            return loadPdf(uri, meta, mimeEarly, earlyType, password)
+        }
         if (earlyType.kind == DocumentKind.IWORK) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
@@ -340,6 +344,50 @@ class DocumentLoader(private val context: Context) {
         )
     }
 
+    /** A PDF opened by PDFium: from the file descriptor when it can seek, else from memory (never copied to storage). */
+    class PdfModel(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfDocument, val outline: List<io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOutlineItem>)
+
+    private fun loadPdf(uri: Uri, meta: Meta, mime: String?, type: DocumentType, password: String?): Result<LoadedDocument> {
+        fun failure(f: LoadFailure): Result<LoadedDocument> = Result.failure(LoadException(f, meta.name))
+        val pdf = io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfDocument
+        val doc = try {
+            kotlinx.coroutines.runBlocking {
+                val pfd = resolver.openFileDescriptor(uri, "r") ?: throw FileNotFoundException()
+                pfd.use { p ->
+                    if (p.statSize > 0) pdf.open(p, password)
+                    else {
+                        // A pipe: read it into memory, up to the cap.
+                        val read = android.os.ParcelFileDescriptor.AutoCloseInputStream(p.dup()).use { readUpTo(it, MAX_PDF_MEMORY_BYTES) }
+                        if (read.truncated) throw io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException(io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException.Reason.FILE)
+                        pdf.open(read.bytes.copyOf(read.length), password)
+                    }
+                }
+            }
+        } catch (_: SecurityException) {
+            return failure(LoadFailure.PermissionLost)
+        } catch (_: FileNotFoundException) {
+            return failure(LoadFailure.NotFound)
+        } catch (e: io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException) {
+            return failure(when (e.reason) {
+                io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException.Reason.PASSWORD -> if (password == null) LoadFailure.NeedsPassword else LoadFailure.WrongPassword
+                io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException.Reason.SECURITY -> LoadFailure.Protected
+                io.github.guilhermefeitosa66.opendocumentsviewer.pdf.PdfOpenException.Reason.FORMAT -> LoadFailure.Other("PDF: damaged or not a PDF file")
+                else -> LoadFailure.Other("PDF: " + e.reason.name.lowercase())
+            })
+        } catch (e: Exception) {
+            return failure(LoadFailure.Other("PDF: " + (e.message ?: e.javaClass.simpleName)))
+        } catch (e: UnsatisfiedLinkError) {
+            return failure(LoadFailure.Other("PDF engine not available on this device"))
+        }
+        val outline = kotlinx.coroutines.runBlocking { doc.outline() }
+        return Result.success(
+            LoadedDocument(
+                uri = uri, name = meta.name, mimeType = mime, size = meta.size, text = "", charset = "", type = type,
+                truncated = false, location = meta.location, modified = stamp(uri).second, model = PdfModel(doc, outline),
+            )
+        )
+    }
+
     class LoadException(val failure: LoadFailure, val name: String? = null) : Exception(failure.toString())
 
     private fun failure(f: LoadFailure): Result<LoadedDocument> = Result.failure(LoadException(f))
@@ -368,5 +416,7 @@ class DocumentLoader(private val context: Context) {
         /** Files above this are shown up to here, with a banner. */
         const val MAX_BYTES = 16 * 1024 * 1024
         const val MAX_IMAGE_BYTES = 64 * 1024 * 1024
+        /** PDFs that only come as a pipe are read into memory up to this size. */
+        const val MAX_PDF_MEMORY_BYTES = 256 * 1024 * 1024
     }
 }

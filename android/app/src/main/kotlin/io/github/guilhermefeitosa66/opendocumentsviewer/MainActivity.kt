@@ -78,6 +78,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 class MainActivity : ComponentActivity() {
     private val vm: AppViewModel by viewModels()
@@ -431,7 +432,20 @@ class MainActivity : ComponentActivity() {
 
         override fun openSwitcher() = openSwitcher()
 
+        override fun copyText(text: String, label: String) {
+            val cm = getSystemService(ClipboardManager::class.java)
+            cm.setPrimaryClip(ClipData.newPlainText(label, text))
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) vm.message = R.string.copied
+        }
+
         override fun copyAll(doc: LoadedDocument) {
+            if (session.formatted is io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.Formatted.Pdf) {
+                lifecycleScope.launch {
+                    val text = session.pdfText().orEmpty()
+                    if (text.length > MAX_CLIP_CHARS) vm.message = R.string.too_large_to_copy else copyText(text, doc.name)
+                }
+                return
+            }
             val text = currentText(session, doc)
             if (text.length > MAX_CLIP_CHARS) {
                 vm.message = R.string.too_large_to_copy

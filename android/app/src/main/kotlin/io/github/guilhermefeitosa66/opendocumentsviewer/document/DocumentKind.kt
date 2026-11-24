@@ -46,6 +46,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     PPT(hasFormattedView = true, prose = false),
     /** Apple iWork (.pages/.numbers/.key): only the preview picture the file embeds, shown as an image. */
     IWORK(hasFormattedView = false, prose = false),
+    /** PDF (PDFium): pages drawn; the source view is the extracted text. */
+    PDF(hasFormattedView = true, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -81,6 +83,7 @@ object DocumentTypes {
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
         if (ext == "ppt" || ext == "pps" || ext == "pot") return DocumentType(DocumentKind.PPT, null, "PPT")
+        if (ext == "pdf") return DocumentType(DocumentKind.PDF, null, "PDF")
         if (ext in setOf("odg", "otg", "fodg")) return DocumentType(DocumentKind.ODP, null, "ODG")
         if (ext in setOf("pages", "numbers", "key")) return DocumentType(DocumentKind.IWORK, null, ext.uppercase().take(4))
         if (ext in setOf("odp", "otp", "fodp")) return DocumentType(DocumentKind.ODP, null, "ODP")
@@ -135,6 +138,7 @@ object DocumentTypes {
         if (m == "application/vnd.oasis.opendocument.graphics" || m == "application/vnd.oasis.opendocument.graphics-template") return DocumentType(DocumentKind.ODP, null, "ODG")
         if (m == "application/vnd.ms-powerpoint") return DocumentType(DocumentKind.PPT, null, "PPT")
         if (m == "application/vnd.ms-excel") return DocumentType(DocumentKind.XLS, null, "XLS")
+        if (m == "application/pdf" || m == "application/x-pdf") return DocumentType(DocumentKind.PDF, null, "PDF")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")

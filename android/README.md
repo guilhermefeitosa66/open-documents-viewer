@@ -16,6 +16,7 @@ The Linux app lives in [`../linux`](../linux) in this same repository.
 ## Build
 
 ```sh
+tools/fetch-pdfium.sh                            # once: pinned PDFium binaries (SHA-256 checked) into pdfium/prebuilt/
 ./gradlew --no-daemon :app:testDebugUnitTest   # unit tests (JVM)
 ./gradlew --no-daemon :app:assembleDebug       # app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -32,6 +33,7 @@ Requires JDK 17 and the Android SDK (compileSdk 36). minSdk 26.
 | [jsoup](https://jsoup.org) (HTML parser) | MIT |
 | [AndroidSVG](https://github.com/BigBadaboom/androidsvg) | Apache-2.0 |
 | [snakeyaml-engine](https://bitbucket.org/snakeyaml/snakeyaml-engine) | Apache-2.0 |
+| [PDFium](https://pdfium.googlesource.com/pdfium/) (prebuilt by [pdfium-binaries](https://github.com/bblanchon/pdfium-binaries), MIT packaging; `tools/fetch-pdfium.sh`) | BSD-3-Clause / Apache-2.0 |
 | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (bundled font) | SIL OFL 1.1 |
 | Dracula and Tokyo Night color palettes (themes) | MIT |
 
