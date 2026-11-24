@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.29.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: PowerPoint 97–2003 presentations (.ppt, .pps, .pot): each slide's text placed where the file puts it, with titles, bullets, notes and hidden slides skipped; a banner says pictures and formatting are not shown; password-protected files say so.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.28.0" date="2026-11-24">
       <description>
         <ul>

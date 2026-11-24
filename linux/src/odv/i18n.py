@@ -276,6 +276,11 @@ CATALOG: dict[str, dict[str, str]] = {
                                          "es": "Esta presentación no tiene diapositivas."},
     "Slide {n}": {"pt": "Slide {n}", "es": "Diapositiva {n}"},
     "Presentation": {"pt": "Apresentação", "es": "Presentación"},
+    "Text from a PowerPoint 97–2003 presentation: pictures and formatting are not shown.": {
+        "pt": "Texto de uma apresentação do PowerPoint 97–2003: imagens e formatação não aparecem.",
+        "es": "Texto de una presentación de PowerPoint 97–2003: no se muestran imágenes ni formato."},
+    "This presentation is password-protected.": {"pt": "Esta apresentação está protegida por senha.",
+                                                 "es": "Esta presentación está protegida con contraseña."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

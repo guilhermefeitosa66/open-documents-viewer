@@ -1127,14 +1127,15 @@ def test_xls_file(tmp_path):
     assert r["tabs"] == ["Sales"] and r["rows"] == [0, 1, 3, 4]
 
 
-@pytest.mark.parametrize("ext", ["pptx", "odp"])
+@pytest.mark.parametrize("ext", ["pptx", "odp", "ppt"])
 def test_presentation_file(tmp_path, ext):
     import sys
 
     sys.path.insert(0, os.path.dirname(__file__))
+    import cfb
     import office
 
-    path = str(getattr(office, f"make_{ext}")(tmp_path / f"deck.{ext}"))
+    path = str(getattr(office if ext != "ppt" else cfb, f"make_{ext}")(tmp_path / f"deck.{ext}"))
 
     def scenario(win, r):
         win.open_path(path)
@@ -1149,6 +1150,7 @@ def test_presentation_file(tmp_path, ext):
         doc.search_entry.set_text("quarterly")
         yield 0.4
         r["found"] = view.position
+        r["banner"] = doc.banner.get_revealed()
         win.present_or_reload()
         yield 0.5
         r["presenting"] = view._presenter is not None
@@ -1163,3 +1165,4 @@ def test_presentation_file(tmp_path, ext):
     assert r["second"] == ("2 / 2", "Mention the north.")
     assert r["found"] == 0
     assert r["presenting"] and r["closed"]
+    assert r["banner"] == (ext == "ppt")

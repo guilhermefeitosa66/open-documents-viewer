@@ -999,3 +999,33 @@ def test_odp_reader(tmp_path, flat):
     assert [["".join(r.text for p in c for r in p.runs) for c in row] for row in s2.shapes[5].rows] == [
         ["Region", "Sales"], ["North", "42"]]
     assert s2.shapes[6].fill == "00AA00"
+
+
+def test_ppt_reader(tmp_path):
+    from cfb import make_ppt
+    from odv.filetypes import classify
+    from odv.formats import ppt
+    from odv.formats.presentations import open_presentation
+
+    assert classify("old.ppt").kind == "presentation" and classify("old.pps").kind == "presentation"
+    pres = open_presentation(str(make_ppt(tmp_path / "old.ppt")))
+    assert pres.note and (pres.width, pres.height) == (9144000, 6858000)
+    assert [(s.title, s.hidden) for s in pres.slides] == [("Quarterly Review", False), ("Results", False),
+                                                           ("Backup", True)]
+    title, subtitle = pres.slides[0].shapes
+    assert (title.x, title.y) == (476250, 317500) and title.paragraphs[0].runs[0].size == 40
+    assert subtitle.paragraphs[0].runs[0].text == "Hello & welcome" and subtitle.paragraphs[0].align == "center"
+    s2 = pres.slides[1]
+    assert s2.notes == "Mention the north."
+    assert [(p.bullet, p.runs[0].text) for p in s2.shapes[1].paragraphs] == [("•", "First point"),
+                                                                             ("•", "Second point")]
+    assert s2.shapes[2].paragraphs[0].runs[0].text == "Free text"
+    grouped = s2.shapes[3]  # placed through the group's child coordinates
+    assert grouped.paragraphs[0].runs[0].text == "Grouped"
+    assert (grouped.x, grouped.y, grouped.w, grouped.h) == (5080000, 5556250, 1587500, 793750)
+    with pytest.raises(ppt.PptError, match="password"):
+        ppt.build(str(make_ppt(tmp_path / "locked.ppt", encrypted=True)))
+    junk = tmp_path / "junk.ppt"
+    junk.write_bytes(b"not a compound file")
+    with pytest.raises(ppt.PptError):
+        ppt.build(str(junk))

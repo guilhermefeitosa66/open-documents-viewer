@@ -79,3 +79,76 @@ def make_doc(path, text: str, encrypted=False):
     clx = b"\x02" + struct.pack("<I", len(plc)) + plc
     struct.pack_into("<II", fib, pos + 33 * 8, 0, len(clx))
     return write(path, {"WordDocument": bytes(fib), "1Table": clx})
+
+
+def _rec(rtype, data=b"", inst=0, ver=0):
+    return struct.pack("<HHI", (inst << 4) | ver, rtype, len(data)) + data
+
+
+def _box(anchor, content, shape_type=1):
+    top, left, right, bottom = anchor
+    return _rec(0xF004, _rec(0xF00A, b"\0" * 8, inst=shape_type, ver=2)
+                + _rec(0xF010, struct.pack("<hhhh", top, left, right, bottom))
+                + _rec(0xF00D, content, ver=0xF), ver=0xF)
+
+
+def _drawing(*shapes):
+    patriarch = _rec(0xF004, _rec(0xF009, b"\0" * 16, ver=1) + _rec(0xF00A, b"\0" * 8, ver=2), ver=0xF)
+    return _rec(0x040C, _rec(0xF002, _rec(0xF003, patriarch + b"".join(shapes), ver=0xF), ver=0xF), ver=0xF)
+
+
+def make_ppt(path, encrypted=False):
+    """A PowerPoint 97 file: three slides (the third hidden) whose
+    placeholder text lives in the slide list, a free text box, notes on
+    the second slide and a group with a child anchor."""
+    slides = [("Quarterly Review", "Hello & welcome", False, None),
+              ("Results", "First point\rSecond point", False, "Mention the north."),
+              ("Backup", "", True, None)]
+    doc_atom = _rec(0x03E9, struct.pack("<ii", 5760, 4320) + b"\0" * 32, ver=1)
+    slide_list = b""
+    notes_list = b""
+    containers = []  # (persist id, bytes)
+    for k, (title, body, hidden, notes) in enumerate(slides):
+        pid = 2 + 2 * k
+        texts = _rec(0x0F9F, struct.pack("<I", 6 if k == 0 else 0)) + _rec(0x0FA0, title.encode("utf-16-le"))
+        if body:
+            texts += _rec(0x0F9F, struct.pack("<I", 5 if k == 0 else 1)) + _rec(0x0FA8, body.encode("cp1252"))
+        slide_list += _rec(0x03F3, struct.pack("<IIiII", pid, 0, 2 if body else 1, 256 + k, 0)) + texts
+        shapes = [_box((200, 300, 5460, 1100), _rec(0x0F9E, struct.pack("<i", 0)))]
+        if body:
+            shapes.append(_box((1300, 300, 3000, 3900), _rec(0x0F9E, struct.pack("<i", 1))))
+        if k == 1:
+            shapes.append(_box((1300, 3200, 5400, 2000), _rec(0x0F9F, struct.pack("<I", 4))
+                               + _rec(0x0FA8, b"Free text"), shape_type=202))
+            group_head = _rec(0xF004, _rec(0xF009, struct.pack("<iiii", 0, 0, 1000, 1000), ver=1)
+                              + _rec(0xF00A, b"\0" * 8, ver=2)
+                              + _rec(0xF010, struct.pack("<hhhh", 3000, 3200, 4200, 4000)), ver=0xF)
+            child = _rec(0xF004, _rec(0xF00A, b"\0" * 8, inst=202, ver=2)
+                         + _rec(0xF00F, struct.pack("<iiii", 0, 500, 1000, 1000))
+                         + _rec(0xF00D, _rec(0x0F9F, struct.pack("<I", 4)) + _rec(0x0FA8, b"Grouped"), ver=0xF),
+                         ver=0xF)
+            shapes.append(_rec(0xF003, group_head + child, ver=0xF))
+        info = _rec(0x03F9, struct.pack("<IIBBH", 0, 0, 0, 0, 0x4 if hidden else 0) + b"\0" * 4)
+        containers.append((pid, _rec(0x03EE, _rec(0x03EF, b"\0" * 24, ver=2) + info + _drawing(*shapes), ver=0xF)))
+        if notes:
+            nid = pid + 1
+            notes_list += _rec(0x03F3, struct.pack("<IIiII", nid, 0, 0, 512 + k, 0))
+            ntext = _rec(0x0F9F, struct.pack("<I", 2)) + _rec(0x0FA0, notes.encode("utf-16-le"))
+            containers.append((nid, _rec(0x03F0, _rec(0x03F1, struct.pack("<IHH", 256 + k, 0, 0), ver=1)
+                                         + _drawing(_box((2000, 300, 5000, 4000), ntext)), ver=0xF)))
+    document = _rec(0x03E8, doc_atom + _rec(0x0FF0, slide_list, inst=0, ver=0xF)
+                    + _rec(0x0FF0, notes_list, inst=2, ver=0xF), ver=0xF)
+    stream = bytearray(document)
+    offsets = {1: 0}
+    for pid, blob in containers:
+        offsets[pid] = len(stream)
+        stream += blob
+    ids = sorted(offsets)
+    directory = b"".join(struct.pack("<II", i | (1 << 20), offsets[i]) for i in ids)
+    dir_offset = len(stream)
+    stream += _rec(0x1772, directory)
+    edit_offset = len(stream)
+    stream += _rec(0x0FF5, struct.pack("<IHBBIIIIHH", 256, 0, 0, 3, 0, dir_offset, 1, max(ids) + 1, 1, 0))
+    token = 0xF3D1C4DF if encrypted else 0xE391C05F
+    user = _rec(0x0FF6, struct.pack("<III", 20, token, edit_offset) + b"\0" * 8)
+    return write(path, {"PowerPoint Document": bytes(stream), "Current User": user})

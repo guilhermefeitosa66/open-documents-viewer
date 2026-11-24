@@ -71,3 +71,4 @@ class Presentation:
     width: int = 9144000
     height: int = 6858000
     slides: list = field(default_factory=list)
+    note: str = ""  # shown in a banner (e.g. only the text could be read)

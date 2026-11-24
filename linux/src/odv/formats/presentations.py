@@ -13,4 +13,8 @@ def open_presentation(path: str):
         from odv.formats import odp
 
         return odp.build(path)
+    if ext in (".ppt", ".pps", ".pot"):
+        from odv.formats import ppt
+
+        return ppt.build(path)
     raise ValueError(f"unsupported presentation: {ext}")

@@ -490,6 +490,9 @@ class DocumentPage(Gtk.Box):
 
         def loaded(v):
             self._set_outline(v.outline())
+            if v.pres.note:
+                self._note = v.pres.note
+                self._update_banner()
             self._first_content()
             self._loaded()
 

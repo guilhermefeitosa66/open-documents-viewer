@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.29.0 (2026-11-24)
+
+- Added: PowerPoint 97–2003 presentations (.ppt, .pps, .pot): each slide's text placed where the file puts it, with titles, bullets, notes and hidden slides skipped; a banner says pictures and formatting are not shown; password-protected files say so.
+
 ## 0.28.0 (2026-11-24)
 
 - Added: OpenDocument presentations (.odp, .otp and flat .fodp), read-only, in the same slides view: master-page placeholders and drawings, page backgrounds, text boxes with lists, custom shapes, pictures, tables, groups, lines and speaker notes.
