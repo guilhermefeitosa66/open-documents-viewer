@@ -112,9 +112,30 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bar, navigationBarStyle = bar)
                 window.setBackgroundDrawable(ColorDrawable(colors.paper.toArgb()))
             }
+            val reading = vm.session != null
+            // Keep the screen on while a document is shown, if asked to.
+            LaunchedEffect(reading && vm.keepScreenOn) {
+                if (reading && vm.keepScreenOn) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            val full = reading && vm.fullScreen
+            LaunchedEffect(full) {
+                val controller = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+                if (full) {
+                    controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                } else {
+                    controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                }
+            }
             OdvTheme(theme) {
                 Surface(color = colors.paper, contentColor = colors.ink) {
-                    App()
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.LocalReading provides
+                            io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ReadingPrefs(vm.limitWidth, full) { vm.fullScreen = it },
+                    ) {
+                        App()
+                    }
                 }
             }
         }
@@ -172,6 +193,10 @@ class MainActivity : ComponentActivity() {
                 onTheme = vm::selectTheme,
                 onBackground = vm::setBackground,
                 onBack = { vm.settingsOpen = false },
+                keepScreenOn = vm.keepScreenOn,
+                onKeepScreenOn = vm::changeKeepScreenOn,
+                limitWidth = vm.limitWidth,
+                onLimitWidth = vm::changeLimitWidth,
             )
             BackHandler { vm.settingsOpen = false }
         } else if (session == null && vm.folder != null) {
@@ -213,6 +238,7 @@ class MainActivity : ComponentActivity() {
             BackHandler {
                 when {
                     session.searchOpen -> session.closeSearch()
+                    vm.fullScreen -> vm.fullScreen = false
                     else -> leaveViewer(session)
                 }
             }
@@ -357,6 +383,7 @@ class MainActivity : ComponentActivity() {
                 split?.searchOpen == true -> split.closeSearch()
                 split != null -> vm.closeSplit()
                 session?.searchOpen == true -> session.closeSearch()
+                vm.fullScreen -> vm.fullScreen = false
                 session != null -> leaveViewer(session)
                 vm.folder?.filter?.isNotEmpty() == true -> vm.folder?.filter = ""
                 vm.folder?.up() == true -> Unit

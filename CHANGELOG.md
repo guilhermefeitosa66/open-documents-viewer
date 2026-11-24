@@ -2,6 +2,13 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.9.0] - 2026-11-24
+
+### Added
+- Full screen reading (menu): hides the app bar and system bars, with a small exit button; back also exits.
+- Settings › Reading: keep the screen on while a document is open; comfortable line width on large screens
+  (markdown and wrapped plain text are centered at a readable measure, on by default).
+
 ## [0.8.0] - 2026-11-24
 
 ### Added

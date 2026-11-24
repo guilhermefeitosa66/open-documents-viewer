@@ -54,6 +54,23 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var settingsOpen by mutableStateOf(false)
 
+    var keepScreenOn by mutableStateOf(prefs.getBoolean(KEY_KEEP_SCREEN_ON, false))
+        private set
+    var limitWidth by mutableStateOf(prefs.getBoolean(KEY_LIMIT_WIDTH, true))
+        private set
+    /** Document shown without the app bar and system bars (not remembered between runs). */
+    var fullScreen by mutableStateOf(false)
+
+    fun changeKeepScreenOn(on: Boolean) {
+        keepScreenOn = on
+        prefs.edit().putBoolean(KEY_KEEP_SCREEN_ON, on).apply()
+    }
+
+    fun changeLimitWidth(on: Boolean) {
+        limitWidth = on
+        prefs.edit().putBoolean(KEY_LIMIT_WIDTH, on).apply()
+    }
+
     fun selectTheme(id: String) {
         themeId = id
         prefs.edit().putString(KEY_THEME, id).apply()
@@ -479,6 +496,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private const val KEY_CODE = "code_scale"
         private const val KEY_THEME = "theme"
         private const val KEY_BACKGROUND = "background"
+        private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+        private const val KEY_LIMIT_WIDTH = "limit_width"
         const val MIN_SCALE = 0.6f
         const val MAX_SCALE = 2.6f
         /** Documents kept rendered in memory; older tabs reopen on demand. */

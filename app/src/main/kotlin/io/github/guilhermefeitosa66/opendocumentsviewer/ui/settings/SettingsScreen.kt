@@ -60,6 +60,10 @@ fun SettingsScreen(
     onTheme: (String) -> Unit,
     onBackground: (Boolean) -> Unit,
     onBack: () -> Unit,
+    keepScreenOn: Boolean = false,
+    onKeepScreenOn: (Boolean) -> Unit = {},
+    limitWidth: Boolean = true,
+    onLimitWidth: (Boolean) -> Unit = {},
 ) {
     val colors = Odv.colors
     val selected = Themes.byId(themeId)
@@ -113,6 +117,11 @@ fun SettingsScreen(
                     colors = SwitchDefaults.colors(checkedTrackColor = colors.accent, checkedThumbColor = colors.onAccent),
                 )
             }
+
+            Spacer(Modifier.height(20.dp))
+            SectionTitle(stringResource(R.string.reading_section))
+            SwitchRow(stringResource(R.string.keep_screen_on), stringResource(R.string.keep_screen_on_desc), keepScreenOn, onKeepScreenOn)
+            SwitchRow(stringResource(R.string.limit_width), stringResource(R.string.limit_width_desc), limitWidth, onLimitWidth)
         }
     }
 }
@@ -200,5 +209,27 @@ private fun MiniDocument(c: OdvColors, modifier: Modifier) {
             .padding(8.dp),
     ) {
         Text(text, fontFamily = MonoFamily, fontSize = 8.sp, lineHeight = 11.sp, maxLines = 5, softWrap = false)
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val colors = Odv.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+            .padding(vertical = 12.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(title, fontSize = 16.sp, color = colors.ink)
+            Text(description, fontSize = 13.sp, lineHeight = 18.sp, color = colors.ink2)
+        }
+        Switch(
+            checked = checked, onCheckedChange = null,
+            colors = SwitchDefaults.colors(checkedTrackColor = colors.accent, checkedThumbColor = colors.onAccent),
+        )
     }
 }

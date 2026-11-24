@@ -81,6 +81,8 @@ fun RowsView(
     revealRequest: Int,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    /** With wrapping on, rows are at most this wide and centered (prose on large screens). */
+    maxTextWidth: Dp? = null,
 ) {
     val colors = Odv.colors
     val index = content.index
@@ -115,9 +117,14 @@ fun RowsView(
             }
         }
 
-        val listModifier = if (wrap) Modifier.fillMaxSize() else Modifier.requiredWidth(contentWidth).fillMaxHeight()
+        val narrowed = wrap && maxTextWidth != null && viewport > maxTextWidth
+        val listModifier = when {
+            narrowed -> Modifier.width(maxTextWidth!!).fillMaxHeight()
+            wrap -> Modifier.fillMaxSize()
+            else -> Modifier.requiredWidth(contentWidth).fillMaxHeight()
+        }
         val outer = if (wrap) Modifier.fillMaxSize() else Modifier.fillMaxSize().horizontalScroll(hScroll)
-        Box(outer) {
+        Box(outer, contentAlignment = Alignment.TopCenter) {
             SelectionContainer {
                 LazyColumn(state = state, modifier = listModifier, contentPadding = contentPadding) {
                     items(count = index.rowCount) { row ->

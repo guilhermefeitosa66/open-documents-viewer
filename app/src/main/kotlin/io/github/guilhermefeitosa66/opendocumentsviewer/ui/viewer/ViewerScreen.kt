@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -94,6 +95,18 @@ interface ViewerActions {
     fun onFirstContent()
 }
 
+/** Reading comfort settings and the full-screen switch, provided by the activity. */
+data class ReadingPrefs(
+    val limitWidth: Boolean = true,
+    val fullScreen: Boolean = false,
+    val onFullScreen: (Boolean) -> Unit = {},
+)
+
+val LocalReading = androidx.compose.runtime.staticCompositionLocalOf { ReadingPrefs() }
+
+/** Comfortable measure for prose on large screens. */
+val MaxProseWidth = 760.dp
+
 /** Split view controls, offered only on wide screens. */
 class SplitControls(
     val inSplit: Boolean,
@@ -118,14 +131,29 @@ fun ViewerScreen(
     val fontSize = if (prose) proseSize else codeSize
 
     Column(Modifier.fillMaxSize().background(colors.paper)) {
-        if (session.searchOpen) SearchBar(session) else TopBar(session, actions, split, onInfo = { showInfo = true })
-        HorizontalDivider(color = colors.line)
+        val reading = LocalReading.current
+        if (session.searchOpen) {
+            SearchBar(session)
+            HorizontalDivider(color = colors.line)
+        } else if (!reading.fullScreen) {
+            TopBar(session, actions, split, onInfo = { showInfo = true })
+            HorizontalDivider(color = colors.line)
+        }
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .pinchToZoom { actions.zoom(prose, it) },
         ) {
+            if (reading.fullScreen && !session.searchOpen) {
+                IconButton(
+                    onClick = { reading.onFullScreen(false) },
+                    modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(8.dp).zIndex(1f)
+                        .clip(RoundedCornerShape(50)).background(colors.card.copy(alpha = 0.85f)),
+                ) {
+                    Icon(painterResource(R.drawable.ic_fullscreen_exit), stringResource(R.string.exit_full_screen), tint = colors.ink)
+                }
+            }
             when (val load = session.load) {
                 LoadState.Loading -> Loading()
                 is LoadState.Failed -> Failure(load.failure)
@@ -168,7 +196,11 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
             ViewMode.SOURCE -> {
                 val src = session.source
                 if (src == null) Loading() else {
-                    RowsView(src, session.sourceList, session.wrap, session.lineNumbers, fontSize, matches, current, session.revealRequest, padding)
+                    val proseRows = session.kind == DocumentKind.PLAIN && session.wrap && LocalReading.current.limitWidth
+                    RowsView(
+                        src, session.sourceList, session.wrap, session.lineNumbers, fontSize, matches, current, session.revealRequest, padding,
+                        maxTextWidth = if (proseRows) MaxProseWidth else null,
+                    )
                     FastScroller(session.sourceList, src.index.rowCount, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
             }
@@ -225,6 +257,7 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
     val doc = session.doc
     var menu by remember { mutableStateOf(false) }
     var showOutline by remember { mutableStateOf(false) }
+    val reading = LocalReading.current
     if (showOutline) OutlineSheet(session, onDismiss = { showOutline = false })
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().height(64.dp).padding(horizontal = 4.dp),
@@ -312,6 +345,7 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                             DropdownMenuItem(text = { Text(stringResource(R.string.split_other)) }, onClick = { menu = false; split.onSplitOther() })
                         }
                     }
+                    DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })
                 }
             }

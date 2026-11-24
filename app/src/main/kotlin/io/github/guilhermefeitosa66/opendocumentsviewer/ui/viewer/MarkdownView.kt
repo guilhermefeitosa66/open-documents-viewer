@@ -99,8 +99,13 @@ fun MarkdownView(
     modifier: Modifier = Modifier,
 ) {
     val colors = Odv.colors
-    SelectionContainer(modifier.fillMaxSize()) {
-        LazyColumn(state = state, contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
+    val limit = LocalReading.current.limitWidth
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.fillMaxSize()) {
+    // On large screens, center a comfortable measure instead of 1000 dp long lines.
+    val side = if (limit && maxWidth > MaxProseWidth) (maxWidth - MaxProseWidth) / 2 else 0.dp
+    val padding = PaddingValues(start = side, end = side, top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding())
+    SelectionContainer(Modifier.fillMaxSize()) {
+        LazyColumn(state = state, contentPadding = padding, modifier = Modifier.fillMaxSize()) {
             itemsIndexed(content.blocks) { i, block ->
                 val itemMatches = matchesByItem[i]
                 val currentHere = current?.takeIf { it.item == i }
@@ -109,6 +114,7 @@ fun MarkdownView(
                 }
             }
         }
+    }
     }
 }
 

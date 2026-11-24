@@ -121,4 +121,11 @@
     <string name="wide_empty">Elige un documento a la izquierda.</string>
     <string name="outline">Índice</string>
     <string name="file_updated">El archivo cambió: actualizado</string>
+    <string name="full_screen">Pantalla completa</string>
+    <string name="exit_full_screen">Salir de pantalla completa</string>
+    <string name="reading_section">Lectura</string>
+    <string name="keep_screen_on">Mantener la pantalla encendida</string>
+    <string name="keep_screen_on_desc">Mientras haya un documento abierto.</string>
+    <string name="limit_width">Ancho de línea cómodo</string>
+    <string name="limit_width_desc">En pantallas grandes, las líneas de texto mantienen un largo fácil de leer.</string>
 </resources>
