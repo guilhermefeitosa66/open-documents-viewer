@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.28.0 (2026-11-24)
+
+- Added: OpenDocument presentations (.odp, .otp and flat .fodp), read-only, in the same slides view: master-page placeholders and drawings, page backgrounds, text boxes with lists, custom shapes, pictures, tables, groups, lines and speaker notes.
+
 ## 0.27.0 (2026-11-24)
 
 - Added: PowerPoint presentations (.pptx, .ppsx, .potx), read-only: slides drawn with their backgrounds, shapes, text (theme fonts and colours, bullets, numbering), pictures, groups and simple tables; thumbnails, keyboard navigation, speaker notes, find, an outline of slide titles and a full-screen presentation mode (F5; Ctrl+R still reloads). Hidden slides are skipped.

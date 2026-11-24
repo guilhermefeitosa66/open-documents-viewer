@@ -1127,13 +1127,14 @@ def test_xls_file(tmp_path):
     assert r["tabs"] == ["Sales"] and r["rows"] == [0, 1, 3, 4]
 
 
-def test_pptx_file(tmp_path):
+@pytest.mark.parametrize("ext", ["pptx", "odp"])
+def test_presentation_file(tmp_path, ext):
     import sys
 
     sys.path.insert(0, os.path.dirname(__file__))
-    from office import make_pptx
+    import office
 
-    path = str(make_pptx(tmp_path / "deck.pptx"))
+    path = str(getattr(office, f"make_{ext}")(tmp_path / f"deck.{ext}"))
 
     def scenario(win, r):
         win.open_path(path)

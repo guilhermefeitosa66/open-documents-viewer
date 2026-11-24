@@ -966,3 +966,36 @@ def test_pptx_broken(tmp_path):
     bad.write_bytes(b"not a zip")
     with pytest.raises(pptx.PptxError):
         pptx.build(str(bad))
+
+
+@pytest.mark.parametrize("flat", [False, True])
+def test_odp_reader(tmp_path, flat):
+    from office import make_odp
+    from odv.filetypes import classify
+    from odv.formats.presentations import open_presentation
+
+    assert classify("talk.odp").kind == "presentation"
+    pres = open_presentation(str(make_odp(tmp_path / ("talk.fodp" if flat else "talk.odp"), flat=flat)))
+    assert (pres.width, pres.height) == (10081260, 5670708)  # 28 x 15.75 cm
+    assert [(s.title, s.hidden) for s in pres.slides] == [("Quarterly Review", False), ("Results", False),
+                                                           ("Backup", True)]
+    band, title, subtitle = pres.slides[0].shapes  # the master's own drawing comes first
+    assert band.fill == "B5502B" and band.line is None and not band.paragraphs
+    # the title has no position of its own: it takes the master's
+    assert (title.x, title.y) == (504063, 216027) and title.paragraphs[0].align == "center"
+    assert title.paragraphs[0].runs[0].size == 40 and title.paragraphs[0].runs[0].font == "DejaVu Sans"
+    assert subtitle.paragraphs[0].runs[0].text == "Hello & welcome"
+    s2 = pres.slides[1]
+    assert s2.background == "FFF5E0" and s2.notes == "Mention the north."
+    assert [s.kind for s in s2.shapes] == ["rect", "rect", "rect", "roundRect", "image", "table", "ellipse", "line"]
+    items = s2.shapes[2].paragraphs
+    assert [(p.bullet, p.level) for p in items] == [("●", 0), ("–", 1), ("1.", 0), ("2.", 0)]
+    assert items[1].runs[0].italic and items[3].runs[0].underline and items[3].runs[0].color == "FF0000"
+    box = s2.shapes[3]
+    assert box.fill == "883C20" and box.line == "000000" and box.anchor == "middle"
+    assert box.paragraphs[0].runs[0].bold and box.paragraphs[0].align == "center"
+    if not flat:
+        assert s2.shapes[4].image.startswith(b"\x89PNG")
+    assert [["".join(r.text for p in c for r in p.runs) for c in row] for row in s2.shapes[5].rows] == [
+        ["Region", "Sales"], ["North", "42"]]
+    assert s2.shapes[6].fill == "00AA00"

@@ -383,3 +383,86 @@ def make_pptx(path):
         z.writestr("ppt/notesSlides/notesSlide2.xml", notes)
         z.writestr("ppt/media/image1.png", PNG)
     return path
+
+
+ODP_NS = ODF_NS + (' xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0" '
+                   'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"')
+
+
+def make_odp(path, flat=False):
+    """Three pages (one hidden) like make_pptx: a title page with placeholders
+    positioned by the master, a page with a list, shapes, a picture, a
+    table, a group and notes."""
+    styles = f"""<office:font-face-decls><style:font-face style:name="DV" svg:font-family="'DejaVu Sans'"/></office:font-face-decls>
+<office:styles>
+  <style:default-style style:family="graphic"><style:graphic-properties draw:fill-color="#729fcf"/></style:default-style>
+  <style:style style:name="Default-title" style:family="presentation"><style:graphic-properties draw:fill="none" draw:stroke="none"/>
+    <style:paragraph-properties fo:text-align="center"/><style:text-properties fo:font-size="40pt" style:font-name="DV"/></style:style>
+  <style:style style:name="Default-outline1" style:family="presentation"><style:graphic-properties draw:fill="none" draw:stroke="none">
+    <text:list-style style:name="L"><text:list-level-style-bullet text:level="1" text:bullet-char="●"/>
+    <text:list-level-style-bullet text:level="2" text:bullet-char="–"/></text:list-style></style:graphic-properties>
+    <style:text-properties fo:font-size="24pt"/></style:style>
+</office:styles>
+<office:automatic-styles>
+  <style:page-layout style:name="PM1"><style:page-layout-properties fo:page-width="28cm" fo:page-height="15.75cm"/></style:page-layout>
+  <style:style style:name="Mdp1" style:family="drawing-page"><style:drawing-page-properties draw:fill="solid" draw:fill-color="#ffffff"/></style:style>
+  <style:style style:name="Mgr1" style:family="graphic"><style:graphic-properties draw:fill="solid" draw:fill-color="#b5502b" draw:stroke="none"/></style:style>
+</office:automatic-styles>
+<office:master-styles><style:master-page style:name="Default" style:page-layout-name="PM1" draw:style-name="Mdp1">
+  <draw:frame presentation:style-name="Default-title" presentation:class="title" svg:x="1.4cm" svg:y="0.6cm" svg:width="25.2cm" svg:height="2.6cm" presentation:placeholder="true"><draw:text-box/></draw:frame>
+  <draw:frame presentation:style-name="Default-outline1" presentation:class="outline" svg:x="1.4cm" svg:y="3.7cm" svg:width="25.2cm" svg:height="9.5cm" presentation:placeholder="true"><draw:text-box/></draw:frame>
+  <draw:rect draw:style-name="Mgr1" svg:x="0cm" svg:y="15cm" svg:width="28cm" svg:height="0.75cm"/>
+</style:master-page></office:master-styles>"""
+    content = f"""<office:automatic-styles>
+  <style:style style:name="dp2" style:family="drawing-page"><style:drawing-page-properties draw:fill="solid" draw:fill-color="#fff5e0"/></style:style>
+  <style:style style:name="dp3" style:family="drawing-page"><style:drawing-page-properties presentation:visibility="hidden"/></style:style>
+  <style:style style:name="gr1" style:family="graphic"><style:graphic-properties draw:fill="solid" draw:fill-color="#883c20" svg:stroke-color="#000000" svg:stroke-width="0.07cm" draw:textarea-vertical-align="middle"/></style:style>
+  <style:style style:name="gr2" style:family="graphic"><style:graphic-properties draw:fill="solid" draw:fill-color="#00aa00" draw:stroke="none"/></style:style>
+  <style:style style:name="T1" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style>
+  <style:style style:name="T2" style:family="text"><style:text-properties fo:color="#ff0000" style:text-underline-style="solid"/></style:style>
+  <style:style style:name="T3" style:family="text"><style:text-properties fo:font-style="italic"/></style:style>
+  <text:list-style style:name="N"><text:list-level-style-number text:level="1" style:num-format="1" style:num-suffix="."/></text:list-style>
+</office:automatic-styles>
+<office:body><office:presentation>
+<draw:page draw:name="p1" draw:master-page-name="Default">
+  <draw:frame presentation:style-name="Default-title" presentation:class="title"><draw:text-box><text:p>Quarterly Review</text:p></draw:text-box></draw:frame>
+  <draw:frame presentation:class="subtitle" svg:x="1.4cm" svg:y="5cm" svg:width="25.2cm" svg:height="3cm"><draw:text-box><text:p>Hello &amp; welcome</text:p></draw:text-box></draw:frame>
+</draw:page>
+<draw:page draw:name="p2" draw:style-name="dp2" draw:master-page-name="Default">
+  <draw:frame presentation:style-name="Default-title" presentation:class="title"><draw:text-box><text:p>Results</text:p></draw:text-box></draw:frame>
+  <draw:frame presentation:style-name="Default-outline1" presentation:class="outline" svg:x="1.4cm" svg:y="3.7cm" svg:width="12cm" svg:height="8cm"><draw:text-box>
+    <text:list><text:list-item><text:p>First point</text:p><text:list><text:list-item><text:p><text:span text:style-name="T3">Detail</text:span></text:p></text:list-item></text:list></text:list-item></text:list>
+    <text:list text:style-name="N"><text:list-item><text:p>One</text:p></text:list-item><text:list-item><text:p><text:span text:style-name="T2">Two</text:span> red</text:p></text:list-item></text:list>
+  </draw:text-box></draw:frame>
+  <draw:custom-shape draw:style-name="gr1" svg:x="15cm" svg:y="3.7cm" svg:width="8cm" svg:height="4cm"><text:p><text:span text:style-name="T1">Callout</text:span></text:p><draw:enhanced-geometry draw:type="round-rectangle"/></draw:custom-shape>
+  <draw:frame svg:x="15cm" svg:y="8.5cm" svg:width="2.5cm" svg:height="2.5cm"><draw:image xlink:href="Pictures/red.png"/></draw:frame>
+  <draw:frame svg:x="1.4cm" svg:y="12cm" svg:width="10cm" svg:height="2cm"><table:table>
+    <table:table-row><table:table-cell><text:p>Region</text:p></table:table-cell><table:table-cell><text:p>Sales</text:p></table:table-cell></table:table-row>
+    <table:table-row><table:table-cell><text:p>North</text:p></table:table-cell><table:table-cell><text:p>42</text:p></table:table-cell></table:table-row>
+  </table:table></draw:frame>
+  <draw:g><draw:ellipse draw:style-name="gr2" svg:x="20cm" svg:y="9cm" svg:width="1.5cm" svg:height="1.5cm"/></draw:g>
+  <draw:line svg:x1="1cm" svg:y1="3.4cm" svg:x2="27cm" svg:y2="3.4cm"/>
+  <presentation:notes><draw:page-thumbnail presentation:class="page"/><draw:frame presentation:class="notes"><draw:text-box><text:p>Mention the north.</text:p></draw:text-box></draw:frame></presentation:notes>
+</draw:page>
+<draw:page draw:name="p3" draw:style-name="dp3" draw:master-page-name="Default">
+  <draw:frame presentation:style-name="Default-title" presentation:class="title"><draw:text-box><text:p>Backup</text:p></draw:text-box></draw:frame>
+</draw:page>
+</office:presentation></office:body>"""
+    if flat:
+        head, rest = styles.split("<office:automatic-styles>")
+        style_auto, masters = rest.split("</office:automatic-styles>")
+        content_auto, body = content.split("<office:automatic-styles>")[1].split("</office:automatic-styles>")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n<office:document {ODP_NS} '
+                    f'office:mimetype="application/vnd.oasis.opendocument.presentation">{head}'
+                    f"<office:automatic-styles>{style_auto}{content_auto}</office:automatic-styles>"
+                    f"{masters}{body}</office:document>")
+        return path
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("mimetype", "application/vnd.oasis.opendocument.presentation")
+        z.writestr("content.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<office:document-content {ODP_NS}>'
+                                  f"{content}</office:document-content>")
+        z.writestr("styles.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<office:document-styles {ODP_NS}>'
+                                 f"{styles}</office:document-styles>")
+        z.writestr("Pictures/red.png", PNG)
+    return path

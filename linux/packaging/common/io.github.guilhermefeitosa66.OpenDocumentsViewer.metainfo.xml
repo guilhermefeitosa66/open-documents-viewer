@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.28.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: OpenDocument presentations (.odp, .otp and flat .fodp), read-only, in the same slides view: master-page placeholders and drawings, page backgrounds, text boxes with lists, custom shapes, pictures, tables, groups, lines and speaker notes.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.27.0" date="2026-11-24">
       <description>
         <ul>
