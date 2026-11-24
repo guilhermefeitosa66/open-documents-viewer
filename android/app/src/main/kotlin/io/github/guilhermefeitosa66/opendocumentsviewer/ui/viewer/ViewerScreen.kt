@@ -258,7 +258,10 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
         // Notices last, so they sit above the document.
         ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
         if (session.mode == ViewMode.FORMATTED && (session.formatted as? Formatted.Markdown)?.partial == true) {
-            PartialNotice(Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp))
+            PartialNotice(
+                if (session.kind == DocumentKind.DOC) R.string.partial_text_only else R.string.partial_render,
+                Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp),
+            )
         }
 
         if (session.hasToggle && !session.searchOpen) {
@@ -401,7 +404,7 @@ private fun subtitle(session: DocumentSession): String {
     val parts = ArrayList<String>()
     parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF ||
         doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
-        else if (doc.type.kind == DocumentKind.DOCX) "Word"
+        else if (doc.type.kind == DocumentKind.DOCX || doc.type.kind == DocumentKind.DOC) "Word"
         else if (doc.type.kind == DocumentKind.ODT) "OpenDocument"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
@@ -417,7 +420,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT && doc.type.kind != DocumentKind.DOC) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }
@@ -733,7 +736,7 @@ private fun RasterContent(session: DocumentSession, doc: LoadedDocument) {
 
 /** Some of the original (pictures, embedded objects...) could not be shown: say so once, briefly. */
 @Composable
-private fun PartialNotice(modifier: Modifier) {
+private fun PartialNotice(message: Int, modifier: Modifier) {
     var visible by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(4000)
@@ -742,7 +745,7 @@ private fun PartialNotice(modifier: Modifier) {
     androidx.compose.animation.AnimatedVisibility(visible, modifier.padding(top = 8.dp)) {
         val colors = Odv.colors
         Surface(color = colors.paper2, contentColor = colors.ink, shape = RoundedCornerShape(12.dp), shadowElevation = 2.dp) {
-            Text(stringResource(R.string.partial_render), Modifier.padding(horizontal = 14.dp, vertical = 8.dp), fontSize = 13.sp)
+            Text(stringResource(message), Modifier.padding(horizontal = 14.dp, vertical = 8.dp), fontSize = 13.sp)
         }
     }
 }

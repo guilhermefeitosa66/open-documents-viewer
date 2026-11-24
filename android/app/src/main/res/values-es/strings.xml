@@ -167,4 +167,5 @@
     <string name="kind_email">Correo</string>
     <string name="kind_contacts">Contactos</string>
     <string name="kind_calendar">Calendario</string>
+    <string name="partial_text_only">Texto simple de un documento antiguo de Word: no se muestran el formato ni las imágenes.</string>
 </resources>

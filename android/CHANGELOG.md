@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.23.0] - 2026-11-24
+
+### Added
+- Word 97–2003 documents (.doc, .dot): the text, with tables rebuilt from the cell marks (cells with several
+  paragraphs included), field results instead of field codes, and page breaks as separators. Formatting and
+  pictures are not read; a short notice says so. A ".doc" that is really RTF or HTML opens as what it is.
+- Own reader for OLE2 compound files (no Apache POI), shared by the older Office formats to come.
+
 ## [0.22.0] - 2026-11-24
 
 ### Added

@@ -173,14 +173,32 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
-        if (earlyType.kind == DocumentKind.DOCX || earlyType.kind == DocumentKind.ODT) {
+        if (earlyType.kind == DocumentKind.DOCX || earlyType.kind == DocumentKind.ODT || earlyType.kind == DocumentKind.DOC) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("document larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
             val bytes = read.bytes.copyOf(read.length)
+            if (earlyType.kind == DocumentKind.DOC && !io.github.guilhermefeitosa66.opendocumentsviewer.formats.Cfb.isCfb(bytes)) {
+                // Many ".doc" files are really RTF or HTML saved by Word: shown as what they are.
+                val decoded = TextDecoder.decode(bytes, bytes.size) as? Decoded.Text ?: return failure(LoadFailure.Binary)
+                val head = decoded.text.trimStart().take(400).lowercase()
+                val type = when {
+                    head.startsWith("{\\rtf") -> DocumentTypes.detect("x.rtf", null)
+                    head.startsWith("<") && ("<html" in head || "<!doctype html" in head) -> DocumentTypes.detect("x.html", null)
+                    else -> DocumentTypes.detect("x.txt", null)
+                }
+                return Result.success(
+                    LoadedDocument(
+                        uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
+                        text = decoded.text, charset = decoded.charset, type = type, truncated = false, location = meta.location,
+                        modified = stamp(uri).second,
+                    )
+                )
+            }
             val parsed = try {
-                if (earlyType.kind == DocumentKind.ODT) io.github.guilhermefeitosa66.opendocumentsviewer.markdown.OdtModel.parse(bytes)
+                if (earlyType.kind == DocumentKind.DOC) io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocModel.parse(bytes)
+                else if (earlyType.kind == DocumentKind.ODT) io.github.guilhermefeitosa66.opendocumentsviewer.markdown.OdtModel.parse(bytes)
                 else io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.parse(bytes)
             } catch (e: Exception) {
                 return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
