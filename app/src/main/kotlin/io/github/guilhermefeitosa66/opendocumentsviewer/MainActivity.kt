@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.IntentCompat
+import androidx.compose.material.icons.filled.Close
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.FileTransfer
 import io.github.guilhermefeitosa66.opendocumentsviewer.folder.RelativePath
 import io.github.guilhermefeitosa66.opendocumentsviewer.document.LoadedDocument
@@ -229,10 +230,14 @@ class MainActivity : ComponentActivity() {
                 scope.launch { sheet.hide() }.invokeOnCompletion { switcher = false; then() }
             }
             ModalBottomSheet(onDismissRequest = { switcher = false }, sheetState = sheet, containerColor = Odv.colors.card) {
+                val currentKey = vm.keyOf(session)
                 QuickSwitcher(
-                    recents = vm.recents,
-                    currentKey = session.recentKey,
-                    onPick = { entry -> hide { if (entry.uri != session.recentKey) vm.openRecent(entry) } },
+                    tabs = vm.tabs,
+                    recents = vm.recents.filter { r -> !r.isFolder && vm.tabs.none { it.key == r.uri } },
+                    currentKey = currentKey,
+                    onTab = { tab -> hide { if (tab.key != currentKey) vm.activateTab(tab) } },
+                    onCloseTab = { tab -> vm.closeTab(tab.key); if (vm.session == null) switcher = false },
+                    onPick = { entry -> hide { vm.openRecent(entry) } },
                     onAllRecents = { hide { vm.closeSession() } },
                     onOpenFile = { hide { openPicker() } },
                 )
@@ -369,25 +374,44 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun QuickSwitcher(
+    tabs: List<AppViewModel.OpenTab>,
     recents: List<RecentEntry>,
     currentKey: String?,
+    onTab: (AppViewModel.OpenTab) -> Unit,
+    onCloseTab: (AppViewModel.OpenTab) -> Unit,
     onPick: (RecentEntry) -> Unit,
     onAllRecents: () -> Unit,
     onOpenFile: () -> Unit,
 ) {
     val colors = Odv.colors
     Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
-        Text(
-            stringResource(R.string.switch_document),
-            modifier = Modifier.padding(horizontal = 24.dp),
-            fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.ink,
-        )
-        LazyColumn(Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-            items(recents.take(8), key = { it.uri }) { entry ->
-                RecentRow(entry, current = entry.uri == currentKey, onClick = { onPick(entry) })
+        LazyColumn(Modifier.weight(1f, fill = false).padding(horizontal = 8.dp)) {
+            item {
+                SwitcherHeader(stringResource(R.string.open_documents))
+            }
+            items(tabs, key = { "tab:" + it.key }) { tab ->
+                val entry = RecentEntry(tab.key, tab.name, tab.mimeType, -1, 0, persisted = true, location = null)
+                RecentRow(
+                    entry, current = tab.key == currentKey, onClick = { onTab(tab) },
+                    trailing = {
+                        androidx.compose.material3.IconButton(onClick = { onCloseTab(tab) }) {
+                            androidx.compose.material3.Icon(
+                                androidx.compose.material.icons.Icons.Filled.Close,
+                                stringResource(R.string.close_document, tab.name), tint = colors.ink2,
+                            )
+                        }
+                    },
+                    showMeta = false,
+                )
+            }
+            if (recents.isNotEmpty()) {
+                item { SwitcherHeader(stringResource(R.string.recent)) }
+                items(recents.take(6), key = { it.uri }) { entry ->
+                    RecentRow(entry, current = false, onClick = { onPick(entry) })
+                }
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onAllRecents, modifier = Modifier.weight(1f).height(48.dp)) {
                 Text(stringResource(R.string.all_recents), color = colors.ink)
             }
@@ -401,6 +425,15 @@ private fun QuickSwitcher(
             }
         }
     }
+}
+
+@Composable
+private fun SwitcherHeader(text: String) {
+    Text(
+        text.uppercase(),
+        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = Odv.colors.ink2,
+    )
 }
 
 @Composable

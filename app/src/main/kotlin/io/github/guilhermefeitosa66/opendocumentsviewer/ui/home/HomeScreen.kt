@@ -228,6 +228,7 @@ fun RecentRow(
     onClick: () -> Unit,
     container: Color? = null,
     trailing: (@Composable () -> Unit)? = null,
+    showMeta: Boolean = true,
 ) {
     val colors = Odv.colors
     val type = remember(entry.name, entry.mimeType) { DocumentTypes.detect(entry.name, entry.mimeType) }
@@ -254,7 +255,7 @@ fun RecentRow(
         }
         Column(Modifier.weight(1f)) {
             Text(entry.name, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(recentMeta(entry), fontSize = 13.sp, color = colors.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (showMeta) Text(recentMeta(entry), fontSize = 13.sp, color = colors.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (current) Text(stringResource(R.string.open_now), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.accentInk)
         trailing?.invoke()

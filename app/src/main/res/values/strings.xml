@@ -113,4 +113,6 @@
     <string name="open_link_title">Leave the app?</string>
     <string name="open_link_body">This link opens in another app:</string>
     <string name="open_link_confirm">Open</string>
+    <string name="open_documents">Open documents</string>
+    <string name="close_document">Close %1$s</string>
 </resources>

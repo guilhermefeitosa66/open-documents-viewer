@@ -110,6 +110,51 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** A document open in this session (a light tab). Its session may be unloaded to save memory. */
+    data class OpenTab(
+        val key: String,
+        val name: String,
+        val mimeType: String?,
+        val folderDocumentId: String?,
+        val external: Boolean,
+        /** Text shared into the app: kept, since it cannot be read again from anywhere. */
+        val shared: LoadedDocument? = null,
+    )
+
+    /** Open documents, most recently used first. */
+    val tabs = androidx.compose.runtime.mutableStateListOf<OpenTab>()
+
+    /** Loaded sessions by tab key, least recently used first. */
+    private val loaded = LinkedHashMap<String, DocumentSession>()
+    private var sharedCounter = 0
+
+    fun keyOf(s: DocumentSession?): String? = loaded.entries.firstOrNull { it.value === s }?.key
+
+    private fun activate(key: String, s: DocumentSession) {
+        loaded.remove(key)
+        loaded[key] = s
+        tabs.indexOfFirst { it.key == key }.takeIf { it > 0 }?.let { tabs.add(0, tabs.removeAt(it)) }
+        session = s
+        // Only a few documents stay rendered; the others reopen at their saved position.
+        while (loaded.size > MAX_LOADED) {
+            val (k, old) = loaded.entries.first()
+            if (old === s) break
+            savePosition(old)
+            old.close()
+            loaded.remove(k)
+        }
+        while (tabs.size > MAX_TABS) closeTab(tabs.last().key)
+    }
+
+    private fun addTab(tab: OpenTab) {
+        if (tabs.none { it.key == tab.key }) tabs.add(0, tab)
+    }
+
+    private fun renameTab(key: String, name: String, mime: String?) {
+        val i = tabs.indexOfFirst { it.key == key }
+        if (i >= 0) tabs[i] = tabs[i].copy(name = name, mimeType = mime ?: tabs[i].mimeType)
+    }
+
     fun openUri(
         uri: Uri,
         mimeHint: String?,
@@ -121,8 +166,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     ) {
         openStartedAt = SystemClock.uptimeMillis()
         closeSession()
+        val key = uri.toString()
+        loaded[key]?.let { s ->
+            activate(key, s)
+            if (anchor != null) s.jumpToAnchor(anchor)
+            return
+        }
         viewModelScope.launch {
-            val key = uri.toString()
             val persisted = withContext(Dispatchers.IO) { persist(uri, grantFlags, fromPicker) }
             val entry = withContext(Dispatchers.IO) { store.find(key) }
             val s = DocumentSession(
@@ -134,8 +184,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 folderDocumentId = folderDocumentId,
                 pendingAnchor = anchor,
             )
-            session = s
-            s.start({ loader.load(uri, mimeHint) }) { doc -> remember(doc, s, persisted || entry?.persisted == true) }
+            addTab(OpenTab(key, entry?.name ?: uri.lastPathSegment?.substringAfterLast('/').orEmpty(), mimeHint, folderDocumentId, external))
+            activate(key, s)
+            s.start({ loader.load(uri, mimeHint) }) { doc ->
+                renameTab(key, doc.name, doc.mimeType)
+                remember(doc, s, persisted || entry?.persisted == true)
+            }
         }
     }
 
@@ -148,9 +202,40 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             uri = null, name = name, mimeType = "text/plain", size = text.length.toLong(), text = text,
             charset = "UTF-16", type = type, truncated = false, location = null,
         )
+        val key = "shared:${sharedCounter++}"
+        openShared(key, doc)
+    }
+
+    private fun openShared(key: String, doc: LoadedDocument) {
         val s = DocumentSession(recentKey = null, external = true, initialFormatted = true, initialWrap = null, initialPosition = ViewPosition())
-        session = s
+        addTab(OpenTab(key, doc.name, doc.mimeType, null, external = true, shared = doc))
+        activate(key, s)
         s.startWithText(doc) {}
+    }
+
+    /** Switches to an open document, reloading it if it was unloaded. */
+    fun activateTab(tab: OpenTab) {
+        val s = loaded[tab.key]
+        when {
+            s != null -> {
+                closeSession()
+                activate(tab.key, s)
+            }
+            tab.shared != null -> {
+                closeSession()
+                openShared(tab.key, tab.shared)
+            }
+            else -> openUri(Uri.parse(tab.key), tab.mimeType, tab.external, folderDocumentId = tab.folderDocumentId)
+        }
+    }
+
+    fun closeTab(key: String) {
+        loaded.remove(key)?.let { s ->
+            savePosition(s)
+            s.close()
+            if (session === s) session = null
+        }
+        tabs.removeAll { it.key == key }
     }
 
     fun openRecent(entry: RecentEntry) {
@@ -218,11 +303,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         folder = null
     }
 
-    /** Leaves the viewer, keeping the reading position. */
+    /** Leaves the viewer, keeping the reading position; the document stays open as a tab. */
     fun closeSession() {
         val s = session ?: return
         savePosition(s)
-        s.close()
         session = null
     }
 
@@ -318,7 +402,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
-        session?.close()
+        loaded.values.forEach { it.close() }
+        loaded.clear()
     }
 
     companion object {
@@ -329,5 +414,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private const val KEY_BACKGROUND = "background"
         const val MIN_SCALE = 0.6f
         const val MAX_SCALE = 2.6f
+        /** Documents kept rendered in memory; older tabs reopen on demand. */
+        const val MAX_LOADED = 3
+        const val MAX_TABS = 12
     }
 }

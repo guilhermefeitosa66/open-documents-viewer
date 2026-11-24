@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.5.0] - 2026-11-24
+
+### Added
+- Light tabs: documents opened in a session stay open; the switcher (tap the title) lists them with a close button,
+  followed by other recent files. Each keeps its position and view mode.
+- Memory limit: only the 3 most recently used documents stay rendered; older tabs reopen on demand at their saved position
+  (shared text is kept, since it cannot be read again). At most 12 tabs.
+
+### Changed
+- Back from a document returns to the start screen (or folder) without closing it.
+
 ## [0.4.0] - 2026-11-24
 
 ### Added
