@@ -991,7 +991,7 @@ def test_docx_file(tmp_path):
         r["align"] = table.lookup("align-center") is not None
 
     r = run_app(scenario)
-    assert r["state"] == ("formatted", False, False)
+    assert r["state"] == ("formatted", False, True)  # the switch offers the faithful view, not a source
     assert "Plain bold, red italic and a link." in r["text"]
     assert r["outline"] == ["Report Title", "Introduction", "Details"] and r["align"]
 
@@ -1287,3 +1287,56 @@ def test_pdf_file(tmp_path):
     assert "Hello and welcome." in r["source"] and "South 17" in r["source"]
     if locked:
         assert r["asked"] == "password" and r["unlocked"] == ("pages", 3)
+
+
+def test_faithful_view(tmp_path, monkeypatch):
+    import sys
+
+    pytest.importorskip("pypdfium2")
+    sys.path.insert(0, os.path.dirname(__file__))
+    from cfb import make_doc
+    from pdfgen import fake_soffice
+
+    path = str(make_doc(tmp_path / "old.doc", "Old title\rSome text.\r"))
+    other = str(make_doc(tmp_path / "other.doc", "Other\r"))
+    monkeypatch.setenv("PATH", fake_soffice(str(tmp_path / "bin")) + os.pathsep + os.environ.get("PATH", ""))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        switch = win.active_pane.mode_switch
+        r["switch"] = (switch.get_visible(), switch.source.get_visible(), switch.faithful.get_visible())
+        r["banner"] = doc.banner.get_button_label()
+        doc._on_banner_button(None)
+        for _i in range(50):
+            yield 0.2
+            view = doc.views.get("faithful")
+            if view is not None and view.pages:
+                break
+        view = doc.views.get("faithful")
+        r["faithful"] = (doc.mode, len(view.pages) if view else 0, switch.faithful.get_active())
+        folder = doc._faithful_dir
+        r["outline"] = [h.title for h in doc.outline()]
+        doc.set_mode("formatted")
+        yield 0.3
+        r["back"] = doc.mode
+        win.close_tab()
+        yield 0.3
+        r["cleaned"] = folder is not None and not os.path.exists(folder)
+        os.environ["PATH"] = str(tmp_path / "nothing")
+        win.open_path(other)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        doc.set_mode("faithful")
+        yield 0.3
+        page = doc.stack.get_visible_child()
+        r["missing"] = page.get_title() if hasattr(page, "get_title") else None
+
+    r = run_app(scenario, timeout=40)
+    assert r["switch"] == (True, False, True)
+    assert r["banner"] == "Faithful view"
+    assert r["faithful"] == ("faithful", 3, True)
+    assert r["outline"] == ["Introduction", "Results", "Backup"]
+    assert r["back"] == "formatted" and r["cleaned"]
+    assert r["missing"] == "LibreOffice is not installed"

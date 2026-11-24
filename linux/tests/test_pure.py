@@ -1181,3 +1181,25 @@ def test_pdf_password(tmp_path):
         assert _engine_call(engine, lambda: engine.open("s3cret")).pages == 3
     finally:
         engine.close()
+
+
+def test_faithful_convert(tmp_path, monkeypatch):
+    import os
+
+    from cfb import make_doc
+    from pdfgen import fake_soffice
+    from odv.formats import faithful
+
+    doc = str(make_doc(tmp_path / "old.doc", "Old title\r"))
+    monkeypatch.setenv("PATH", str(tmp_path / "empty"))
+    assert faithful.find_soffice() is None
+    with pytest.raises(faithful.FaithfulError):
+        faithful.convert(doc)
+    monkeypatch.setenv("PATH", fake_soffice(str(tmp_path / "bin")))
+    pdf, folder = faithful.convert(doc)
+    assert pdf == os.path.join(folder, "old.pdf") and open(pdf, "rb").read(5) == b"%PDF-"
+    assert not os.path.exists(os.path.join(folder, "profile"))  # the throw-away profile is gone
+    monkeypatch.setenv("PATH", fake_soffice(str(tmp_path / "bad"), fail=True))
+    with pytest.raises(faithful.FaithfulError, match="could not be loaded"):
+        faithful.convert(doc)
+    assert faithful.supported("a.PPTX") and not faithful.supported("a.pdf") and not faithful.supported("a.pages")

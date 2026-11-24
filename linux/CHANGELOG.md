@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.33.0 (2026-11-24)
+
+- Added: a faithful view for office files (Word, Excel, PowerPoint and OpenDocument, old and new, and RTF): a third button next to Formatted/Source converts the file to PDF with LibreOffice, when installed, in a temporary folder with a throw-away profile, and shows it in the PDF view (zoom, find, outline, print). Without LibreOffice it explains how to install it. The text-only Word 97–2003 and PowerPoint 97–2003 views offer it in their banner.
+
 ## 0.32.0 (2026-11-24)
 
 - Added: PDF files, with pypdfium2 (PDFium): continuous scroll with pages rendered on demand in a thread and a small cache, zoom (buttons, Ctrl+wheel, pinch), fit width or page, go to page, thumbnails, the outline in the sidebar, find with highlights, text selection and copy, internal and web links, password-protected PDFs and printing; the source view shows the extracted text. pypdfium2 is bundled in the .deb (now amd64) and the AppImage.

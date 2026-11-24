@@ -8,7 +8,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from odv import settings
 from odv.bench import after_next_paint
-from odv.filetypes import classify
+from odv.filetypes import FAITHFUL_EXT, classify
 from odv.textio import MAX_TEXT_BYTES, BinaryFile, human_size, read_text
 from odv.i18n import _
 
@@ -48,7 +48,11 @@ class DocumentPage(Gtk.Box):
         self.kind = classify(self.path)
         self.has_formatted = self.kind.has_formatted
         self.has_source = self.kind.has_source
+        self.has_faithful = os.path.splitext(self.path)[1].lower() in FAITHFUL_EXT
+        if mode == "faithful":  # restored from a session: never start LibreOffice by itself
+            mode = "formatted"
         self.mode = mode if (mode and self.has_formatted) else ("formatted" if self.has_formatted else "source")
+        self._faithful_dir = None
         self._open_path = open_path
         self.started = time.perf_counter()
         self._text = None  # odv.textio.TextFile once read
@@ -343,7 +347,7 @@ class DocumentPage(Gtk.Box):
     # -- views ----------------------------------------------------------------
     def set_mode(self, mode: str) -> None:
         if mode == self.mode or (mode == "formatted" and not self.has_formatted) \
-                or (mode == "source" and not self.has_source):
+                or (mode == "source" and not self.has_source) or (mode == "faithful" and not self.has_faithful):
             return
         self.mode = mode
         self._show(mode)
@@ -352,6 +356,8 @@ class DocumentPage(Gtk.Box):
     def toggle_mode(self) -> None:
         if self.has_formatted and self.has_source:
             self.set_mode("source" if self.mode == "formatted" else "formatted")
+        elif self.has_formatted and self.has_faithful:
+            self.set_mode("faithful" if self.mode == "formatted" else "formatted")
 
     def _show(self, mode: str) -> None:
         if mode in self.views:
@@ -359,6 +365,9 @@ class DocumentPage(Gtk.Box):
             self._update_banner()
             return
         self.stack.set_visible_child_name("loading")
+        if mode == "faithful":
+            self._build_faithful()
+            return
         if self.kind.kind in ("document", "spreadsheet", "presentation"):
             from odv.formats import protect
 
@@ -605,6 +614,46 @@ class DocumentPage(Gtk.Box):
         run_in_thread(work, done, lambda e: self._status(_("Could not open this file"), str(e),
                                                          "dialog-warning-symbolic"))
 
+    def _build_faithful(self):
+        """LibreOffice converts the file to PDF in a thread; the PDF view shows it."""
+        from odv.formats import faithful
+
+        if faithful.find_soffice() is None:
+            self._status(_("LibreOffice is not installed"),
+                         _("The faithful view converts the file to PDF with LibreOffice, on this computer. "
+                           "Install LibreOffice (for example: sudo apt install libreoffice) and try again."),
+                         "dialog-information-symbolic")
+            return
+        spinner = Adw.Spinner() if hasattr(Adw, "Spinner") else Gtk.Spinner(spinning=True)
+        waiting = Adw.StatusPage(title=_("Converting with LibreOffice…"),
+                                 description=_("The faithful view shows the file the way LibreOffice prints it."),
+                                 child=spinner)
+        self.stack.add_child(waiting)
+        self.stack.set_visible_child(waiting)
+
+        def done(result):
+            pdf, folder = result
+            self.stack.remove(waiting)
+            if self.closed:
+                import shutil
+
+                shutil.rmtree(folder, ignore_errors=True)
+                return
+            self._faithful_dir = folder
+            from odv.views.pdf import PdfView
+
+            view = PdfView(pdf)
+            view.connect("loaded", lambda v: self._set_outline(v.outline()))
+            view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg,
+                                                                "dialog-warning-symbolic"))
+            self._add_view("faithful", view)
+
+        def failed(err):
+            self.stack.remove(waiting)
+            self._status(_("LibreOffice could not convert this file"), str(err), "dialog-warning-symbolic")
+
+        run_in_thread(lambda: faithful.convert(self.path), done, failed)
+
     def present(self) -> bool:
         view = self.views.get("formatted")
         if view is not None and hasattr(view, "present"):
@@ -668,10 +717,13 @@ class DocumentPage(Gtk.Box):
         self._loaded()
 
     def _update_banner(self):
-        if self._note:
+        if self._note and self.mode != "faithful":
             self.banner.set_title(self._note)
-            self.banner.set_button_label(None)
+            self.banner.set_button_label(_("Faithful view") if self.has_faithful else None)
             self.banner.set_revealed(True)
+            return
+        if self.mode == "faithful":
+            self.banner.set_revealed(False)
             return
         view = self.views.get(self.mode)
         tf = self._text
@@ -687,6 +739,9 @@ class DocumentPage(Gtk.Box):
             self.banner.set_revealed(False)
 
     def _on_banner_button(self, _banner):
+        if self._note and self.has_faithful and self.mode != "faithful":
+            self.set_mode("faithful")
+            return
         view = self.views.get("formatted")
         if view is not None and hasattr(view, "stop"):
             view.stop()
@@ -748,6 +803,11 @@ class DocumentPage(Gtk.Box):
                             encoding=encoding or self.forced_encoding)
 
     def shutdown(self) -> None:
+        if self._faithful_dir:
+            import shutil
+
+            shutil.rmtree(self._faithful_dir, ignore_errors=True)
+            self._faithful_dir = None
         if self._save_timer:
             GLib.source_remove(self._save_timer)
             self._save_position()

@@ -54,3 +54,23 @@ def make_pdf(path, pages=None):
     with open(path, "wb") as f:
         f.write(bytes(out))
     return path
+
+
+def fake_soffice(folder, fail=False):
+    """A stand-in for LibreOffice in ``folder`` (put it first in PATH): it
+    "converts" any file to the sample PDF, or fails without output."""
+    import os
+    import sys
+
+    os.makedirs(folder, exist_ok=True)
+    script = os.path.join(folder, "soffice")
+    tests = os.path.dirname(os.path.abspath(__file__))
+    body = ("import sys\nsys.stderr.write('Error: source file could not be loaded\\n')\nsys.exit(0)\n" if fail else
+            f"import os, sys\nsys.path.insert(0, {tests!r})\nfrom pdfgen import make_pdf\n"
+            "args = sys.argv[1:]\nout = args[args.index('--outdir') + 1]\nsrc = args[-1]\n"
+            "assert any(a.startswith('-env:UserInstallation=file://') for a in args)\n"
+            "make_pdf(os.path.join(out, os.path.splitext(os.path.basename(src))[0] + '.pdf'))\n")
+    with open(script, "w") as f:
+        f.write(f"#!{sys.executable}\n{body}")
+    os.chmod(script, 0o755)
+    return folder

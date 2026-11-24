@@ -90,7 +90,7 @@ def print_doc(window, doc, export_to: str | None = None):
     """Show the print dialog (or, for tests, export straight to a PDF)."""
     from odv.views.source import gtksource
 
-    if doc.kind.kind == "pdf":
+    if doc.kind.kind == "pdf" or doc.mode == "faithful":
         return print_pdf(window, doc, export_to)
     if doc.mode == "formatted" and doc.kind.kind == "delimited":
         doc.set_mode("source")
@@ -128,14 +128,14 @@ def print_pdf(window, doc, export_to: str | None = None):
 
     from odv.formats.pdf import PDFIUM_LOCK, load
 
-    view = doc.views.get("formatted")
+    view = doc.views.get("faithful" if doc.mode == "faithful" else "formatted")
     password = getattr(view, "password", None)
     if view is None or getattr(view, "info", None) is None:
         window.toast(_("Open the file once in this view before printing."))
         return None
     pdfium = load()
     with PDFIUM_LOCK:
-        pdf = pdfium.PdfDocument(doc.path, password=password)
+        pdf = pdfium.PdfDocument(view.path, password=password)
     op = Gtk.PrintOperation(job_name=doc.name, n_pages=view.info.pages, use_full_page=False)
 
     def draw(_operation, context, n):

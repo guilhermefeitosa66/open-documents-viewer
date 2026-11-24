@@ -263,6 +263,24 @@ CATALOG: dict[str, dict[str, str]] = {
         "pt": "Texto simples de um documento do Word 97–2003: a formatação não é mostrada.",
         "es": "Texto sin formato de un documento de Word 97–2003: no se muestra el formato."},
     "Sheet": {"pt": "Planilha", "es": "Hoja"},
+    # faithful view (LibreOffice)
+    "Faithful": {"pt": "Fiel", "es": "Fiel"},
+    "Faithful view": {"pt": "Visualização fiel", "es": "Vista fiel"},
+    "Faithful view: converted by LibreOffice, if installed": {
+        "pt": "Visualização fiel: convertida pelo LibreOffice, se estiver instalado",
+        "es": "Vista fiel: convertida por LibreOffice, si está instalado"},
+    "LibreOffice is not installed": {"pt": "O LibreOffice não está instalado", "es": "LibreOffice no está instalado"},
+    "The faithful view converts the file to PDF with LibreOffice, on this computer. Install LibreOffice (for example: sudo apt install libreoffice) and try again.": {
+        "pt": "A visualização fiel converte o arquivo para PDF com o LibreOffice, neste computador. Instale o "
+              "LibreOffice (por exemplo: sudo apt install libreoffice) e tente de novo.",
+        "es": "La vista fiel convierte el archivo a PDF con LibreOffice, en este equipo. Instala LibreOffice "
+              "(por ejemplo: sudo apt install libreoffice) y vuelve a intentarlo."},
+    "Converting with LibreOffice…": {"pt": "Convertendo com o LibreOffice…", "es": "Convirtiendo con LibreOffice…"},
+    "The faithful view shows the file the way LibreOffice prints it.": {
+        "pt": "A visualização fiel mostra o arquivo como o LibreOffice o imprime.",
+        "es": "La vista fiel muestra el archivo como lo imprime LibreOffice."},
+    "LibreOffice could not convert this file": {"pt": "O LibreOffice não conseguiu converter este arquivo",
+                                                "es": "LibreOffice no pudo convertir este archivo"},
     # pdf
     "Pages": {"pt": "Páginas", "es": "Páginas"},
     "Thumbnails": {"pt": "Miniaturas", "es": "Miniaturas"},

@@ -13,6 +13,11 @@ SHEET_EXT = {".xlsx", ".xlsm", ".xltx", ".xltm", ".ods", ".ots", ".fods", ".xls"
 # Presentations, shown in the slides view (odv.views.slides).
 SLIDES_EXT = {".pptx", ".pptm", ".ppsx", ".ppsm", ".potx", ".potm", ".odp", ".otp", ".fodp", ".odg", ".otg",
               ".fodg", ".ppt", ".pps", ".pot"}
+# Office files LibreOffice can turn into a PDF for the faithful view (odv.formats.faithful).
+FAITHFUL_EXT = {".docx", ".docm", ".dotx", ".dotm", ".odt", ".ott", ".fodt", ".doc", ".dot", ".rtf",
+                ".xlsx", ".xlsm", ".xltx", ".xltm", ".ods", ".ots", ".fods", ".xls", ".xlt",
+                ".pptx", ".pptm", ".ppsx", ".ppsm", ".potx", ".potm", ".odp", ".otp", ".fodp",
+                ".odg", ".otg", ".fodg", ".ppt", ".pps", ".pot"}
 # Structured data with a tree view: extension -> (parser kind, source language).
 TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
             ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),

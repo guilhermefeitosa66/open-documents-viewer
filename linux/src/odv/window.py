@@ -13,7 +13,7 @@ from odv.i18n import _
 
 
 class ModeSwitch(Gtk.Box):
-    """Formatted | Source, for the selected tab of one pane."""
+    """Formatted | Source | Faithful, for the selected tab of one pane."""
 
     def __init__(self, on_mode):
         super().__init__(valign=Gtk.Align.CENTER, margin_end=6)
@@ -23,7 +23,9 @@ class ModeSwitch(Gtk.Box):
         self._sync = False
         self.formatted = Gtk.ToggleButton(label=_("Formatted"), tooltip_text=_("Formatted view (Ctrl+E)"))
         self.source = Gtk.ToggleButton(label=_("Source"), group=self.formatted, tooltip_text=_("Source view (Ctrl+E)"))
-        for mode, btn in (("formatted", self.formatted), ("source", self.source)):
+        self.faithful = Gtk.ToggleButton(label=_("Faithful"), group=self.formatted,
+                                         tooltip_text=_("Faithful view: converted by LibreOffice, if installed"))
+        for mode, btn in (("formatted", self.formatted), ("source", self.source), ("faithful", self.faithful)):
             btn.connect("toggled", self._toggled, mode)
             self.append(btn)
 
@@ -32,13 +34,16 @@ class ModeSwitch(Gtk.Box):
             self._on_mode(mode)
 
     def show_doc(self, doc):
-        visible = doc is not None and doc.has_formatted and doc.has_source
+        visible = doc is not None and doc.has_formatted and (doc.has_source or doc.has_faithful)
         self.set_visible(visible)
         if not visible:
             return
         self._sync = True
         self.formatted.set_label(_(doc.kind.formatted_label))
-        (self.formatted if doc.mode == "formatted" else self.source).set_active(True)
+        self.source.set_visible(doc.has_source)
+        self.faithful.set_visible(doc.has_faithful)
+        {"formatted": self.formatted, "source": self.source, "faithful": self.faithful}.get(
+            doc.mode, self.formatted).set_active(True)
         self._sync = False
 
 
