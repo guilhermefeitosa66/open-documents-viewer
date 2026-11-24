@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sample page</title>
+  <style>body { color: red; }</style>
+  <script>document.write("never shown"); fetch("https://example.org/track");</script>
+</head>
+<body>
+  <h1 id="top">Sample &amp; page</h1>
+  <p>A paragraph with <b>bold</b>, <em>italic</em>, <u>underline</u>,
+     <code>code</code> and a <a href="#details">jump</a>.</p>
+  <img src="https://example.org/remote.png" alt="remote picture">
+  <h2>Details</h2>
+  <ul><li>one<li>two</ul>
+  <pre>  indented
+    code</pre>
+  <table><tr><th>Name<th align="right">Size<tr><td>a.md<td>12</table>
+  <p>Unclosed <b>bold <i>both</p>
+  <h2 id="custom-id">Last <span>part</span></h2>
+  <p>See <a href="sample.md">the Markdown sample</a>.</p>
+</body>
+</html>

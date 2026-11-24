@@ -68,6 +68,7 @@ class MarkdownView(Gtk.ScrolledWindow):
         b.create_tag("bold", weight=700)
         b.create_tag("italic", style=Pango.Style.ITALIC)
         b.create_tag("strike", strikethrough=True)
+        b.create_tag("underline", underline=Pango.Underline.SINGLE)
         b.create_tag("link", underline=Pango.Underline.SINGLE)
         b.create_tag("marker", weight=700)
         b.create_tag("quotebar", weight=900)

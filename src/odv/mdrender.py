@@ -266,5 +266,5 @@ class _Builder:
         return i + 1
 
 
-def build(text: str) -> Doc:
+def build(text: str, path: str = "") -> Doc:
     return _Builder().build(_parser().parse(text))

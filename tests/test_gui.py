@@ -657,3 +657,24 @@ def test_file_actions(tmp_path):
     assert (tmp_path / "copy.py").read_bytes() == before
     assert open(original, "rb").read() == before
     assert r["dialog"]
+
+
+def test_html_file():
+    def scenario(win, r):
+        win.open_path(os.path.join(FIX, "sample.html"))
+        yield 1.2
+        doc = win.active_pane.current_doc()
+        r["mode"] = doc.mode
+        r["text"] = buffer_text(doc)
+        r["outline"] = [e.title for e in doc.outline()]
+        doc.views["formatted"].follow("#details")
+        yield 0.3
+        doc.set_mode("source")
+        yield 0.8
+        r["source"] = buffer_text(doc)
+
+    r = run_app(scenario)
+    assert r["mode"] == "formatted"
+    assert "Sample & page" in r["text"] and "never shown" not in r["text"]
+    assert r["outline"] == ["Sample & page", "Details", "Last part"]
+    assert r["source"].startswith("<!doctype html>")

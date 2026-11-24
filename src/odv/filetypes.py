@@ -4,6 +4,7 @@ import os
 
 MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
+HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
 
 # Language ids understood by GtkSourceView 5, for names its own guess misses.
 LANG_BY_EXT = {
@@ -70,8 +71,13 @@ class Kind:
         return f"Kind({self.kind!r}, {self.lang!r}, {self.delimiter!r}, {self.wrap!r})"
 
     @property
+    def rich(self) -> bool:
+        """Shown formatted by the rich-text view (odv.formats.RICH)."""
+        return self.kind in ("markdown", "html")
+
+    @property
     def has_formatted(self) -> bool:
-        return self.kind in ("markdown", "delimited")
+        return self.rich or self.kind == "delimited"
 
     @property
     def formatted_label(self) -> str:
@@ -95,6 +101,8 @@ def classify(path: str) -> Kind:
         return Kind("markdown", "markdown", wrap=True)
     if ext in DELIMITED_EXT:
         return Kind("delimited", None, DELIMITED_EXT[ext])
+    if ext in HTML_EXT:
+        return Kind("html", "html", wrap=True)
     if is_env_file(name):
         return Kind("text", "sh")
     if lower in LANG_BY_NAME:
@@ -108,7 +116,7 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
-    if ext in MARKDOWN_EXT:
+    if ext in MARKDOWN_EXT or ext in HTML_EXT:
         return "markdown"
     if ext in DELIMITED_EXT:
         return "data"

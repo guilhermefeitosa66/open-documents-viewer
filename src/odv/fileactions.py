@@ -72,7 +72,7 @@ def printable_buffer(doc):
     if not gs:
         return None, False
     view = doc.views.get(doc.mode)
-    if doc.mode == "formatted" and doc.kind.kind == "markdown" and view is not None:
+    if doc.mode == "formatted" and doc.kind.rich and view is not None:
         src = view.buffer
         buf = gs.Buffer(tag_table=src.get_tag_table())
         buf.set_highlight_syntax(False)

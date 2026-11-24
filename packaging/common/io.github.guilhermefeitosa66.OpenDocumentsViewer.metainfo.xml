@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.10.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: HTML files (.html, .htm, .xhtml) open formatted, rendered natively and safely: no web engine, no scripts, nothing loaded from the network; the source is one click away.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.9.0" date="2026-11-24">
       <description>
         <ul>

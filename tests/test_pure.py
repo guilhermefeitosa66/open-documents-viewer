@@ -21,11 +21,13 @@ FIX = os.path.join(os.path.dirname(__file__), "fixtures")
     ("Dockerfile", "text", "docker"),
     ("main.py", "text", None),
     ("app.conf", "text", "ini"),
+    ("page.html", "html", "html"),
+    ("old.HTM", "html", "html"),
 ])
 def test_classify(name, kind, lang):
     k = filetypes.classify(name)
     assert (k.kind, k.lang) == (kind, lang)
-    assert k.has_formatted == (kind in ("markdown", "delimited"))
+    assert k.has_formatted == (kind in ("markdown", "delimited", "html"))
 
 
 def test_tsv_delimiter_and_labels():
@@ -470,3 +472,40 @@ def test_file_properties():
     assert rows["Name"] == "sample.py" and rows["Encoding"] == "utf-8" and rows["Lines"] == "7"
     assert rows["Permissions"].startswith("-r")
     assert "text/x-python" in rows["Type"]
+
+
+# -- HTML -----------------------------------------------------------------------
+
+from odv.formats import htmlrender  # noqa: E402
+
+
+def _flat(doc):
+    return "".join(op[1] if op[0] == "text" else "￼" for op in doc.ops)
+
+
+def test_html_render():
+    doc = htmlrender.build(open(os.path.join(FIX, "sample.html")).read())
+    text = _flat(doc)
+    assert "never shown" not in text and "color: red" not in text and "Sample page" not in text
+    assert text.startswith("Sample & page\n")
+    assert "A paragraph with bold, italic, underline, code and a jump." in text
+    assert "[image: remote picture]" in text
+    assert "• one\n• two\n" in text
+    assert "  indented\n    code" in text
+    table = next(op[1] for op in doc.ops if op[0] == "table")
+    assert table.header == ["Name", "Size"] and table.rows == [["a.md", "12"]] and table.align[1] == "right"
+    assert [(h.level, h.title) for h in doc.outline] == [(1, "Sample & page"), (2, "Details"), (2, "Last part")]
+    assert {"top", "details", "custom-id", "last-part"} <= set(doc.headings)
+    assert [link.href for link in doc.links] == ["#details", "sample.md"]
+    assert len(text) == doc.length
+    for link in doc.links:
+        assert text[link.start:link.end] in ("jump", "the Markdown sample")
+
+
+def test_html_styles_and_broken_markup():
+    doc = htmlrender.build("<p>x <b>b <i>bi</p><p>after</p></div></span>")
+    tags = {op[1]: op[2] for op in doc.ops if op[0] == "text"}
+    assert "bold" in tags["b "] and {"bold", "italic"} <= set(tags["bi"])
+    assert "bold" not in tags.get("after", ()) and "italic" not in tags.get("after", ())
+    assert htmlrender.build("").ops == []
+    assert htmlrender.build("plain &lt;text&gt;").ops[0][1] == "plain <text>"

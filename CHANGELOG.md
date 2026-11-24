@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.10.0 (2026-11-24)
+
+- Added: HTML files (.html, .htm, .xhtml) open formatted, rendered natively and safely: no web engine, no scripts, nothing loaded from the network; the source is one click away.
+
 ## 0.9.0 (2026-11-24)
 
 - Added: file actions in the main menu, the tab menu and the command palette: copy path, show in folder, open with another app, save a copy (Ctrl+Shift+S), print (Ctrl+Alt+P) and properties (Alt+Enter).

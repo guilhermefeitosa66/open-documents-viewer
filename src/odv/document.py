@@ -336,10 +336,10 @@ class DocumentPage(Gtk.Box):
         def work():
             tf = read_text(self.path)
             doc = None
-            if self.kind.kind == "markdown":  # parsed even for the source view: the outline
-                from odv import mdrender
+            if self.kind.rich:  # parsed even for the source view: the outline
+                from odv.formats import build_rich
 
-                doc = mdrender.build(tf.text)
+                doc = build_rich(self.kind.kind, tf.text, self.path)
             return tf, doc
 
         def done(result):
@@ -375,14 +375,14 @@ class DocumentPage(Gtk.Box):
         if mode in self.views:
             return
         tf = self._text
-        if mode == "formatted" and self.kind.kind == "markdown":
+        if mode == "formatted" and self.kind.rich:
             doc = doc or self._md_doc
             if doc is None:
                 # Toggled to formatted after the source was read: parse now.
                 def work():
-                    from odv import mdrender
+                    from odv.formats import build_rich
 
-                    return mdrender.build(tf.text)
+                    return build_rich(self.kind.kind, tf.text, self.path)
 
                 run_in_thread(work, lambda d: self._build_text_view("formatted", d), lambda e: None)
                 return
