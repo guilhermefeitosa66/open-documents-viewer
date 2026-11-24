@@ -20,8 +20,8 @@
   </description>
   <launchable type="desktop-id">io.github.guilhermefeitosa66.OpenDocumentsViewer.desktop</launchable>
   <url type="homepage">https://libre-apps.org</url>
-  <url type="bugtracker">https://github.com/guilhermefeitosa66/open-documents-viewer-desktop/issues</url>
-  <url type="vcs-browser">https://github.com/guilhermefeitosa66/open-documents-viewer-desktop</url>
+  <url type="bugtracker">https://github.com/guilhermefeitosa66/open-documents-viewer/issues</url>
+  <url type="vcs-browser">https://github.com/guilhermefeitosa66/open-documents-viewer</url>
   <content_rating type="oars-1.1"/>
   <provides>
     <binary>open-documents-viewer</binary>

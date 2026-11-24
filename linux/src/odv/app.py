@@ -90,7 +90,7 @@ class Application(Adw.Application):
         kwargs = dict(application_name=APP_NAME, application_icon=APP_ID, version=__version__,
                       developer_name="Guilherme Feitosa", license_type=Gtk.License.APACHE_2_0,
                       website="https://libre-apps.org",
-                      issue_url="https://github.com/guilhermefeitosa66/open-documents-viewer-desktop/issues",
+                      issue_url="https://github.com/guilhermefeitosa66/open-documents-viewer/issues",
                       comments=_("Fast, offline, read-only. No ads, no account, no tracking."))
         if hasattr(Adw, "AboutDialog"):
             Adw.AboutDialog(**kwargs).present(self.get_active_window())

@@ -7,7 +7,7 @@ Screens: Claude Design canvas "Open Documents Viewer — Android" (link in the c
 
 A fast, offline, read-only viewer for text documents on Android. Kotlin + Jetpack Compose,
 no WebView, no network permission, no account, no ads, no telemetry. Sister app of
-`open-documents-viewer-desktop` (GTK4): same name, same idea, same libre-apps palette, each with
+`linux/` (GTK4, in this same repository): same name, same idea, same libre-apps palette, each with
 the UX of its own platform.
 
 ## 2. Desktop features, translated to a phone

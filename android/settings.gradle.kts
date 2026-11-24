@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "open-documents-viewer-android"
+rootProject.name = "open-documents-viewer"
 include(":app")

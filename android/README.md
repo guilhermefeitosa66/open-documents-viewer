@@ -11,7 +11,7 @@ No ads, no account, no network permission, no telemetry.
 - Opens from "Open with" and "Share" in any app, through the Storage Access Framework
 - Themes: libre-apps (follows the system), Pastel, Dracula, Kitty and Neon (Tokyo Night)
 
-Sister app: `open-documents-viewer-desktop` (Linux, GTK4).
+The Linux app lives in [`../linux`](../linux) in this same repository.
 
 ## Build
 
