@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Adwaita-dark, on the libre-apps night colours. -->
+<style-scheme id="odv-dark" name="Open Documents Viewer Dark" version="1.0" parent-scheme="Adwaita-dark" kind="dark">
+  <style name="text" foreground="#F3E7D8" background="#1A1310"/>
+  <style name="line-numbers" foreground="#6E5A4B" background="#1A1310"/>
+  <style name="current-line-number" foreground="#BBA58F" background="#1A1310" bold="true"/>
+  <style name="selection" foreground="#F3E7D8" background="#5A3E2A"/>
+  <style name="selection-unfocused" foreground="#F3E7D8" background="#3E2E24"/>
+</style-scheme>

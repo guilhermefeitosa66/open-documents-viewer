@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Adwaita, on the libre-apps paper colours. -->
+<style-scheme id="odv-light" name="Open Documents Viewer Light" version="1.0" parent-scheme="Adwaita" kind="light">
+  <style name="text" foreground="#2A1A12" background="#FCF7EE"/>
+  <style name="line-numbers" foreground="#A68B75" background="#FCF7EE"/>
+  <style name="current-line-number" foreground="#6B5242" background="#FCF7EE" bold="true"/>
+  <style name="selection" foreground="#2A1A12" background="#F5D7A1"/>
+  <style name="selection-unfocused" foreground="#2A1A12" background="#EFE2CC"/>
+</style-scheme>

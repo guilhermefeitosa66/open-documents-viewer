@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.guilhermefeitosa66.OpenDocumentsViewer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>Open Documents Viewer</name>
+  <summary>Fast, read-only viewer for Markdown, text, code and data files</summary>
+  <developer id="io.github.guilhermefeitosa66">
+    <name>Guilherme Feitosa</name>
+  </developer>
+  <description>
+    <p>Open Documents Viewer opens documents fast and only shows them: nothing is edited, nothing leaves your computer.</p>
+    <ul>
+      <li>Markdown rendered with native widgets, with a one-click switch to the source</li>
+      <li>Syntax highlighting for code and config files: JSON, YAML, TOML, INI, XML, .env and more</li>
+      <li>CSV and TSV as tables, even with millions of rows</li>
+      <li>Open a folder and browse it in a tree, open many files in tabs, split the window in two</li>
+    </ul>
+    <p>No ads, no account, no tracking. Part of libre-apps.</p>
+  </description>
+  <launchable type="desktop-id">io.github.guilhermefeitosa66.OpenDocumentsViewer.desktop</launchable>
+  <url type="homepage">https://libre-apps.org</url>
+  <url type="bugtracker">https://github.com/guilhermefeitosa66/open-documents-viewer-desktop/issues</url>
+  <url type="vcs-browser">https://github.com/guilhermefeitosa66/open-documents-viewer-desktop</url>
+  <content_rating type="oars-1.1"/>
+  <provides>
+    <binary>open-documents-viewer</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2026-11-24">
+      <description>
+        <p>First release: Markdown, text, code, config and CSV files; folder tree, tabs and split view.</p>
+      </description>
+    </release>
+  </releases>
+</component>

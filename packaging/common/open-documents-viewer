@@ -1,0 +1,11 @@
+#!/usr/bin/python3 -s
+# Launcher for the native packages: the app lives in /usr/lib/open-documents-viewer.
+import time
+
+_T0 = time.perf_counter()
+import sys  # noqa: E402
+
+sys.path.insert(0, "/usr/lib/open-documents-viewer")
+from odv.main import main  # noqa: E402
+
+sys.exit(main(t0=_T0))
