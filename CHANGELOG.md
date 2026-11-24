@@ -2,6 +2,18 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.11.0] - 2026-11-24
+
+### Added
+- Images: PNG, JPEG, GIF (animated), WebP (animated), BMP, ICO, and HEIC/HEIF/AVIF where Android decodes them.
+  Fitted to the screen, pinch to zoom, pan, double tap to zoom; dimensions in the subtitle and file info.
+  Large images are decoded at most 4096 px on the longest side.
+- SVG: rendered (AndroidSVG) as the formatted view, crisp at any zoom; the XML source is one tap away.
+- "Open with" and "Share" accept images.
+
+### Dependencies
+- AndroidSVG 1.4 (Apache-2.0), used only when an SVG file is opened.
+
 ## [0.10.0] - 2026-11-24
 
 ### Added

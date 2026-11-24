@@ -23,6 +23,8 @@ class LoadedDocument(
     val location: String?,
     /** Last-modified time from the provider (0 when unknown): with [size], detects changes. */
     val modified: Long = 0,
+    /** Raw bytes for binary formats (images); null for text documents. */
+    val bytes: ByteArray? = null,
 )
 
 sealed interface LoadFailure {
@@ -125,6 +127,22 @@ class DocumentLoader(private val context: Context) {
         } catch (e: Exception) {
             return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
         }
+        val mimeEarly = meta.mimeType ?: mimeHint
+        val earlyType = DocumentTypes.detect(meta.name, mimeEarly)
+        if (earlyType.kind == DocumentKind.IMAGE) {
+            // Images are kept as bytes and decoded by the image view (sampled to the screen).
+            val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
+                return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
+            }
+            if (read.truncated) return failure(LoadFailure.Other("image larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
+            return Result.success(
+                LoadedDocument(
+                    uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else read.length.toLong(),
+                    text = "", charset = "", type = earlyType, truncated = false, location = meta.location,
+                    modified = stamp(uri).second, bytes = read.bytes.copyOf(read.length),
+                )
+            )
+        }
         val (bytes, length, truncated) = try {
             stream.use { readUpTo(it, MAX_BYTES) }
         } catch (e: Exception) {
@@ -176,5 +194,6 @@ class DocumentLoader(private val context: Context) {
     companion object {
         /** Files above this are shown up to here, with a banner. */
         const val MAX_BYTES = 16 * 1024 * 1024
+        const val MAX_IMAGE_BYTES = 64 * 1024 * 1024
     }
 }

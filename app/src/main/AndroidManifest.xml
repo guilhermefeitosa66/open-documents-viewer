@@ -48,7 +48,7 @@
                 <data android:mimeType="application/x-httpd-php" />
                 <data android:mimeType="application/x-subrip" />
                 <data android:mimeType="application/xhtml+xml" />
-                <data android:mimeType="image/svg+xml" />
+                <data android:mimeType="image/*" />
                 <!-- Many file managers send .md, .env, .kt... with this type. Binary files are
                      detected and refused with a clear message. -->
                 <data android:mimeType="application/octet-stream" />
@@ -65,6 +65,7 @@
                 <data android:mimeType="application/x-yaml" />
                 <data android:mimeType="application/x-sh" />
                 <data android:mimeType="application/javascript" />
+                <data android:mimeType="image/*" />
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>

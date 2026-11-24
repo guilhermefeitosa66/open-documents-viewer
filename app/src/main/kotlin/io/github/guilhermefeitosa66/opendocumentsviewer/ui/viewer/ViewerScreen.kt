@@ -143,7 +143,7 @@ fun ViewerScreen(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .pinchToZoom { actions.zoom(prose, it) },
+                .then(if (session.showsPicture) Modifier else Modifier.pinchToZoom { actions.zoom(prose, it) }),
         ) {
             if (reading.fullScreen && !session.searchOpen) {
                 IconButton(
@@ -189,6 +189,10 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
     // Items before the first data item (the .env note), for scrolling to a match.
     var leadingItems = 0
 
+    if (doc.type.kind == DocumentKind.IMAGE) {
+        RasterContent(session, doc)
+        return
+    }
     Box(Modifier.fillMaxSize()) {
         if (doc.truncated) TruncatedBanner(Modifier.align(Alignment.TopCenter))
         ReloadNotice(session.reloadCount, Modifier.align(Alignment.TopCenter))
@@ -217,6 +221,13 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                 is Formatted.Table -> {
                     TableView(f.table, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
+                }
+                is Formatted.Svg -> {
+                    val decoded by androidx.compose.runtime.produceState<ImageLoading.Decoded?>(null, f) {
+                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ImageLoading.svgDrawable(f.svg) }
+                        session.imageSize = value?.size
+                    }
+                    decoded?.let { ZoomableDrawable(it.drawable, Modifier.background(colors.paper2)) } ?: Loading()
                 }
                 is Formatted.Env -> {
                     val anySecret = remember(f) { f.lines.any { it is EnvLine.Variable && Dotenv.looksSecret(it.key, it.value) } }
@@ -287,7 +298,7 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
             }
         }
         if (doc != null) {
-            val showsRows = session.mode == ViewMode.SOURCE || session.formatted is Formatted.Json
+            val showsRows = !session.showsPicture && (session.mode == ViewMode.SOURCE || session.formatted is Formatted.Json)
             if (showsRows) {
                 IconToggleButton(checked = session.wrap, onCheckedChange = { session.wrapOverride = it }) {
                     Icon(
@@ -311,7 +322,7 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                     Icon(painterResource(R.drawable.ic_outline), stringResource(R.string.outline))
                 }
             }
-            IconButton(onClick = session::openSearch) {
+            if (!session.showsPicture) IconButton(onClick = session::openSearch) {
                 Icon(Icons.Filled.Search, stringResource(R.string.search))
             }
             Box {
@@ -319,9 +330,11 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                     Icon(Icons.Filled.MoreVert, stringResource(R.string.more_options))
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.copy_all)) }, onClick = { menu = false; actions.copyAll(doc) })
+                    if (doc.type.kind != DocumentKind.IMAGE) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.copy_all)) }, onClick = { menu = false; actions.copyAll(doc) })
+                    }
                     DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { menu = false; actions.share(doc) })
-                    if (doc.uri != null && doc.text.length <= FileTransfer.SHARE_AS_TEXT_MAX_CHARS) {
+                    if (doc.uri != null && doc.bytes == null && doc.text.length <= FileTransfer.SHARE_AS_TEXT_MAX_CHARS) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.share_as_text)) }, onClick = { menu = false; actions.shareAsText(doc) })
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { menu = false; actions.saveCopy(doc) })
@@ -357,14 +370,20 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
 private fun subtitle(session: DocumentSession): String {
     val doc = session.doc ?: return ""
     val parts = ArrayList<String>()
-    parts += doc.type.language?.name ?: when (doc.type.kind) {
+    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML) doc.type.label else doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
         DocumentKind.HTML -> "HTML"
+        DocumentKind.IMAGE -> doc.type.label
+        DocumentKind.SVG -> "SVG"
         DocumentKind.CSV -> "CSV"
         DocumentKind.TSV -> "TSV"
         else -> stringResource(R.string.kind_text)
     }
-    session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
+    if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
+        session.imageSize?.let { parts += "${it.width} × ${it.height}" }
+    } else {
+        session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
+    }
     doc.location?.let { parts += it }
     return parts.joinToString(" · ")
 }
@@ -550,8 +569,11 @@ private fun InfoDialog(doc: LoadedDocument, session: DocumentSession, onDismiss:
                 }
                 line(R.string.info_type, doc.type.language?.name ?: doc.type.label)
                 if (doc.size >= 0) line(R.string.info_size, formatSize(doc.size))
-                session.source?.let { line(R.string.info_lines, it.index.lineCount.toString()) }
-                line(R.string.info_encoding, doc.charset)
+                session.imageSize?.let { line(R.string.info_dimensions, "${it.width} × ${it.height}") }
+                if (doc.bytes == null) {
+                    session.source?.let { line(R.string.info_lines, it.index.lineCount.toString()) }
+                    line(R.string.info_encoding, doc.charset)
+                }
                 doc.location?.let { line(R.string.info_location, it) }
                 doc.mimeType?.let { line(R.string.info_mime, it) }
             }
@@ -611,5 +633,23 @@ private fun ReloadNotice(count: Int, modifier: Modifier) {
         Surface(color = colors.pill, contentColor = colors.onPill, shape = RoundedCornerShape(50), shadowElevation = 3.dp) {
             Text(stringResource(R.string.file_updated), Modifier.padding(horizontal = 14.dp, vertical = 8.dp), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+@Composable
+private fun RasterContent(session: DocumentSession, doc: LoadedDocument) {
+    val colors = Odv.colors
+    val res = androidx.compose.ui.platform.LocalContext.current.resources
+    var failed by remember(doc) { mutableStateOf(false) }
+    val decoded by androidx.compose.runtime.produceState<ImageLoading.Decoded?>(null, doc) {
+        val bytes = doc.bytes
+        value = if (bytes == null) null else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { ImageLoading.decode(bytes, res) }
+        session.imageSize = value?.size
+        failed = value == null
+    }
+    when {
+        decoded != null -> ZoomableDrawable(decoded!!.drawable, Modifier.background(colors.paper2))
+        failed -> Failure(LoadFailure.Other(stringResource(R.string.image_cannot_decode)))
+        else -> Loading()
     }
 }

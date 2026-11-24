@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 109
-        versionName = "0.10.0"
+        versionCode = 110
+        versionName = "0.11.0"
     }
 
     buildFeatures {
@@ -63,6 +63,8 @@ dependencies {
 
     // HTML parser for the formatted view of .html files (MIT). Only touched when an HTML file opens.
     implementation("org.jsoup:jsoup:1.24.1")
+    // SVG rendering (Apache-2.0). Only touched when an SVG file opens.
+    implementation("com.caverock:androidsvg-aar:1.4")
 
     testImplementation("junit:junit:4.13.2")
     // android.jar's org.json is a stub on the JVM.

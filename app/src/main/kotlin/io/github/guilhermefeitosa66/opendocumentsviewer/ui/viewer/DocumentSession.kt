@@ -68,6 +68,7 @@ sealed interface Formatted {
     data class Json(val content: TextContent) : Formatted
     data class Table(val table: DelimitedTable) : Formatted
     data class Env(val lines: List<EnvLine>) : Formatted
+    data class Svg(val svg: com.caverock.androidsvg.SVG) : Formatted
     /** The formatted view could not be built (invalid JSON...): the source is shown instead. */
     data object Unavailable : Formatted
 }
@@ -138,6 +139,9 @@ class DocumentSession(
     }
 
     val hasToggle: Boolean get() = kind?.hasFormattedView == true && formatted != Formatted.Unavailable
+
+    /** An image is on screen (raster, or SVG rendered): no text search, gestures zoom the picture. */
+    val showsPicture: Boolean get() = kind == DocumentKind.IMAGE || (mode == ViewMode.FORMATTED && formatted is Formatted.Svg)
 
     /** Wrapping: on by default for prose, off for code. */
     val wrap: Boolean get() = wrapOverride ?: (kind?.prose ?: true)
@@ -274,6 +278,11 @@ class DocumentSession(
                 Formatted.Table(Delimited.parse(doc.text, d))
             }
             DocumentKind.DOTENV -> Formatted.Env(Dotenv.parse(doc.text))
+            DocumentKind.SVG -> try {
+                Formatted.Svg(com.caverock.androidsvg.SVG.getFromString(doc.text))
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
             else -> Formatted.Unavailable
         }
     }
@@ -305,6 +314,9 @@ class DocumentSession(
         jumpTarget = f.anchors[anchor.lowercase()] ?: return false
         return true
     }
+
+    /** Pixel size of an image document (or SVG), once decoded. */
+    var imageSize by mutableStateOf<androidx.compose.ui.unit.IntSize?>(null)
 
     /** Incremented after each reload because the file changed (the UI shows a short notice). */
     var reloadCount by mutableIntStateOf(0)

@@ -117,6 +117,16 @@ class DocumentTypesTest {
     }
 
     @Test
+    fun imagesAndSvg() {
+        assertEquals(DocumentKind.IMAGE, DocumentTypes.detect("photo.JPG", null).kind)
+        assertEquals(DocumentKind.IMAGE, DocumentTypes.detect("anim.gif", null).kind)
+        assertEquals(DocumentKind.IMAGE, DocumentTypes.detect("x", "image/heic").kind)
+        assertEquals(DocumentKind.SVG, DocumentTypes.detect("icon.svg", null).kind)
+        assertEquals(DocumentKind.SVG, DocumentTypes.detect("x", "image/svg+xml").kind)
+        assertEquals(DocumentKind.HTML, DocumentTypes.detect("index.html", null).kind)
+    }
+
+    @Test
     fun fallsBackToMime() {
         assertEquals(DocumentKind.MARKDOWN, DocumentTypes.detect("document", "text/markdown").kind)
         assertEquals(DocumentKind.PLAIN, DocumentTypes.detect("document", "text/plain").kind)

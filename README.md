@@ -30,6 +30,7 @@ Requires JDK 17 and the Android SDK (compileSdk 36). minSdk 26.
 | AndroidX (Activity, Lifecycle, Core), Jetpack Compose, Material 3 | Apache-2.0 |
 | [commonmark-java](https://github.com/commonmark/commonmark-java) and its GFM extensions | BSD-2-Clause |
 | [jsoup](https://jsoup.org) (HTML parser) | MIT |
+| [AndroidSVG](https://github.com/BigBadaboom/androidsvg) | Apache-2.0 |
 | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (bundled font) | SIL OFL 1.1 |
 | Dracula and Tokyo Night color palettes (themes) | MIT |
 

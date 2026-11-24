@@ -13,6 +13,10 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     TSV(hasFormattedView = true, prose = false),
     DOTENV(hasFormattedView = true, prose = false),
     HTML(hasFormattedView = true, prose = true),
+    /** Raster images: shown, never decoded as text. */
+    IMAGE(hasFormattedView = false, prose = false),
+    /** SVG: rendered as the formatted view, XML as the source. */
+    SVG(hasFormattedView = true, prose = false),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -23,6 +27,7 @@ data class DocumentType(val kind: DocumentKind, val language: Language?, val lab
 object DocumentTypes {
     private val markdownExt = setOf("md", "markdown", "mdown", "mkd", "mkdn", "mdx")
     private val plainExt = setOf("txt", "text", "log", "out", "nfo", "rst", "adoc", "asciidoc", "org", "tex", "srt", "vtt")
+    val imageExt = setOf("png", "jpg", "jpeg", "jpe", "jfif", "gif", "webp", "bmp", "dib", "ico", "cur", "heic", "heif", "avif", "wbmp")
     private val jsonExt = setOf("json", "jsonc", "json5", "geojson", "webmanifest", "har", "ipynb", "jsonl", "ndjson")
 
     fun detect(fileName: String?, mimeType: String?): DocumentType {
@@ -37,6 +42,8 @@ object DocumentTypes {
         if (ext in jsonExt || lower == ".babelrc" || lower == ".eslintrc" || lower == "composer.lock") {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
+        if (ext == "svg") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
+        if (ext in imageExt) return DocumentType(DocumentKind.IMAGE, null, ext.uppercase().take(4))
         if (ext == "html" || ext == "htm" || ext == "xhtml" || ext == "shtml") return DocumentType(DocumentKind.HTML, Languages.HTML, "HTML")
         if (ext == "csv") return DocumentType(DocumentKind.CSV, null, "CSV")
         if (ext == "tsv" || ext == "tab") return DocumentType(DocumentKind.TSV, null, "TSV")
@@ -45,7 +52,10 @@ object DocumentTypes {
         if (ext.isNotEmpty()) Languages.byExtension(ext)?.let { return DocumentType(DocumentKind.CODE, it, it.badge) }
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
-        return when (mimeType?.lowercase()?.substringBefore(';')?.trim()) {
+        val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
+        if (m == "image/svg+xml") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
+        if (m != null && m.startsWith("image/")) return DocumentType(DocumentKind.IMAGE, null, m.removePrefix("image/").uppercase().take(4))
+        return when (m) {
             "text/markdown", "text/x-markdown" -> DocumentType(DocumentKind.MARKDOWN, Languages.MARKDOWN, "MD")
             "application/json" -> DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
             "text/csv", "text/comma-separated-values" -> DocumentType(DocumentKind.CSV, null, "CSV")
