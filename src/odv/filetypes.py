@@ -7,6 +7,8 @@ DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
 # Word-processing documents read from their package (odv.formats.office).
 DOCUMENT_EXT = {".docx", ".odt", ".doc"}
+# Spreadsheets, shown in the sheet view (odv.views.sheet).
+SHEET_EXT = {".xlsx", ".xlsm"}
 # Structured data with a tree view: extension -> (parser kind, source language).
 TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
             ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),
@@ -173,7 +175,7 @@ class Kind:
 
     @property
     def has_formatted(self) -> bool:
-        return self.rich or self.kind in ("delimited", "image", "tree")
+        return self.rich or self.kind in ("delimited", "image", "tree", "spreadsheet")
 
     @property
     def has_source(self) -> bool:
@@ -183,11 +185,12 @@ class Kind:
     @property
     def binary(self) -> bool:
         """Read from the file itself, not as text (EPUB is a zip)."""
-        return self.kind in ("ebook", "document") and self.lang is None
+        return self.kind in ("ebook", "document", "spreadsheet") and self.lang is None
 
     @property
     def formatted_label(self) -> str:
-        return {"delimited": "Table", "image": "Image", "tree": "Tree"}.get(self.kind, "Formatted")
+        return {"delimited": "Table", "image": "Image", "tree": "Tree", "spreadsheet": "Sheet"}.get(self.kind,
+                                                                                                   "Formatted")
 
 
 def is_env_file(name: str) -> bool:
@@ -217,6 +220,8 @@ def classify(path: str) -> Kind:
         return Kind("message", None, wrap=True)
     if ext in DOCUMENT_EXT:
         return Kind("document", None)
+    if ext in SHEET_EXT:
+        return Kind("spreadsheet", None)
     if ext == ".epub":
         return Kind("ebook", None)
     if ext == ".fb2":
@@ -242,7 +247,7 @@ def sidebar_class(name: str) -> str:
         return "markdown"
     if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2", ".eml", ".vcf", ".ics"):
         return "markdown"
-    if ext in DELIMITED_EXT or ext in IMAGE_EXT:
+    if ext in DELIMITED_EXT or ext in IMAGE_EXT or ext in SHEET_EXT:
         return "data"
     if is_env_file(name) or ext in CONFIG_EXT:
         return "config"

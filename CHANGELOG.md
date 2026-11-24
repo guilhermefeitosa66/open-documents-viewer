@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.24.0 (2026-11-24)
+
+- Added: Excel workbooks (.xlsx, .xlsm), read-only: sheet tabs, a grid with the file's number, date and currency formats, bold/italic/colours/fills, column widths, merged cells, hidden rows, columns and sheets respected; a bar shows the selected cell's value and formula; find in cells; copy rows as TSV. Formulas are shown, never recalculated, and macros never run.
+
 ## 0.23.0 (2026-11-24)
 
 - Added: Word 97–2003 documents (.doc): their text, with tables and page breaks, and a banner saying formatting is not shown; password-protected files say so.

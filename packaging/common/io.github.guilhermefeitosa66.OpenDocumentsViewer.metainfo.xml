@@ -27,6 +27,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.24.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: Excel workbooks (.xlsx, .xlsm), read-only: sheet tabs, a grid with the file's number, date and currency formats, bold/italic/colours/fills, column widths, merged cells, hidden rows, columns and sheets respected; a bar shows the selected cell's value and formula; find in cells; copy rows as TSV. Formulas are shown, never recalculated, and macros never run.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.23.0" date="2026-11-24">
       <description>
         <ul>

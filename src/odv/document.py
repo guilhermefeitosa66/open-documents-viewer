@@ -359,6 +359,8 @@ class DocumentPage(Gtk.Box):
             self._build_table()
         elif mode == "formatted" and self.kind.kind == "image":
             self._build_image()
+        elif mode == "formatted" and self.kind.kind == "spreadsheet":
+            self._build_sheet()
         elif mode == "formatted" and self.kind.kind == "tree" and self._text is not None:
             self._build_tree()
         elif self._text is not None:
@@ -478,6 +480,17 @@ class DocumentPage(Gtk.Box):
         if line:
             self._goto = (line, None, True)
 
+    def _build_sheet(self):
+        from odv.formats.spreadsheets import open_workbook
+        from odv.views.sheet import SheetView
+
+        view = SheetView(self.path, open_workbook)
+        view.connect("first-rows", lambda v: self._first_content())
+        view.connect("loaded", lambda v: self._loaded())
+        view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg,
+                                                            "dialog-warning-symbolic"))
+        self._add_view("formatted", view)
+
     def _build_image(self):
         from odv.views.image import ImageView
 
@@ -562,7 +575,7 @@ class DocumentPage(Gtk.Box):
     def find(self, forward: bool, from_selection_start: bool = False) -> bool:
         needle = self.search_entry.get_text()
         view = self.views.get(self.mode)
-        if view is not None and hasattr(view, "reveal"):  # the data tree
+        if view is not None and (hasattr(view, "reveal") or hasattr(view, "set_current")):  # tree, sheet
             if not needle:
                 self._set_found(True)
                 return False

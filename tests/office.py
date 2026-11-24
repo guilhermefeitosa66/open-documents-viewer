@@ -129,3 +129,48 @@ def make_odt(path):
         z.writestr("styles.xml", styles)
         z.writestr("Pictures/red.png", PNG)
     return path
+
+
+SS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' \
+     'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+
+
+def make_xlsx(path, extra_rows=0):
+    rows = [
+        '<row r="1"><c r="A1" t="s" s="1"><v>0</v></c><c r="B1" t="s" s="1"><v>1</v></c>'
+        '<c r="C1" t="s" s="1"><v>2</v></c><c r="D1" t="inlineStr"><is><t>secret col</t></is></c></row>',
+        '<row r="2"><c r="A2" t="s"><v>3</v></c><c r="B2" s="2"><v>1234.5</v></c><c r="C2" s="3"><v>45000</v></c></row>',
+        '<row r="3" hidden="1"><c r="A3" t="inlineStr"><is><t>hidden row</t></is></c></row>',
+        '<row r="4"><c r="A4" t="inlineStr"><is><t>Total</t></is></c><c r="B4" s="2"><f>SUM(B2:B2)</f><v>1234.5</v></c>'
+        '<c r="C4" t="b"><v>1</v></c></row>',
+        '<row r="5"><c r="A5" t="e"><v>#DIV/0!</v></c><c r="B5" t="inlineStr"><is><t>merged here</t></is></c></row>',
+    ]
+    rows += [f'<row r="{6 + i}"><c r="A{6 + i}"><v>{i}</v></c></row>' for i in range(extra_rows)]
+    sheet1 = (f'<?xml version="1.0"?><worksheet {SS}><dimension ref="A1:D{5 + extra_rows}"/>'
+              '<sheetViews><sheetView><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews>'
+              '<cols><col min="1" max="1" width="20"/><col min="4" max="4" hidden="1"/></cols>'
+              f'<sheetData>{"".join(rows)}</sheetData>'
+              '<mergeCells><mergeCell ref="B5:C5"/></mergeCells></worksheet>')
+    sheet2 = f'<?xml version="1.0"?><worksheet {SS}><sheetData><row r="1"><c r="A1"><v>7</v></c></row></sheetData></worksheet>'
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("xl/workbook.xml", f'<?xml version="1.0"?><workbook {SS}><sheets>'
+                   '<sheet name="Sales" sheetId="1" r:id="rId1"/><sheet name="Hidden" sheetId="2" r:id="rId2" state="hidden"/>'
+                   '</sheets></workbook>')
+        z.writestr("xl/_rels/workbook.xml.rels", '<?xml version="1.0"?><Relationships xmlns="http://schemas.'
+                   'openxmlformats.org/package/2006/relationships">'
+                   '<Relationship Id="rId1" Type="worksheet" Target="worksheets/sheet1.xml"/>'
+                   '<Relationship Id="rId2" Type="worksheet" Target="worksheets/sheet2.xml"/></Relationships>')
+        z.writestr("xl/sharedStrings.xml", f'<?xml version="1.0"?><sst {SS}><si><t>Item</t></si><si><t>Price</t></si>'
+                   '<si><t>Date</t></si><si><r><t>Ri</t></r><r><t>ch</t></r></si></sst>')
+        z.writestr("xl/styles.xml", f'<?xml version="1.0"?><styleSheet {SS}>'
+                   '<numFmts count="1"><numFmt numFmtId="164" formatCode="dd/mm/yyyy"/></numFmts>'
+                   '<fonts count="2"><font/><font><b/><color rgb="FFB5502B"/></font></fonts>'
+                   '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/>'
+                   '</fill><fill><patternFill patternType="solid"><fgColor rgb="FFF5D7A1"/></patternFill></fill></fills>'
+                   '<borders count="1"><border/></borders>'
+                   '<cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0"/><xf numFmtId="0" fontId="1" fillId="2"/>'
+                   '<xf numFmtId="4" fontId="0" fillId="0"/><xf numFmtId="164" fontId="0" fillId="0"/></cellXfs>'
+                   '</styleSheet>')
+        z.writestr("xl/worksheets/sheet1.xml", sheet1)
+        z.writestr("xl/worksheets/sheet2.xml", sheet2)
+    return path

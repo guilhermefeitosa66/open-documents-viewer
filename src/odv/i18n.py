@@ -262,6 +262,9 @@ CATALOG: dict[str, dict[str, str]] = {
     "Plain text from a Word 97–2003 document: formatting is not shown.": {
         "pt": "Texto simples de um documento do Word 97–2003: a formatação não é mostrada.",
         "es": "Texto sin formato de un documento de Word 97–2003: no se muestra el formato."},
+    "Sheet": {"pt": "Planilha", "es": "Hoja"},
+    "This workbook has no visible sheets.": {"pt": "Esta pasta de trabalho não tem planilhas visíveis.",
+                                             "es": "Este libro no tiene hojas visibles."},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

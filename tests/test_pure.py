@@ -845,3 +845,39 @@ def test_doc_binary(tmp_path):
         docfmt.build(None, str(make_doc(tmp_path / "locked.doc", "x\r", encrypted=True)))
     with pytest.raises(docfmt.DocError):
         docfmt.build(None, os.path.join(FIX, "sample.md"))
+
+
+# -- spreadsheets -------------------------------------------------------------------------
+
+from odv.formats import sheet as sheetfmt  # noqa: E402
+
+
+@pytest.mark.parametrize("value,code,shown", [
+    (1234.5, "#,##0.00", "1,234.50"), (0.256, "0.0%", "25.6%"), (45000, "yyyy-mm-dd", "2023-03-15"),
+    (45000.75, "dd/mm/yyyy hh:mm", "15/03/2023 18:00"), (-12.3, '"R$" #,##0.00;[Red]-"R$" #,##0.00', "-R$ 12.30"),
+    (1234.567, "[$R$-416] #,##0.00", "R$ 1,234.57"), (0, '0.00;-0.00;"zero"', "zero"), (123456789, "0.00E+00", "1.23E+08"),
+    (42, "General", "42"), (3.14159, "0.###", "3.142"), (0.5, "h:mm AM/PM", "12:00 PM"), (1.5, "[h]:mm", "36:00"),
+    (7, "000", "007"), (-5, "0;(0)", "(5)"), (0.1 + 0.2, "General", "0.3"), (True, "General", "TRUE"),
+])
+def test_number_formats(value, code, shown):
+    assert sheetfmt.format_value(value, code) == shown
+
+
+def test_xlsx_reader(tmp_path):
+    from office import make_xlsx
+
+    reader = sheetfmt.XlsxReader(str(make_xlsx(tmp_path / "s.xlsx")))
+    wb = reader.workbook
+    assert [(s.name, s.hidden) for s in wb.sheets] == [("Sales", False), ("Hidden", True)]
+    sh = reader.read_sheet(0)
+    assert sh.complete and sh.max_row == 5 and sh.max_col == 4
+    show = lambda r, c: sheetfmt.display(wb, sh.rows[r][c])  # noqa: E731
+    assert [show(0, c) for c in range(3)] == ["Item", "Price", "Date"]
+    assert show(1, 0) == "Rich" and show(1, 1) == "1,234.50" and show(1, 2) == "15/03/2023"
+    assert sh.rows[3][1].formula == "=SUM(B2:B2)" and show(3, 1) == "1,234.50" and show(3, 2) == "TRUE"
+    assert show(4, 0) == "#DIV/0!"
+    assert sh.hidden_rows == {2} and sh.hidden_cols == {3} and sh.freeze == (1, 0)
+    assert sh.merges == [(4, 1, 4, 2)] and sh.col_widths[0] == 20
+    style = wb.styles[sh.rows[0][0].style]
+    assert style.bold and style.color == "B5502B" and style.fill == "F5D7A1"
+    reader.close()

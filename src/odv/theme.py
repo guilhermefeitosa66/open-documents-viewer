@@ -25,6 +25,7 @@ _COMMON = """
 .welcome-hint { color: @odv_small_dim; }
 .image-info { padding: 4px 10px; border-radius: 8px; }
 .data-tree { font-family: monospace; }
+.sheet-grid .cell-current { box-shadow: inset 0 0 0 2px @accent_bg_color; }
 .tree-key { font-weight: bold; }
 .tree-string { color: @odv_data; }
 .tree-number { color: @odv_code; }

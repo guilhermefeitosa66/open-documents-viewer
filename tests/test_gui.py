@@ -1035,3 +1035,50 @@ def test_doc_file(tmp_path):
     r = run_app(scenario)
     assert r["text"].startswith("Old title\nSome text.")
     assert r["banner"] == (True, True)
+
+
+def test_xlsx_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_xlsx
+
+    path = str(make_xlsx(tmp_path / "sales.xlsx"))
+    big = str(make_xlsx(tmp_path / "big.xlsx", extra_rows=30000))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        view = doc.views["formatted"]
+        r["state"] = (doc.mode, doc.has_source)
+        r["tabs"] = [b.get_label() for b in iter_children(view.tabs)]
+        r["columns"] = [c.get_title() for c in view.columnview.get_columns()]
+        r["rows"] = list(view.model.rows)
+        doc.start_search()
+        doc.search_entry.set_text("total")
+        yield 0.4
+        r["current"] = view.current
+        view.set_current(3, 1)
+        r["bar"] = (view.ref_label.get_label(), view.value_label.get_label())
+        r["copy"] = view.copy()
+        win.open_path(big)
+        yield from settle(win)
+        bigview = win.active_pane.current_doc().views["formatted"]
+        r["big_rows"] = len(bigview.model.rows)
+
+    r = run_app(scenario)
+    assert r["state"] == ("formatted", False)
+    assert r["tabs"] == ["Sales"]  # the hidden sheet is not shown
+    assert r["columns"] == ["", "A", "B", "C"]  # column D is hidden
+    assert r["rows"] == [0, 1, 3, 4]  # row 3 is hidden
+    assert r["current"] == (3, 0)
+    assert r["bar"] == ("B4", "=SUM(B2:B2)   →   1,234.50") and r["copy"] == "1,234.50"
+    assert r["big_rows"] == 30004
+
+
+def iter_children(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        yield child
+        child = child.get_next_sibling()
