@@ -23,7 +23,7 @@ Priority: optional
 Architecture: all
 Installed-Size: $SIZE
 Depends: python3 (>= 3.10), python3-gi (>= 3.42), python3-gi-cairo, python3-yaml, python3-olefile, python3-xlrd, gir1.2-gtk-4.0 (>= 4.12), gir1.2-adw-1 (>= 1.4), gir1.2-gtksource-5, python3-markdown-it
-Recommends: adwaita-icon-theme, librsvg2-common, webp-pixbuf-loader, heif-gdk-pixbuf, libavif-gdk-pixbuf
+Recommends: python3-msoffcrypto-tool, adwaita-icon-theme, librsvg2-common, webp-pixbuf-loader, heif-gdk-pixbuf, libavif-gdk-pixbuf
 Maintainer: Guilherme Feitosa <guilhermefeitosa66@gmail.com>
 Homepage: https://libre-apps.org
 Description: fast, read-only viewer for Markdown, text, code and data files

@@ -17,6 +17,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 
 from odv.formats.odt import NS, _size_pt
+from odv.i18n import _
 from odv.formats.slides import EMU_PER_PT, Paragraph, Presentation, Run, Shape, Slide
 
 O, S, T, TB, D, FO, XL = (f"{{{NS[k]}}}" for k in ("office", "style", "text", "table", "draw", "fo", "xlink"))
@@ -179,6 +180,9 @@ class _Odp:
     def build(self, body) -> Presentation:
         out = Presentation()
         pres = body.find(f"{O}body/{O}presentation") if body is not None else None
+        drawing = pres is None
+        if drawing:  # an OpenDocument drawing (.odg): its pages are shown like slides
+            pres = body.find(f"{O}body/{O}drawing") if body is not None else None
         if pres is None:
             raise OdpError("this file has no presentation body")
         first_master = None
@@ -189,7 +193,10 @@ class _Odp:
                 size = self.layouts.get(master.get(S + "page-layout-name"))
                 if size and size[0] and size[1]:
                     out.width, out.height = size
-            out.slides.append(self.page(page, master))
+            slide = self.page(page, master)
+            if drawing and not slide.title:
+                slide.title = page.get(D + "name") or ""
+            out.slides.append(slide)
         return out
 
     def page(self, page, master) -> Slide:
@@ -419,6 +426,10 @@ def build(path: str) -> Presentation:
     except (OSError, zipfile.BadZipFile) as e:
         raise OdpError(str(e)) from e
     with zf:
+        from odv.formats import protect
+
+        if protect.odf_encrypted(zf):
+            raise OdpError(_(protect.ODF_ENCRYPTED))
         names = set(zf.namelist())
 
         def read(name):

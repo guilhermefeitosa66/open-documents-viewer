@@ -11,6 +11,7 @@ import re
 import zipfile
 import xml.etree.ElementTree as ET
 
+from odv.formats import protect
 from odv.formats.slides import Paragraph, Presentation, Run, Shape, Slide
 
 P = "{http://schemas.openxmlformats.org/presentationml/2006/main}"
@@ -409,7 +410,7 @@ class _SlideReader:
 
 def build(path: str) -> Presentation:
     try:
-        zf = zipfile.ZipFile(path)
+        zf = zipfile.ZipFile(protect.source(path))
     except (OSError, zipfile.BadZipFile) as e:
         raise PptxError(str(e)) from e
     with zf:

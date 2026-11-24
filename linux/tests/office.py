@@ -466,3 +466,41 @@ def make_odp(path, flat=False):
                                  f"{styles}</office:document-styles>")
         z.writestr("Pictures/red.png", PNG)
     return path
+
+
+def make_odg(path):
+    """An OpenDocument drawing: make_odp's pages under office:drawing."""
+    make_odp(path)
+    with zipfile.ZipFile(path) as z:
+        parts = {n: z.read(n) for n in z.namelist()}
+    parts["content.xml"] = parts["content.xml"].replace(b"office:presentation>", b"office:drawing>")
+    parts["mimetype"] = b"application/vnd.oasis.opendocument.graphics"
+    with zipfile.ZipFile(path, "w") as z:
+        for name, data in parts.items():
+            z.writestr(name, data)
+    return path
+
+
+def make_iwork(path, preview=True):
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("Index/Document.iwa", b"\0" * 16)
+        if preview:
+            z.writestr("preview.jpg", PNG)
+    return path
+
+
+def encrypt_ooxml(plain, path, password):
+    """``plain`` encrypted with ``password`` (ECMA-376 agile encryption)."""
+    from cfb import encrypt_ooxml as encrypt
+
+    return encrypt(plain, path, password)
+
+
+def make_encrypted_odt(path):
+    make_odt(path)
+    with zipfile.ZipFile(path, "a") as z:
+        z.writestr("META-INF/manifest.xml", '<?xml version="1.0"?><manifest:manifest xmlns:manifest="urn:oasis:'
+                   'names:tc:opendocument:xmlns:manifest:1.0"><manifest:file-entry manifest:full-path="content.xml">'
+                   '<manifest:encryption-data manifest:checksum-type="SHA1"/></manifest:file-entry>'
+                   '</manifest:manifest>')
+    return path

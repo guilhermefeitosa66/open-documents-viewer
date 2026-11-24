@@ -15,6 +15,7 @@ import re
 import zipfile
 import xml.etree.ElementTree as ET
 
+from odv.formats import protect
 from odv.mdrender import Doc, Heading, Link, Table, slugify
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -418,7 +419,7 @@ class _Docx:
 
 def build(text, path: str = "") -> Doc:
     try:
-        zf = zipfile.ZipFile(path)
+        zf = zipfile.ZipFile(protect.source(path))
     except (OSError, zipfile.BadZipFile) as e:
         raise DocxError(str(e)) from e
     with zf:

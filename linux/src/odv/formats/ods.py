@@ -38,6 +38,11 @@ class OdsReader:
                 self.zf = zipfile.ZipFile(path)
             except (OSError, zipfile.BadZipFile) as e:
                 raise SheetError(str(e)) from e
+            from odv.formats import protect
+            from odv.i18n import _
+
+            if protect.odf_encrypted(self.zf):
+                raise SheetError(_(protect.ODF_ENCRYPTED))
             if "content.xml" not in self.zf.namelist():
                 raise SheetError("content.xml is missing")
         self.workbook = Workbook()

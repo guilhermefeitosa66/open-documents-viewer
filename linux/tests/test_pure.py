@@ -1029,3 +1029,85 @@ def test_ppt_reader(tmp_path):
     junk.write_bytes(b"not a compound file")
     with pytest.raises(ppt.PptError):
         ppt.build(str(junk))
+
+
+# -- other office files (C10) ---------------------------------------------------------------
+@pytest.mark.parametrize("name,kind", [
+    ("a.dotx", "document"), ("a.docm", "document"), ("a.ott", "document"), ("a.fodt", "document"),
+    ("a.dot", "document"), ("a.pages", "document"), ("a.xltx", "spreadsheet"), ("a.xltm", "spreadsheet"),
+    ("a.ots", "spreadsheet"), ("a.fods", "spreadsheet"), ("a.xlt", "spreadsheet"), ("a.numbers", "document"),
+    ("a.pptm", "presentation"), ("a.potm", "presentation"), ("a.odg", "presentation"),
+    ("a.fodg", "presentation"), ("a.key", "document"),
+])
+def test_classify_office_family(name, kind):
+    from odv.filetypes import classify
+
+    assert classify(name).kind == kind
+
+
+def test_macro_note():
+    from odv.formats.protect import macro_note
+
+    assert macro_note("x.docm") and macro_note("x.XLSM") and macro_note("x.pptm")
+    assert macro_note("x.docx") is None and macro_note("x.odt") is None
+
+
+def test_odg_reader(tmp_path):
+    from office import make_odg
+    from odv.formats.presentations import open_presentation
+
+    pres = open_presentation(str(make_odg(tmp_path / "plan.odg")))
+    assert [s.title for s in pres.slides] == ["Quarterly Review", "Results", "Backup"]
+
+
+def test_template_and_macro_files_open(tmp_path):
+    import shutil
+
+    from office import make_docx, make_pptx, make_xlsx
+    from odv.formats import office as officefmt
+    from odv.formats.presentations import open_presentation
+    from odv.formats.spreadsheets import open_workbook
+
+    docm = shutil.copy(make_docx(tmp_path / "a.docx"), tmp_path / "a.dotm")
+    assert "Report Title" in "".join(op[1] for op in officefmt.build(None, str(docm)).ops if op[0] == "text")
+    xltx = shutil.copy(make_xlsx(tmp_path / "a.xlsx"), tmp_path / "a.xltx")
+    reader = open_workbook(str(xltx))
+    assert reader.workbook.sheets[0].name == "Sales"
+    reader.close()
+    potm = shutil.copy(make_pptx(tmp_path / "a.pptx"), tmp_path / "a.potm")
+    assert open_presentation(str(potm)).slides[0].title == "Quarterly Review"
+
+
+def test_iwork_preview(tmp_path):
+    from office import make_iwork
+    from odv.formats import office as officefmt
+
+    doc = officefmt.build(None, str(make_iwork(tmp_path / "a.pages")))
+    assert doc.note and any(op[0] == "image" for op in doc.ops)
+    doc = officefmt.build(None, str(make_iwork(tmp_path / "b.key", preview=False)))
+    assert not any(op[0] == "image" for op in doc.ops)
+
+
+def test_encrypted_odf_explained(tmp_path):
+    from office import make_encrypted_odt
+    from odv.formats import odt
+
+    with pytest.raises(odt.OdtError, match="password-protected"):
+        odt.build(None, str(make_encrypted_odt(tmp_path / "secret.odt")))
+
+
+def test_encrypted_ooxml_unlock(tmp_path):
+    pytest.importorskip("msoffcrypto")
+    from office import encrypt_ooxml, make_xlsx
+    from odv.formats import protect
+    from odv.formats.spreadsheets import open_workbook
+
+    path = str(encrypt_ooxml(make_xlsx(tmp_path / "plain.xlsx"), tmp_path / "secret.xlsx", "s3cret"))
+    assert protect.is_encrypted_ooxml(path) and protect.needs_password(path)
+    with pytest.raises(protect.WrongPassword):
+        protect.unlock(path, "nope")
+    protect.unlock(path, "s3cret")
+    assert not protect.needs_password(path)
+    reader = open_workbook(path)
+    assert reader.workbook.sheets[0].name == "Sales"
+    reader.close()

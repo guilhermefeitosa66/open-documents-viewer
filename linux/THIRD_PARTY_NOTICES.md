@@ -15,6 +15,7 @@ changes the license of the app.
 | [PyYAML](https://github.com/yaml/pyyaml) | MIT | YAML tree view |
 | [olefile](https://github.com/decalage2/olefile) | BSD-2-Clause | Reading Word/Excel/PowerPoint 97–2003 containers |
 | [xlrd](https://github.com/python-excel/xlrd) | BSD-3-Clause | Excel 97–2003 workbooks |
+| [msoffcrypto-tool](https://github.com/nolze/msoffcrypto-tool) and its dependency [cryptography](https://github.com/pyca/cryptography) (optional) | MIT; Apache-2.0 OR BSD-3-Clause | Opening password-protected Word/Excel/PowerPoint files, in memory |
 | GdkPixbuf loaders: [webp-pixbuf-loader](https://github.com/aruiz/webp-pixbuf-loader), libheif's, libavif's (optional) | LGPL-2.0-or-later, LGPL-3.0-or-later, BSD-2-Clause | WebP, HEIF and AVIF images |
 
 Tests only (not shipped): [xlwt](https://github.com/python-excel/xlwt) (BSD-3-Clause) writes sample .xls files.

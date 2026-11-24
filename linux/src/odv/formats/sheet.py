@@ -11,6 +11,8 @@ import zipfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 
+from odv.formats import protect
+
 MAX_COLS = 256
 
 
@@ -330,7 +332,7 @@ class XlsxReader:
 
     def __init__(self, path: str):
         try:
-            self.zf = zipfile.ZipFile(path)
+            self.zf = zipfile.ZipFile(protect.source(path))
         except (OSError, zipfile.BadZipFile) as e:
             raise SheetError(str(e)) from e
         self.names = set(self.zf.namelist())

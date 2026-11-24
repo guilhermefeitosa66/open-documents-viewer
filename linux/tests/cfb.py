@@ -152,3 +152,53 @@ def make_ppt(path, encrypted=False):
     token = 0xF3D1C4DF if encrypted else 0xE391C05F
     user = _rec(0x0FF6, struct.pack("<III", 20, token, edit_offset) + b"\0" * 8)
     return write(path, {"PowerPoint Document": bytes(stream), "Current User": user})
+
+
+def encrypt_ooxml(plain, path, password: str, spin=1000):
+    """An encrypted OOXML file (ECMA-376 agile, AES-256/SHA-512) holding the
+    package ``plain``. Written with ``cryptography`` (a dependency of
+    msoffcrypto-tool), as the distro's msoffcrypto-tool cannot encrypt."""
+    import base64
+    import hashlib
+    import os
+
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+    def aes(key, iv, data):
+        enc = Cipher(algorithms.AES(key), modes.CBC(iv)).encryptor()
+        return enc.update(data) + enc.finalize()
+
+    package = open(plain, "rb").read()
+    secret, key_salt, pw_salt, verifier = (os.urandom(n) for n in (32, 16, 16, 16))
+    out = struct.pack("<Q", len(package))
+    for i in range(0, len(package), 4096):
+        chunk = package[i:i + 4096]
+        chunk += b"\0" * (-len(chunk) % 16)
+        iv = hashlib.sha512(key_salt + struct.pack("<I", i // 4096)).digest()[:16]
+        out += aes(secret, iv, chunk)
+    body = max(4096, len(out)) - 8
+    out = out.ljust(8 + body + (-body % 16), b"\0")  # whole AES blocks, no mini stream
+    h = hashlib.sha512(pw_salt + password.encode("utf-16-le")).digest()
+    for i in range(spin):
+        h = hashlib.sha512(struct.pack("<I", i) + h).digest()
+
+    def key(block):
+        return hashlib.sha512(h + bytes.fromhex(block)).digest()[:32]
+
+    b64 = lambda b: base64.b64encode(b).decode()  # noqa: E731
+    attrs = ('saltSize="16" blockSize="16" keyBits="256" hashSize="64" cipherAlgorithm="AES" '
+             'cipherChaining="ChainingModeCBC" hashAlgorithm="SHA512"')
+    xml = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'
+           '<encryption xmlns="http://schemas.microsoft.com/office/2006/encryption" '
+           'xmlns:p="http://schemas.microsoft.com/office/2006/keyEncryptor/password">'
+           f'<keyData {attrs} saltValue="{b64(key_salt)}"/>'
+           f'<dataIntegrity encryptedHmacKey="{b64(os.urandom(64))}" encryptedHmacValue="{b64(os.urandom(64))}"/>'
+           '<keyEncryptors><keyEncryptor uri="http://schemas.microsoft.com/office/2006/keyEncryptor/password">'
+           f'<p:encryptedKey spinCount="{spin}" {attrs} saltValue="{b64(pw_salt)}" '
+           f'encryptedVerifierHashInput="{b64(aes(key("fea7d2763b4b9e79"), pw_salt, verifier))}" '
+           f'encryptedVerifierHashValue="{b64(aes(key("d7aa0f6d3061344e"), pw_salt, hashlib.sha512(verifier).digest()))}" '
+           f'encryptedKeyValue="{b64(aes(key("146e0be7abacd0d6"), pw_salt, secret))}"/>'
+           '</keyEncryptor></keyEncryptors></encryption>').encode()
+    info = struct.pack("<HHI", 4, 4, 0x40) + xml
+    info = info.ljust(4096, b" ")  # whitespace after the XML: no mini stream needed
+    return write(path, {"EncryptionInfo": info, "EncryptedPackage": out})

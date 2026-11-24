@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.31.0 (2026-11-24)
+
+- Added: more office files: OpenDocument drawings (.odg, .otg, .fodg), templates (.dotx, .dotm, .ott, .xltx, .xltm, .ots, .potx, .potm, .otp, .dot, .xlt), flat OpenDocument (.fodt, .fods, .fodp), macro-enabled files (.docm, .xlsm, .pptm…) with a note that macros never run, and Apple iWork files (.pages, .numbers, .key) through the preview picture saved inside them. Password-protected Word, Excel and PowerPoint files ask for the password and are decrypted in memory only (msoffcrypto-tool, optional); encrypted OpenDocument files say they cannot be opened yet.
+
 ## 0.30.0 (2026-11-24)
 
 - Changed: New app icon: four tiles on near-black, for slides, spreadsheets, documents and code.

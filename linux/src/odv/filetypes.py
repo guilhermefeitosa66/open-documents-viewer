@@ -6,11 +6,13 @@ MARKDOWN_EXT = {".md", ".markdown", ".mdown", ".mkd", ".mkdn", ".mdtext"}
 DELIMITED_EXT = {".csv": None, ".tsv": "\t", ".tab": "\t"}
 HTML_EXT = {".html", ".htm", ".xhtml", ".shtml"}
 # Word-processing documents read from their package (odv.formats.office).
-DOCUMENT_EXT = {".docx", ".odt", ".doc"}
+DOCUMENT_EXT = {".docx", ".docm", ".dotx", ".dotm", ".odt", ".ott", ".fodt", ".doc", ".dot",
+                ".pages", ".numbers", ".key"}
 # Spreadsheets, shown in the sheet view (odv.views.sheet).
-SHEET_EXT = {".xlsx", ".xlsm", ".ods", ".xls"}
+SHEET_EXT = {".xlsx", ".xlsm", ".xltx", ".xltm", ".ods", ".ots", ".fods", ".xls", ".xlt"}
 # Presentations, shown in the slides view (odv.views.slides).
-SLIDES_EXT = {".pptx", ".ppsx", ".potx", ".odp", ".otp", ".fodp", ".ppt", ".pps", ".pot"}
+SLIDES_EXT = {".pptx", ".pptm", ".ppsx", ".ppsm", ".potx", ".potm", ".odp", ".otp", ".fodp", ".odg", ".otg",
+              ".fodg", ".ppt", ".pps", ".pot"}
 # Structured data with a tree view: extension -> (parser kind, source language).
 TREE_EXT = {".json": ("json", "json"), ".geojson": ("json", "json"), ".webmanifest": ("json", "json"),
             ".ndjson": ("ndjson", "json"), ".jsonl": ("ndjson", "json"), ".yaml": ("yaml", "yaml"),

@@ -279,6 +279,33 @@ CATALOG: dict[str, dict[str, str]] = {
     "Text from a PowerPoint 97–2003 presentation: pictures and formatting are not shown.": {
         "pt": "Texto de uma apresentação do PowerPoint 97–2003: imagens e formatação não aparecem.",
         "es": "Texto de una presentación de PowerPoint 97–2003: no se muestran imágenes ni formato."},
+    # protected and macro-enabled files
+    "This file contains macros. They are never run.": {"pt": "Este arquivo contém macros. Elas nunca são executadas.",
+                                                       "es": "Este archivo contiene macros. Nunca se ejecutan."},
+    "Opening password-protected files needs msoffcrypto-tool (the python3-msoffcrypto-tool package).": {
+        "pt": "Abrir arquivos protegidos por senha precisa do msoffcrypto-tool (pacote python3-msoffcrypto-tool).",
+        "es": "Abrir archivos protegidos con contraseña requiere msoffcrypto-tool (paquete python3-msoffcrypto-tool)."},
+    "Wrong password.": {"pt": "Senha incorreta.", "es": "Contraseña incorrecta."},
+    "This file is too big to unlock in memory.": {"pt": "Este arquivo é grande demais para desbloquear na memória.",
+                                                  "es": "Este archivo es demasiado grande para desbloquearlo en memoria."},
+    "This file is password-protected. Encrypted OpenDocument files cannot be opened yet.": {
+        "pt": "Este arquivo está protegido por senha. Arquivos OpenDocument criptografados ainda não podem ser abertos.",
+        "es": "Este archivo está protegido con contraseña. Los archivos OpenDocument cifrados aún no se pueden abrir."},
+    "Password": {"pt": "Senha", "es": "Contraseña"},
+    "This file is password-protected": {"pt": "Este arquivo está protegido por senha",
+                                        "es": "Este archivo está protegido con contraseña"},
+    "The password is only used to read the file here, in memory.": {
+        "pt": "A senha só é usada para ler o arquivo aqui, na memória.",
+        "es": "La contraseña solo se usa para leer el archivo aquí, en memoria."},
+    "This iWork file has no preview picture inside it.": {
+        "pt": "Este arquivo do iWork não tem imagem de prévia dentro dele.",
+        "es": "Este archivo de iWork no tiene una imagen de vista previa dentro."},
+    "This iWork file only has a PDF preview inside it.": {
+        "pt": "Este arquivo do iWork só tem uma prévia em PDF dentro dele.",
+        "es": "Este archivo de iWork solo tiene una vista previa en PDF dentro."},
+    "Apple iWork content cannot be read: this is the preview picture saved inside the file.": {
+        "pt": "O conteúdo do Apple iWork não pode ser lido: esta é a imagem de prévia salva dentro do arquivo.",
+        "es": "El contenido de Apple iWork no se puede leer: esta es la imagen de vista previa guardada en el archivo."},
     "This presentation is password-protected.": {"pt": "Esta apresentação está protegida por senha.",
                                                  "es": "Esta presentación está protegida con contraseña."},
     # about

@@ -9,7 +9,7 @@ def open_presentation(path: str):
         from odv.formats import pptx
 
         return pptx.build(path)
-    if ext in (".odp", ".otp", ".fodp"):
+    if ext in (".odp", ".otp", ".fodp", ".odg", ".otg", ".fodg"):
         from odv.formats import odp
 
         return odp.build(path)

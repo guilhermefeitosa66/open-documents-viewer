@@ -17,4 +17,8 @@ def build(text, path: str = ""):
         from odv.formats import odt
 
         return odt.build(text, path)
+    if ext in (".pages", ".numbers", ".key"):
+        from odv.formats import iwork
+
+        return iwork.build(text, path)
     raise ValueError(f"unsupported document: {ext}")

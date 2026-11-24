@@ -1166,3 +1166,43 @@ def test_presentation_file(tmp_path, ext):
     assert r["found"] == 0
     assert r["presenting"] and r["closed"]
     assert r["banner"] == (ext == "ppt")
+
+
+def test_password_and_macro_files(tmp_path):
+    import shutil
+    import sys
+
+    pytest.importorskip("msoffcrypto")
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import encrypt_ooxml, make_docx, make_xlsx
+
+    secret = str(encrypt_ooxml(make_xlsx(tmp_path / "plain.xlsx"), tmp_path / "secret.xlsx", "s3cret"))
+    macro = str(shutil.copy(make_docx(tmp_path / "a.docx"), tmp_path / "macro.docm"))
+
+    def scenario(win, r):
+        win.open_path(macro)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["macro"] = (doc.banner.get_revealed(), doc.banner.get_title())
+        win.open_path(secret)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["asked"] = "formatted" not in doc.views
+        doc.password_entry.set_text("wrong")
+        doc.password_entry.emit("entry-activated")
+        yield 1.5
+        r["still_asking"] = "formatted" not in doc.views
+        doc.password_entry.set_text("s3cret")
+        doc.password_entry.emit("entry-activated")
+        for _i in range(40):
+            yield 0.2
+            view = doc.views.get("formatted")
+            if view is not None and getattr(view, "model", None) is not None and view.model.rows:
+                break
+        view = doc.views.get("formatted")
+        r["tabs"] = [b.get_label() for b in iter_children(view.tabs)] if view is not None else None
+
+    r = run_app(scenario, timeout=30)
+    assert r["macro"][0] and "macros" in r["macro"][1]
+    assert r["asked"] and r["still_asking"]
+    assert r["tabs"] == ["Sales"]

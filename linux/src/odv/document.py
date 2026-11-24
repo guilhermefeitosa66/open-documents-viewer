@@ -70,6 +70,10 @@ class DocumentPage(Gtk.Box):
         self._change_timer = 0
         self.deleted = False
         self._note = None  # a message that stays in the banner (e.g. data that could not be read)
+        if self.kind.kind in ("document", "spreadsheet", "presentation"):
+            from odv.formats.protect import macro_note
+
+            self._note = macro_note(self.path)
 
         self.banner = Adw.Banner(revealed=False)
         self.banner.connect("button-clicked", self._on_banner_button)
@@ -355,6 +359,12 @@ class DocumentPage(Gtk.Box):
             self._update_banner()
             return
         self.stack.set_visible_child_name("loading")
+        if self.kind.kind in ("document", "spreadsheet", "presentation"):
+            from odv.formats import protect
+
+            if protect.needs_password(self.path):
+                self._ask_password(mode)
+                return
         if mode == "formatted" and self.kind.kind == "delimited":
             self._build_table()
         elif mode == "formatted" and self.kind.kind == "image":
@@ -412,6 +422,54 @@ class DocumentPage(Gtk.Box):
                              "dialog-warning-symbolic")
 
         run_in_thread(work, done, failed)
+
+    def _ask_password(self, mode: str) -> None:
+        """A password-protected OOXML file: ask, unlock in a thread, then show."""
+        entry = Adw.PasswordEntryRow(title=_("Password"))
+        group = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
+        group.append(entry)
+        error = Gtk.Label(visible=False, wrap=True, css_classes=["error"])
+        button = Gtk.Button(label=_("Open"), halign=Gtk.Align.CENTER, css_classes=["pill", "suggested-action"])
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, width_request=320,
+                      halign=Gtk.Align.CENTER)
+        for widget in (group, error, button):
+            box.append(widget)
+        page = Adw.StatusPage(title=_("This file is password-protected"),
+                              description=_("The password is only used to read the file here, in memory."),
+                              icon_name="dialog-password-symbolic", child=box)
+        self.password_entry = entry
+
+        def submit(*_args):
+            password = entry.get_text()
+            if not password:
+                return
+            button.set_sensitive(False)
+            entry.set_sensitive(False)
+
+            def done(_result):
+                if self.closed:
+                    return
+                self.stack.remove(page)
+                self._show(mode)
+
+            def failed(err):
+                button.set_sensitive(True)
+                entry.set_sensitive(True)
+                error.set_label(str(err))
+                error.set_visible(True)
+                entry.grab_focus()
+
+            from odv.formats import protect
+
+            run_in_thread(lambda: protect.unlock(self.path, password), done, failed)
+
+        entry.connect("entry-activated", submit)
+        button.connect("clicked", submit)
+        self.stack.add_child(page)
+        self.stack.set_visible_child(page)
+        self._first_content()
+        self._loaded()
+        GLib.idle_add(lambda: (entry.grab_focus(), False)[1])
 
     def _status(self, title, description, icon):
         page = Adw.StatusPage(title=title, description=GLib.markup_escape_text(description), icon_name=icon)
@@ -492,6 +550,7 @@ class DocumentPage(Gtk.Box):
             self._set_outline(v.outline())
             if v.pres.note:
                 self._note = v.pres.note
+            if self._note:
                 self._update_banner()
             self._first_content()
             self._loaded()

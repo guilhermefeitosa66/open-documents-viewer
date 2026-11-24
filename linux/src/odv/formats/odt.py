@@ -381,6 +381,11 @@ def build(text, path: str = "") -> Doc:
     except (OSError, zipfile.BadZipFile) as e:
         raise OdtError(str(e)) from e
     with zf:
+        from odv.formats import protect
+        from odv.i18n import _
+
+        if protect.odf_encrypted(zf):
+            raise OdtError(_(protect.ODF_ENCRYPTED))
         names = set(zf.namelist())
 
         def read(name):
