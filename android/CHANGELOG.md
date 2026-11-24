@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.16.0] - 2026-11-24
+
+### Changed
+- New app icon: four tiles on near-black, for slides, spreadsheets, documents and code. The themed
+  (monochrome) icon shows the four glyphs.
+
 ## [0.15.0] - 2026-11-24
 
 ### Added
