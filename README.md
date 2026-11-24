@@ -31,6 +31,7 @@ Requires JDK 17 and the Android SDK (compileSdk 36). minSdk 26.
 | [commonmark-java](https://github.com/commonmark/commonmark-java) and its GFM extensions | BSD-2-Clause |
 | [jsoup](https://jsoup.org) (HTML parser) | MIT |
 | [AndroidSVG](https://github.com/BigBadaboom/androidsvg) | Apache-2.0 |
+| [snakeyaml-engine](https://bitbucket.org/snakeyaml/snakeyaml-engine) | Apache-2.0 |
 | [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (bundled font) | SIL OFL 1.1 |
 | Dracula and Tokyo Night color palettes (themes) | MIT |
 

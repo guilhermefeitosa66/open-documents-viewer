@@ -22,7 +22,7 @@
     <string name="source_code">Source code</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_body">A fast, offline, read-only viewer for text documents. No ads, no account, no network. Part of libre-apps.</string>
-    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Apache License 2.0. Uses commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose and AndroidX (Apache 2.0).</string>
     <string name="back">Back</string>
     <string name="switch_document">Switch document</string>
     <string name="all_recents">All recent files</string>
@@ -134,4 +134,7 @@
     <string name="image_cannot_decode">This image format is not supported on this Android version.</string>
     <string name="info_dimensions">Size (px)</string>
     <string name="partial_render">Some content (images, embedded objects) could not be shown.</string>
+    <string name="path_copied">Path copied</string>
+    <string name="show_as_text">Show as indented text</string>
+    <string name="show_as_tree">Show as tree</string>
 </resources>

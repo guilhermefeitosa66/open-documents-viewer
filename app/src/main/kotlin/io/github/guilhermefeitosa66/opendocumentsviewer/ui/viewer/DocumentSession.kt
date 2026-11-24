@@ -70,6 +70,7 @@ sealed interface Formatted {
     data class Table(val table: DelimitedTable) : Formatted
     data class Env(val lines: List<EnvLine>) : Formatted
     data class Svg(val svg: com.caverock.androidsvg.SVG) : Formatted
+    data class Tree(val doc: io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeDocument) : Formatted
     /** The formatted view could not be built (invalid JSON...): the source is shown instead. */
     data object Unavailable : Formatted
 }
@@ -190,7 +191,7 @@ class DocumentSession(
         val wantFormatted = doc.type.kind.hasFormattedView && preferFormatted
         // Build what is shown first; the other view is built right after, off the main thread.
         if (wantFormatted) {
-            formatted = withContext(Dispatchers.Default) { buildFormatted(doc) }
+            assignFormatted(withContext(Dispatchers.Default) { buildFormatted(doc) })
         } else {
             source = withContext(Dispatchers.Default) { buildSource(doc) }
         }
@@ -203,8 +204,8 @@ class DocumentSession(
         scope.launch {
             if (source == null) source = withContext(Dispatchers.Default) { buildSource(doc) }.also(::finishStates)
             if (formatted == null && doc.type.kind.hasFormattedView) {
-                formatted = withContext(Dispatchers.Default) { buildFormatted(doc) }
-                    .also { f -> (f as? Formatted.Json)?.content?.let(::finishStates) }
+                assignFormatted(withContext(Dispatchers.Default) { buildFormatted(doc) }
+                    .also { f -> (f as? Formatted.Json)?.content?.let(::finishStates) })
                 applyPendingAnchor()
             }
             if (formatted == Formatted.Unavailable) restorePosition()
@@ -282,7 +283,24 @@ class DocumentSession(
                 blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
                 Formatted.Markdown(blocks, anchors, partial)
             }
+            DocumentKind.YAML -> try {
+                Formatted.Tree(io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.fromYaml(doc.text))
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
+            DocumentKind.XML -> try {
+                Formatted.Tree(io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.fromXml(doc.text))
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
             DocumentKind.JSON -> {
+                val lowerName = doc.name.lowercase()
+                val lines = lowerName.endsWith(".jsonl") || lowerName.endsWith(".ndjson")
+                val tree = if (doc.text.length <= TREE_MAX_CHARS) try {
+                    if (lines) io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.fromJsonLines(doc.text)
+                    else io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.fromJson(doc.text)
+                } catch (_: Exception) { null } else null
+                if (tree != null) return Formatted.Tree(tree)
                 val lower = doc.name.lowercase()
                 val pretty = if (lower.endsWith(".jsonl") || lower.endsWith(".ndjson")) JsonFormatter.formatLines(doc.text) else JsonFormatter.format(doc.text)
                 if (pretty == null) Formatted.Unavailable
@@ -330,6 +348,44 @@ class DocumentSession(
         return true
     }
 
+    // ---- Tree view (JSON, YAML, XML) ------------------------------------------------------
+
+    var treeExpanded by mutableStateOf<Set<Int>>(emptySet())
+
+    /** Visible rows of the tree for the current expansion. */
+    val treeLines: List<io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeLine> by derivedStateOf {
+        val t = formatted as? Formatted.Tree ?: return@derivedStateOf emptyList()
+        io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.visible(t.doc, treeExpanded)
+    }
+
+    /** Sets the formatted content, opening a new tree at its default expansion. */
+    private fun assignFormatted(f: Formatted?) {
+        if (f is Formatted.Tree && (formatted as? Formatted.Tree)?.doc !== f.doc) {
+            treeExpanded = io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeModel.initialExpanded(f.doc)
+        }
+        formatted = f
+    }
+
+    fun toggleNode(id: Int) {
+        treeExpanded = if (id in treeExpanded) treeExpanded - id else treeExpanded + id
+    }
+
+    /** JSON shown as indented text instead of a tree (menu). */
+    var jsonAsText by mutableStateOf(false)
+    var prettyJson by mutableStateOf<TextContent?>(null)
+        private set
+
+    fun showJsonAsText(on: Boolean) {
+        jsonAsText = on
+        val doc = doc ?: return
+        if (on && prettyJson == null) scope.launch {
+            prettyJson = withContext(Dispatchers.Default) {
+                val pretty = JsonFormatter.format(doc.text) ?: doc.text
+                TextContent.build(pretty, Languages.JSON) { true }
+            }.also(::finishStates)
+        }
+    }
+
     /** Pixel size of an image document (or SVG), once decoded. */
     var imageSize by mutableStateOf<androidx.compose.ui.unit.IntSize?>(null)
 
@@ -353,7 +409,7 @@ class DocumentSession(
                 val newFormatted = if (doc.type.kind.hasFormattedView) withContext(Dispatchers.Default) { buildFormatted(doc) } else null
                 load = LoadState.Ready(doc)
                 source = newSource
-                formatted = newFormatted
+                assignFormatted(newFormatted)
                 finishStates(newSource)
                 (newFormatted as? Formatted.Json)?.content?.let(::finishStates)
                 delay(16)
@@ -408,6 +464,7 @@ class DocumentSession(
         val opts = options
         val viewMode = mode
         val firstVisible = activeList.firstVisibleItemIndex
+        val treeLinesSnapshot = treeLines
         searchJob = scope.launch {
             if (debounce) delay(150)
             searching = true
@@ -421,6 +478,7 @@ class DocumentSession(
                         is Formatted.Markdown -> TextSearch.search(f.blocks.map { it.plainText }, q, opts, active)
                         is Formatted.Table -> TextSearch.search(f.table.rows.map { it.joinToString("  ") }, q, opts, active)
                         is Formatted.Env -> TextSearch.search(f.lines.map(::envText), q, opts, active)
+                        is Formatted.Tree -> TextSearch.search(treeLinesSnapshot.map { (it.node.key ?: "") + " " + (it.node.value ?: "") }, q, opts, active)
                         else -> null
                     }
                 }
@@ -452,6 +510,9 @@ class DocumentSession(
     }
 
     companion object {
+        /** Above this, JSON is shown as indented text only (a tree would cost too much memory). */
+        const val TREE_MAX_CHARS = 8_000_000
+
         fun envText(line: EnvLine): String = when (line) {
             is EnvLine.Comment -> line.text
             is EnvLine.Variable -> line.key + " " + line.value

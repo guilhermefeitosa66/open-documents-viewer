@@ -19,6 +19,9 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     SVG(hasFormattedView = true, prose = false),
     RTF(hasFormattedView = true, prose = true),
     NOTEBOOK(hasFormattedView = true, prose = true),
+    /** YAML and XML: tree as the formatted view. */
+    YAML(hasFormattedView = true, prose = false),
+    XML(hasFormattedView = true, prose = false),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -54,6 +57,8 @@ object DocumentTypes {
 
         Languages.byFileName(lower)?.let { return DocumentType(DocumentKind.CODE, it, it.badge) }
         if (ext.isNotEmpty()) Languages.byExtension(ext)?.let {
+            if (it == Languages.YAML) return DocumentType(DocumentKind.YAML, it, it.badge)
+            if (it == Languages.XML) return DocumentType(DocumentKind.XML, it, it.badge)
             // Prose formats (logs, subtitles, reST...) stay wrapped text, with their highlighting.
             return DocumentType(if (ext in plainExt) DocumentKind.PLAIN else DocumentKind.CODE, it, it.badge)
         }
@@ -68,9 +73,9 @@ object DocumentTypes {
             "application/json" -> DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
             "text/csv", "text/comma-separated-values" -> DocumentType(DocumentKind.CSV, null, "CSV")
             "text/tab-separated-values" -> DocumentType(DocumentKind.TSV, null, "TSV")
-            "text/xml", "application/xml" -> DocumentType(DocumentKind.CODE, Languages.XML, "XML")
+            "text/xml", "application/xml" -> DocumentType(DocumentKind.XML, Languages.XML, "XML")
             "text/html", "application/xhtml+xml" -> DocumentType(DocumentKind.HTML, Languages.HTML, "HTML")
-            "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml" -> DocumentType(DocumentKind.CODE, Languages.YAML, "YAML")
+            "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml" -> DocumentType(DocumentKind.YAML, Languages.YAML, "YAML")
             "application/x-sh", "text/x-sh", "application/x-shellscript", "text/x-shellscript" -> DocumentType(DocumentKind.CODE, Languages.SHELL, "SH")
             else -> DocumentType(DocumentKind.PLAIN, null, if (ext.isNotEmpty() && ext.length <= 4) ext.uppercase() else "TXT")
         }

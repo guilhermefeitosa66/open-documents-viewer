@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.15.0] - 2026-11-24
+
+### Added
+- Tree view as the formatted view of JSON, JSON Lines/NDJSON, YAML (all documents of a file) and XML (elements,
+  attributes, text): tap to open or close a branch, long press to copy the node's path (`$.deps[3].name`,
+  `/catalog/book[2]/title`). Small files open fully expanded. Search finds visible nodes.
+- JSON keeps its indented text as an option in the menu ("Show as indented text").
+
+### Dependencies
+- snakeyaml-engine 2.9 (Apache-2.0), used only when a YAML file is opened.
+
 ## [0.14.0] - 2026-11-24
 
 ### Added

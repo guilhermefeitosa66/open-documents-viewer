@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.guilhermefeitosa66.opendocumentsviewer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 113
-        versionName = "0.14.0"
+        versionCode = 114
+        versionName = "0.15.0"
     }
 
     buildFeatures {
@@ -65,6 +65,8 @@ dependencies {
     implementation("org.jsoup:jsoup:1.24.1")
     // SVG rendering (Apache-2.0). Only touched when an SVG file opens.
     implementation("com.caverock:androidsvg-aar:1.4")
+    // YAML parser for the tree view of .yaml files (Apache-2.0, no java.beans). Only touched when one opens.
+    implementation("org.snakeyaml:snakeyaml-engine:2.9")
 
     testImplementation("junit:junit:4.13.2")
     // android.jar's org.json is a stub on the JVM.

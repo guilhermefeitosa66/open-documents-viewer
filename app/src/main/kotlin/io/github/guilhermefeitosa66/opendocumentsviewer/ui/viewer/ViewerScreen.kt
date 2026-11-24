@@ -222,6 +222,18 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
                     TableView(f.table, session.formattedList, fontSize, matches, current, padding)
                     FastScroller(session.formattedList, f.table.rows.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
                 }
+                is Formatted.Tree -> {
+                    val pretty = session.prettyJson
+                    if (session.jsonAsText && session.kind == DocumentKind.JSON) {
+                        if (pretty == null) Loading() else {
+                            RowsView(pretty, session.formattedList, session.wrap, session.lineNumbers, fontSize, matches, current, session.revealRequest, padding)
+                            FastScroller(session.formattedList, pretty.index.rowCount, session.matches, current, Modifier.align(Alignment.CenterEnd))
+                        }
+                    } else {
+                        TreeView(session, session.formattedList, fontSize, matches, current, padding)
+                        FastScroller(session.formattedList, session.treeLines.size, session.matches, current, Modifier.align(Alignment.CenterEnd))
+                    }
+                }
                 is Formatted.Svg -> {
                     val decoded by androidx.compose.runtime.produceState<ImageLoading.Decoded?>(null, f) {
                         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ImageLoading.svgDrawable(f.svg) }
@@ -363,6 +375,12 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                             }
                             DropdownMenuItem(text = { Text(stringResource(R.string.split_other)) }, onClick = { menu = false; split.onSplitOther() })
                         }
+                    }
+                    if (session.kind == DocumentKind.JSON && session.formatted is Formatted.Tree && session.mode == ViewMode.FORMATTED) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (session.jsonAsText) R.string.show_as_tree else R.string.show_as_text)) },
+                            onClick = { menu = false; session.showJsonAsText(!session.jsonAsText) },
+                        )
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })

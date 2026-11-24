@@ -21,7 +21,7 @@
     <string name="source_code">Código-fonte</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_body">Um visualizador de documentos de texto rápido, offline e só de leitura. Sem anúncio, sem conta, sem rede. Parte da libre-apps.</string>
-    <string name="about_licenses">Licença Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose e AndroidX (Apache 2.0).</string>
+    <string name="about_licenses">Licença Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), JetBrains Mono (SIL OFL 1.1), Jetpack Compose e AndroidX (Apache 2.0).</string>
     <string name="back">Voltar</string>
     <string name="switch_document">Trocar de documento</string>
     <string name="all_recents">Todos os recentes</string>
@@ -133,4 +133,7 @@
     <string name="image_cannot_decode">Este formato de imagem não é suportado nesta versão do Android.</string>
     <string name="info_dimensions">Dimensões (px)</string>
     <string name="partial_render">Parte do conteúdo (imagens, objetos embutidos) não pôde ser mostrada.</string>
+    <string name="path_copied">Caminho copiado</string>
+    <string name="show_as_text">Ver como texto indentado</string>
+    <string name="show_as_tree">Ver como árvore</string>
 </resources>

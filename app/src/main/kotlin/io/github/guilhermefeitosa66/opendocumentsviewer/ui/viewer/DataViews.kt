@@ -2,6 +2,9 @@ package io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import io.github.guilhermefeitosa66.opendocumentsviewer.formats.NodeKind
+import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -217,3 +220,86 @@ fun EnvView(
         }
     }
 }
+
+/** JSON, YAML and XML as a collapsible tree. Tap a branch to open it; long press copies the node's path. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun TreeView(
+    session: DocumentSession,
+    state: LazyListState,
+    fontSize: TextUnit,
+    matchesByItem: Map<Int, List<Match>>,
+    current: Match?,
+    contentPadding: PaddingValues,
+) {
+    val colors = Odv.colors
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val copied = stringResource(R.string.path_copied)
+    val lines = session.treeLines
+    val indentPx = 18.dp
+    LazyColumn(state = state, contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
+        itemsIndexed(lines, key = { _, l -> l.node.id }) { i, line ->
+            val n = line.node
+            val hit = matchesByItem.containsKey(i)
+            val bg = when {
+                current?.item == i -> colors.currentMatch.copy(alpha = 0.45f)
+                hit -> colors.match
+                else -> colors.paper.copy(alpha = 0f)
+            }
+            val open = n.id in session.treeExpanded
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(bg)
+                    .combinedClickable(
+                        onClick = { if (n.children.isNotEmpty()) session.toggleNode(n.id) },
+                        onLongClick = {
+                            clipboard.setText(androidx.compose.ui.text.AnnotatedString(n.path))
+                            android.widget.Toast.makeText(context, copied + "\n" + n.path, android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                    )
+                    .heightIn(min = 36.dp)
+                    .padding(start = 8.dp + indentPx * line.depth, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Box(Modifier.width(22.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    if (n.children.isNotEmpty()) {
+                        Text(if (open) "▾" else "▸", color = colors.ink2, fontSize = fontSize)
+                    }
+                }
+                Text(
+                    treeLabel(n, colors, open),
+                    fontFamily = MonoFamily,
+                    fontSize = fontSize,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+private fun treeLabel(n: io.github.guilhermefeitosa66.opendocumentsviewer.formats.TreeNode, colors: io.github.guilhermefeitosa66.opendocumentsviewer.ui.theme.OdvColors, open: Boolean) =
+    androidx.compose.ui.text.buildAnnotatedString {
+        when (n.kind) {
+            NodeKind.ELEMENT -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.syntax.tag, fontWeight = FontWeight.SemiBold)) { append("<${n.key}>") }
+            NodeKind.TEXT -> {}
+            else -> n.key?.let { key ->
+                withStyle(androidx.compose.ui.text.SpanStyle(color = if (n.kind == NodeKind.ATTRIBUTE) colors.syntax.attribute else colors.syntax.key)) { append(key) }
+                withStyle(androidx.compose.ui.text.SpanStyle(color = colors.ink2)) { append(if (n.kind == NodeKind.ATTRIBUTE) " = " else ": ") }
+            }
+        }
+        val count = n.children.size
+        when (n.kind) {
+            NodeKind.OBJECT -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.ink2)) { append(if (open) "{ }" else "{ $count }") }
+            NodeKind.ARRAY -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.ink2)) { append(if (open) "[ ]" else "[ $count ]") }
+            NodeKind.ELEMENT -> if (!open && count > 0) withStyle(androidx.compose.ui.text.SpanStyle(color = colors.ink2)) { append("  ($count)") }
+            NodeKind.STRING, NodeKind.ATTRIBUTE -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.syntax.string)) {
+                append(if (n.kind == NodeKind.STRING) "\"${n.value}\"" else n.value.orEmpty())
+            }
+            NodeKind.NUMBER -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.syntax.number)) { append(n.value.orEmpty()) }
+            NodeKind.BOOLEAN, NodeKind.NULL -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.syntax.literal)) { append(n.value.orEmpty()) }
+            NodeKind.TEXT -> withStyle(androidx.compose.ui.text.SpanStyle(color = colors.ink)) { append(n.value.orEmpty()) }
+        }
+    }
