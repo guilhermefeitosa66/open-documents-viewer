@@ -34,6 +34,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     ODT(hasFormattedView = true, prose = true),
     /** Spreadsheets: Excel 2007+ (.xlsx/.xlsm/.xltx), shown as a grid. */
     XLSX(hasFormattedView = true, prose = false),
+    /** OpenDocument spreadsheets (.ods/.ots/.fods): same grid as XLSX. */
+    ODS(hasFormattedView = true, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -68,6 +70,7 @@ object DocumentTypes {
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
+        if (ext in setOf("ods", "ots", "fods")) return DocumentType(DocumentKind.ODS, null, "ODS")
         if (ext == "doc" || ext == "dot") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (ext in setOf("odt", "ott", "fodt")) return DocumentType(DocumentKind.ODT, null, "ODT")
         if (ext == "eml" || ext == "mht" || ext == "mhtml") return DocumentType(DocumentKind.EMAIL, null, "EML")
@@ -102,6 +105,9 @@ object DocumentTypes {
         if (m == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || m == "application/vnd.ms-excel.sheet.macroenabled.12" ||
             m == "application/vnd.openxmlformats-officedocument.spreadsheetml.template"
         ) return DocumentType(DocumentKind.XLSX, null, "XLSX")
+        if (m == "application/vnd.oasis.opendocument.spreadsheet" || m == "application/vnd.oasis.opendocument.spreadsheet-template" ||
+            m == "application/vnd.oasis.opendocument.spreadsheet-flat-xml"
+        ) return DocumentType(DocumentKind.ODS, null, "ODS")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")

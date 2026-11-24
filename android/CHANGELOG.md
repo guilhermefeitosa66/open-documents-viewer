@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.25.0] - 2026-11-24
+
+### Added
+- OpenDocument spreadsheets (.ods, .ots, flat .fods from LibreOffice Calc) in the same sheet grid as Excel files:
+  the text each cell shows, typed values and formulas for the cell panel, bold/italic/underline/strikethrough,
+  colors, fills, borders, alignment, wrapping, merged cells, column widths, hidden sheets, rows and columns, frozen
+  panes from the saved view. The empty padding rows and columns Calc adds are skipped.
+
+### Changed
+- The sample Excel file used by the tests is now a complete package (opens in LibreOffice too).
+
 ## [0.24.0] - 2026-11-24
 
 ### Added

@@ -173,14 +173,15 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
-        if (earlyType.kind == DocumentKind.XLSX) {
+        if (earlyType.kind == DocumentKind.XLSX || earlyType.kind == DocumentKind.ODS) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("workbook larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
             val bytes = read.bytes.copyOf(read.length)
             val wb = try {
-                io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsxReader.read(bytes)
+                if (earlyType.kind == DocumentKind.ODS) io.github.guilhermefeitosa66.opendocumentsviewer.formats.OdsReader.read(bytes)
+                else io.github.guilhermefeitosa66.opendocumentsviewer.formats.XlsxReader.read(bytes)
             } catch (e: Exception) {
                 return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
             } catch (e: OutOfMemoryError) {
