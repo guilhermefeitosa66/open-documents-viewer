@@ -268,6 +268,14 @@ class DocumentSession(
                 anchors.putAll(parsed.ids)
                 Formatted.Markdown(parsed.blocks, anchors)
             }
+            DocumentKind.NOTEBOOK -> try {
+                val nb = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.NotebookModel.parse(doc.text)
+                val anchors = HashMap<String, Int>()
+                nb.blocks.forEachIndexed { i, b -> if (b is MdBlock.Heading) anchors.putIfAbsent(Anchors.slug(b.content.text), i) }
+                Formatted.Markdown(nb.blocks, anchors, nb.partial)
+            } catch (_: Exception) {
+                Formatted.Unavailable
+            }
             DocumentKind.RTF -> {
                 val (blocks, partial) = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.RtfModel.parseWithInfo(doc.text)
                 val anchors = HashMap<String, Int>()

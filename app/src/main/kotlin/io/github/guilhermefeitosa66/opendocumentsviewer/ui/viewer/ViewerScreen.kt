@@ -126,7 +126,7 @@ fun ViewerScreen(
     val colors = Odv.colors
     var showInfo by remember { mutableStateOf(false) }
     val doc = session.doc
-    val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML || session.kind == DocumentKind.RTF) ||
+    val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML || session.kind == DocumentKind.RTF || session.kind == DocumentKind.NOTEBOOK) ||
         session.mode == ViewMode.SOURCE && session.kind == DocumentKind.PLAIN && session.wrap
     val fontSize = if (prose) proseSize else codeSize
 
@@ -376,7 +376,8 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
 private fun subtitle(session: DocumentSession): String {
     val doc = session.doc ?: return ""
     val parts = ArrayList<String>()
-    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF) doc.type.label else doc.type.language?.name ?: when (doc.type.kind) {
+    parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF) doc.type.label
+        else if (doc.type.kind == DocumentKind.NOTEBOOK) "Jupyter" else doc.type.language?.name ?: when (doc.type.kind) {
         DocumentKind.MARKDOWN -> "Markdown"
         DocumentKind.HTML -> "HTML"
         DocumentKind.IMAGE -> doc.type.label

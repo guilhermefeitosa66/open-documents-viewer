@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.13.0] - 2026-11-24
+
+### Added
+- Jupyter notebooks (`.ipynb`): markdown cells rendered, code cells highlighted in the kernel's language with
+  their execution counts, outputs shown (text streams, errors without terminal color codes, HTML tables such as
+  pandas DataFrames, embedded PNG/JPEG/GIF images). Widgets and scripts are not run: a notice says what was left out.
+  The JSON source is one tap away. Nothing is executed.
+
 ## [0.12.0] - 2026-11-24
 
 ### Added

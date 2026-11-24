@@ -18,6 +18,7 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     /** SVG: rendered as the formatted view, XML as the source. */
     SVG(hasFormattedView = true, prose = false),
     RTF(hasFormattedView = true, prose = true),
+    NOTEBOOK(hasFormattedView = true, prose = true),
 }
 
 data class DocumentType(val kind: DocumentKind, val language: Language?, val label: String) {
@@ -29,7 +30,7 @@ object DocumentTypes {
     private val markdownExt = setOf("md", "markdown", "mdown", "mkd", "mkdn", "mdx")
     private val plainExt = setOf("txt", "text", "log", "out", "nfo", "rst", "adoc", "asciidoc", "org", "tex", "srt", "vtt")
     val imageExt = setOf("png", "jpg", "jpeg", "jpe", "jfif", "gif", "webp", "bmp", "dib", "ico", "cur", "heic", "heif", "avif", "wbmp")
-    private val jsonExt = setOf("json", "jsonc", "json5", "geojson", "webmanifest", "har", "ipynb", "jsonl", "ndjson")
+    private val jsonExt = setOf("json", "jsonc", "json5", "geojson", "webmanifest", "har", "jsonl", "ndjson")
 
     fun detect(fileName: String?, mimeType: String?): DocumentType {
         val name = (fileName ?: "").substringAfterLast('/')
@@ -43,6 +44,7 @@ object DocumentTypes {
         if (ext in jsonExt || lower == ".babelrc" || lower == ".eslintrc" || lower == "composer.lock") {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
+        if (ext == "ipynb") return DocumentType(DocumentKind.NOTEBOOK, Languages.JSON, "IPYNB")
         if (ext == "rtf") return DocumentType(DocumentKind.RTF, Languages.RTF, "RTF")
         if (ext == "svg") return DocumentType(DocumentKind.SVG, Languages.XML, "SVG")
         if (ext in imageExt) return DocumentType(DocumentKind.IMAGE, null, ext.uppercase().take(4))
