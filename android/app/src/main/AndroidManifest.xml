@@ -53,6 +53,7 @@
                 <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/msword" />
                 <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.slideshow" />
                 <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />
@@ -86,6 +87,7 @@
                 <data android:mimeType="message/rfc822" />
                 <data android:mimeType="application/msword" />
                 <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.slideshow" />
                 <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />

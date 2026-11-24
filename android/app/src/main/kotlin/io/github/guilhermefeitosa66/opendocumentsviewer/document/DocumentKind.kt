@@ -40,6 +40,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     XLS(hasFormattedView = true, prose = false),
     /** PowerPoint 2007+ (.pptx/.ppsx/.potx/.pptm): slides drawn on a canvas. */
     PPTX(hasFormattedView = true, prose = false),
+    /** OpenDocument presentations (.odp/.otp/.fodp): same slides as PPTX. */
+    ODP(hasFormattedView = true, prose = false),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -74,6 +76,7 @@ object DocumentTypes {
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext in setOf("xlsx", "xlsm", "xltx", "xltm")) return DocumentType(DocumentKind.XLSX, null, "XLSX")
+        if (ext in setOf("odp", "otp", "fodp")) return DocumentType(DocumentKind.ODP, null, "ODP")
         if (ext in setOf("pptx", "ppsx", "potx", "pptm", "ppsm", "potm")) return DocumentType(DocumentKind.PPTX, null, "PPTX")
         if (ext == "xls" || ext == "xlt") return DocumentType(DocumentKind.XLS, null, "XLS")
         if (ext in setOf("ods", "ots", "fods")) return DocumentType(DocumentKind.ODS, null, "ODS")
@@ -119,6 +122,9 @@ object DocumentTypes {
             m == "application/vnd.openxmlformats-officedocument.presentationml.template" ||
             m == "application/vnd.ms-powerpoint.presentation.macroenabled.12"
         ) return DocumentType(DocumentKind.PPTX, null, "PPTX")
+        if (m == "application/vnd.oasis.opendocument.presentation" || m == "application/vnd.oasis.opendocument.presentation-template" ||
+            m == "application/vnd.oasis.opendocument.presentation-flat-xml"
+        ) return DocumentType(DocumentKind.ODP, null, "ODP")
         if (m == "application/vnd.ms-excel") return DocumentType(DocumentKind.XLS, null, "XLS")
         if (m == "application/msword") return DocumentType(DocumentKind.DOC, null, "DOC")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")

@@ -173,14 +173,15 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
-        if (earlyType.kind == DocumentKind.PPTX) {
+        if (earlyType.kind == DocumentKind.PPTX || earlyType.kind == DocumentKind.ODP) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("presentation larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
             val bytes = read.bytes.copyOf(read.length)
             val pres = try {
-                io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptxReader.read(bytes)
+                if (earlyType.kind == DocumentKind.ODP) io.github.guilhermefeitosa66.opendocumentsviewer.formats.OdpReader.read(bytes)
+                else io.github.guilhermefeitosa66.opendocumentsviewer.formats.PptxReader.read(bytes)
             } catch (e: Exception) {
                 return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
             }

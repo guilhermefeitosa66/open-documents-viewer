@@ -100,7 +100,8 @@ class SlideImages(private val archive: ByteArray?) {
         if (cache.containsKey(path) || !pending.add(path)) return
         val bmp = withContext(Dispatchers.IO) {
             runCatching {
-                val data = archive?.let { ZipFiles.resource(it, path) } ?: return@runCatching null
+                val data = if (path.startsWith("data:")) java.util.Base64.getMimeDecoder().decode(path.substringAfter(','))
+                    else archive?.let { ZipFiles.resource(it, path) } ?: return@runCatching null
                 val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
                 var sample = 1

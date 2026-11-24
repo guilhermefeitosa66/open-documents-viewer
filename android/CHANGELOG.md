@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.28.0] - 2026-11-24
+
+### Added
+- OpenDocument presentations (.odp, .otp, flat .fodp from LibreOffice Impress) in the same slide view as PowerPoint:
+  text boxes, pictures, tables, custom shapes, rectangles, ellipses, lines and groups with their fill, outline,
+  rotation and text styles; placeholders placed from the master page, the master's own drawings behind; background
+  colors and pictures; lists and outline bullets; speaker notes; hidden slides marked.
+
 ## [0.27.0] - 2026-11-24
 
 ### Added
