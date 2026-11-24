@@ -163,6 +163,8 @@ private fun Block(
                     lineHeight = (size.value * 1.2f).sp,
                     fontWeight = if (block.level == 1) FontWeight.ExtraBold else FontWeight.Bold,
                     color = colors.headingColor ?: if (block.level >= 5) colors.ink2 else colors.ink,
+                    textAlign = block.align.toTextAlign(),
+                    modifier = if (block.align == io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.START) Modifier else Modifier.fillMaxWidth(),
                 )
                 if (block.level <= 2) HorizontalDivider(Modifier.padding(top = 6.dp), color = colors.rule)
             }
@@ -170,6 +172,8 @@ private fun Block(
         is MdBlock.Paragraph -> Text(
             text = rememberInline(block.content, colors, codeSize, matches, current, linkListener),
             fontSize = body, lineHeight = lineHeight, color = colors.ink,
+            textAlign = block.align.toTextAlign(),
+            modifier = if (block.align == io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.START) Modifier else Modifier.fillMaxWidth(),
         )
         is MdBlock.ListItem -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val checked = block.checked
@@ -346,4 +350,11 @@ private fun ImageBlockView(block: MdBlock.Image, colors: OdvColors) {
             }
         }
     }
+}
+
+private fun io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.toTextAlign(): androidx.compose.ui.text.style.TextAlign = when (this) {
+    io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.START -> androidx.compose.ui.text.style.TextAlign.Start
+    io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.CENTER -> androidx.compose.ui.text.style.TextAlign.Center
+    io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.END -> androidx.compose.ui.text.style.TextAlign.End
+    io.github.guilhermefeitosa66.opendocumentsviewer.markdown.BlockAlign.JUSTIFY -> androidx.compose.ui.text.style.TextAlign.Justify
 }

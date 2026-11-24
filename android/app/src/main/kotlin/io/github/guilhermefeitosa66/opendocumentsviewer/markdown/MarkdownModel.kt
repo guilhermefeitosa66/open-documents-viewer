@@ -33,6 +33,8 @@ import org.commonmark.node.Text
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 
+enum class BlockAlign { START, CENTER, END, JUSTIFY }
+
 enum class InlineStyle { BOLD, ITALIC, CODE, STRIKE, LINK, UNDERLINE, COLOR, SIZE }
 
 data class InlineSpan(
@@ -65,11 +67,23 @@ sealed interface MdBlock {
     /** The text a search looks at. */
     val plainText: String
 
-    data class Heading(val level: Int, val content: InlineText, override val indent: Int, override val quoteDepth: Int) : MdBlock {
+    data class Heading(
+        val level: Int,
+        val content: InlineText,
+        override val indent: Int,
+        override val quoteDepth: Int,
+        val align: BlockAlign = BlockAlign.START,
+    ) : MdBlock {
         override val plainText get() = content.text
     }
 
-    data class Paragraph(val content: InlineText, override val indent: Int, override val quoteDepth: Int) : MdBlock {
+    data class Paragraph(
+        val content: InlineText,
+        override val indent: Int,
+        override val quoteDepth: Int,
+        /** Word processor documents keep their alignment; markdown is always START. */
+        val align: BlockAlign = BlockAlign.START,
+    ) : MdBlock {
         override val plainText get() = content.text
     }
 

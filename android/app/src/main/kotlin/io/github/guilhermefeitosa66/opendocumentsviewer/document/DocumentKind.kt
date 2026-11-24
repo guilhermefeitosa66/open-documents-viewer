@@ -26,6 +26,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     EPUB(hasFormattedView = true, prose = true),
     /** FictionBook 2: XML, formatted as a book. */
     FB2(hasFormattedView = true, prose = true),
+    /** Word 2007+ (.docx/.docm/.dotx/.dotm): kept as bytes; plain text is the source view. */
+    DOCX(hasFormattedView = true, prose = true),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -58,6 +60,7 @@ object DocumentTypes {
             return DocumentType(DocumentKind.JSON, Languages.JSON, "JSON")
         }
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
+        if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (ext == "eml" || ext == "mht" || ext == "mhtml") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (ext == "vcf" || ext == "vcard") return DocumentType(DocumentKind.VCARD, null, "VCF")
         if (ext == "ics" || ext == "ical" || ext == "ifb") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")
@@ -80,6 +83,10 @@ object DocumentTypes {
         if (ext in plainExt) return DocumentType(DocumentKind.PLAIN, null, "TXT")
 
         val m = mimeType?.lowercase()?.substringBefore(';')?.trim()
+        if (m == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+            m == "application/vnd.ms-word.document.macroenabled.12" ||
+            m == "application/vnd.openxmlformats-officedocument.wordprocessingml.template"
+        ) return DocumentType(DocumentKind.DOCX, null, "DOCX")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")
         if (m == "text/calendar") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")

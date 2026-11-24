@@ -28,7 +28,7 @@ class EbookTest {
         p.toc.forEach { (e, i) -> assertEquals(e.title, (p.blocks[i] as MdBlock.Heading).content.text) }
         // Images point into the book and can be read from it.
         val img = p.blocks.filterIsInstance<MdBlock.Image>().single()
-        assertEquals("epub:OEBPS/images/leaf.png", img.src)
+        assertEquals("zip:OEBPS/images/leaf.png", img.src)
         val png = EpubModel.resource(raw, img.src.removePrefix(EpubModel.IMAGE_SCHEME))!!
         assertArrayEquals(byteArrayOf(0x89.toByte(), 'P'.code.toByte()), png.copyOf(2))
         // A link to another chapter's id becomes an anchor of this document.

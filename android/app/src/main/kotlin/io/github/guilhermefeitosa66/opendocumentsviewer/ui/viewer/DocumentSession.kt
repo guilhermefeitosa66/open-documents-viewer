@@ -304,9 +304,14 @@ class DocumentSession(
             } catch (_: Exception) {
                 Formatted.Unavailable
             }
-            DocumentKind.EPUB -> doc.epub?.let { book ->
+            DocumentKind.EPUB -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.Book)?.let { book ->
                 val p = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.parse(book)
                 Formatted.Markdown(p.blocks, p.anchors, toc = p.toc.map { (e, i) -> OutlineItem(e.level, e.title, i) })
+            } ?: Formatted.Unavailable
+            DocumentKind.DOCX -> (doc.model as? io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.Result)?.let { r ->
+                val anchors = HashMap(headingAnchors(r.blocks))
+                anchors.putAll(r.anchors)
+                Formatted.Markdown(r.blocks, anchors, r.partial)
             } ?: Formatted.Unavailable
             DocumentKind.EMAIL -> try {
                 val m = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.MailModel.parse(doc.text, doc.charset)

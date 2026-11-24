@@ -2,6 +2,15 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.21.0] - 2026-11-24
+
+### Added
+- Word documents (.docx, .docm, .dotx): reflowed to the screen with headings (Title, Heading 1–6, outline levels),
+  bold, italic, underline, strikethrough, colors and sizes, monospaced fonts, alignment, numbered and bulleted lists
+  (with their numbering styles), tables (merged cells), pictures, links (web, inside the document and HYPERLINK
+  fields), footnotes, header first and footer last, page breaks as separators. The outline lists the headings; the
+  source view shows the plain text. Deleted tracked changes are left out. Macros are never run.
+
 ## [0.20.0] - 2026-11-24
 
 ### Added

@@ -25,8 +25,11 @@ class LoadedDocument(
     val modified: Long = 0,
     /** Raw bytes for binary formats (images); null for text documents. */
     val bytes: ByteArray? = null,
-    /** The parsed e-book, for EPUB files (its chapters' XHTML is [text]). */
-    val epub: io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.Book? = null,
+    /**
+     * The parsed document for archive formats (EPUB book, DOCX result...), built by the loader off
+     * the main thread; [text] then holds what the source view and "Copy all" show.
+     */
+    val model: Any? = null,
 )
 
 sealed interface LoadFailure {
@@ -166,7 +169,26 @@ class DocumentLoader(private val context: Context) {
                     uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
                     text = io.github.guilhermefeitosa66.opendocumentsviewer.markdown.EpubModel.sourceText(book), charset = "",
                     type = earlyType, truncated = false, location = meta.location, modified = stamp(uri).second,
-                    bytes = bytes, epub = book,
+                    bytes = bytes, model = book,
+                )
+            )
+        }
+        if (earlyType.kind == DocumentKind.DOCX) {
+            val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
+                return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
+            }
+            if (read.truncated) return failure(LoadFailure.Other("document larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
+            val bytes = read.bytes.copyOf(read.length)
+            val parsed = try {
+                io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.parse(bytes)
+            } catch (e: Exception) {
+                return failure(LoadFailure.Other("DOCX: " + (e.message ?: e.javaClass.simpleName)))
+            }
+            return Result.success(
+                LoadedDocument(
+                    uri = uri, name = meta.name, mimeType = mimeEarly, size = if (meta.size >= 0) meta.size else bytes.size.toLong(),
+                    text = parsed.plainText, charset = "", type = earlyType, truncated = false, location = meta.location,
+                    modified = stamp(uri).second, bytes = bytes, model = parsed,
                 )
             )
         }

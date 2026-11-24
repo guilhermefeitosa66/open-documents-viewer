@@ -3,8 +3,7 @@ package io.github.guilhermefeitosa66.opendocumentsviewer.markdown
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
-import java.io.ByteArrayInputStream
-import java.util.zip.ZipInputStream
+import io.github.guilhermefeitosa66.opendocumentsviewer.formats.ZipFiles
 
 /**
  * EPUB 2 and 3 (no DRM): the chapters of the spine, in order, turned into the markdown block list
@@ -14,7 +13,7 @@ import java.util.zip.ZipInputStream
  * (EPUB 2), falling back to the chapter headings.
  */
 object EpubModel {
-    const val IMAGE_SCHEME = "epub:"
+    const val IMAGE_SCHEME = ZipFiles.IMAGE_SCHEME
 
     class Chapter(val path: String, val html: String)
     class TocEntry(val level: Int, val title: String, val target: String)
@@ -28,30 +27,10 @@ object EpubModel {
     /** Fonts obfuscated this way are not DRM: the text is readable. */
     private val fontObfuscation = setOf("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC")
 
-    /** Every entry of the zip, by path. A book is at most a few tens of MB (the loader caps it). */
-    fun entries(bytes: ByteArray): Map<String, ByteArray> {
-        val out = LinkedHashMap<String, ByteArray>()
-        ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
-            while (true) {
-                val e = zip.nextEntry ?: break
-                if (!e.isDirectory) out[e.name.trimStart('/')] = zip.readBytes()
-            }
-        }
-        return out
-    }
-
-    /** One file of the book (an image), or null. */
-    fun resource(bytes: ByteArray, path: String): ByteArray? {
-        ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
-            while (true) {
-                val e = zip.nextEntry ?: return null
-                if (e.name.trimStart('/') == path) return zip.readBytes()
-            }
-        }
-    }
+    fun resource(bytes: ByteArray, path: String): ByteArray? = ZipFiles.resource(bytes, path)
 
     fun open(bytes: ByteArray): Book {
-        val files = try { entries(bytes) } catch (e: Exception) { throw NotEpub("not a zip file") }
+        val files = try { ZipFiles.entries(bytes) { !isPicture(it) } } catch (e: Exception) { throw NotEpub("not a zip file") }
         files["META-INF/encryption.xml"]?.let { enc ->
             val x = Jsoup.parse(String(enc, Charsets.UTF_8), "", Parser.xmlParser())
             val algorithms = x.select("EncryptionMethod, enc|EncryptionMethod").map { it.attr("Algorithm") }
@@ -128,19 +107,9 @@ object EpubModel {
         return if (frag.isEmpty()) abs else "$abs#$frag"
     }
 
-    fun resolve(base: String, href: String): String {
-        val decoded = try { java.net.URLDecoder.decode(href.replace("+", "%2B"), "UTF-8") } catch (_: Exception) { href }
-        val parts = ArrayList<String>()
-        if (!decoded.startsWith("/")) base.split('/').filter { it.isNotEmpty() }.forEach { parts += it }
-        for (seg in decoded.split('/')) {
-            when (seg) {
-                "", "." -> Unit
-                ".." -> if (parts.isNotEmpty()) parts.removeAt(parts.size - 1)
-                else -> parts += seg
-            }
-        }
-        return parts.joinToString("/")
-    }
+    fun resolve(base: String, href: String): String = ZipFiles.resolve(base, href)
+
+    private fun isPicture(path: String) = path.substringAfterLast('.').lowercase() in setOf("png", "jpg", "jpeg", "gif", "webp", "svg", "bmp")
 
     private fun decode(data: ByteArray): String {
         val head = String(data, 0, minOf(data.size, 200), Charsets.ISO_8859_1)
