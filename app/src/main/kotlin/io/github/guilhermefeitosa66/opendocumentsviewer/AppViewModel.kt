@@ -229,6 +229,34 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Second document beside the main one (wide screens only), or null. Never in [loaded]. */
+    var split by mutableStateOf<DocumentSession?>(null)
+        private set
+
+    /** Split view of the current document: the other view (formatted beside source). */
+    fun splitSameDocument() {
+        val s = session ?: return
+        val doc = s.doc ?: return
+        closeSplit()
+        val t = DocumentSession(recentKey = null, external = false, initialFormatted = !s.preferFormatted, initialWrap = s.wrapOverride, initialPosition = ViewPosition())
+        split = t
+        t.startWithText(doc) {}
+    }
+
+    /** Split view with another document: a tab or a recent file. */
+    fun splitWith(key: String, mimeType: String?, shared: LoadedDocument?) {
+        closeSplit()
+        val t = DocumentSession(recentKey = null, external = false, initialFormatted = true, initialWrap = null, initialPosition = ViewPosition())
+        split = t
+        if (shared != null) t.startWithText(shared) {}
+        else t.start({ loader.load(Uri.parse(key), mimeType) }) {}
+    }
+
+    fun closeSplit() {
+        split?.close()
+        split = null
+    }
+
     fun closeTab(key: String) {
         loaded.remove(key)?.let { s ->
             savePosition(s)
@@ -402,6 +430,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        split?.close()
         loaded.values.forEach { it.close() }
         loaded.clear()
     }

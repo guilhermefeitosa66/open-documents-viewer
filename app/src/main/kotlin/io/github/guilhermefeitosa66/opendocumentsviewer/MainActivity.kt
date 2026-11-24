@@ -69,6 +69,14 @@ import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.Formatted
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ViewMode
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ViewerActions
 import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.ViewerScreen
+import io.github.guilhermefeitosa66.opendocumentsviewer.ui.viewer.SplitControls
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -144,8 +152,13 @@ class MainActivity : ComponentActivity() {
     private fun App() {
         val session = vm.session
         var switcher by remember { mutableStateOf(false) }
+        var splitPicking by remember { mutableStateOf(false) }
+        // Tablets, open foldables and wide landscape: list beside the document, and split view.
+        val wide = LocalConfiguration.current.screenWidthDp >= WIDE_DP
 
-        if (session == null && vm.settingsOpen) {
+        if (wide && !vm.settingsOpen) {
+            WideLayout(session, onSwitcher = { switcher = true }, onSplitPick = { splitPicking = true })
+        } else if (session == null && vm.settingsOpen) {
             SettingsScreen(
                 themeId = vm.themeId,
                 backgroundEnabled = vm.backgroundEnabled,
@@ -198,6 +211,23 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        if (splitPicking && session != null) {
+            ModalBottomSheet(onDismissRequest = { splitPicking = false }, containerColor = Odv.colors.card) {
+                val currentKey = vm.keyOf(session)
+                QuickSwitcher(
+                    tabs = vm.tabs.filter { it.key != currentKey },
+                    recents = vm.recents.filter { r -> !r.isFolder && r.uri != currentKey && vm.tabs.none { it.key == r.uri } },
+                    currentKey = null,
+                    onTab = { tab -> splitPicking = false; vm.splitWith(tab.key, tab.mimeType, tab.shared) },
+                    onCloseTab = null,
+                    onPick = { entry -> splitPicking = false; vm.splitWith(entry.uri, entry.mimeType, null) },
+                    onAllRecents = null,
+                    onOpenFile = null,
+                    title = stringResource(R.string.split_pick_title),
+                )
+            }
+        }
+
         vm.copyProgress?.let { CopyProgressDialog(it) }
 
         pendingExternalLink?.let { url ->
@@ -242,6 +272,97 @@ class MainActivity : ComponentActivity() {
                     onOpenFile = { hide { openPicker() } },
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun ListPane() {
+        val folder = vm.folder
+        if (folder != null) {
+            FolderScreen(
+                folder = folder,
+                onBack = { if (!folder.up()) vm.closeFolder() },
+                onOpenFile = { entry -> vm.openUri(folder.documentUri(entry), entry.mimeType, external = false, folderDocumentId = entry.documentId) },
+            )
+        } else {
+            val theme = Themes.byId(vm.themeId)
+            HomeScreen(
+                onSettings = { vm.settingsOpen = true },
+                background = theme.background?.takeIf { vm.backgroundEnabled },
+                recents = vm.recents,
+                loaded = vm.recentsLoaded,
+                onOpenFile = ::openPicker,
+                onOpenFolder = ::openFolderPicker,
+                onOpenRecent = vm::openRecent,
+                onRemove = vm::removeRecent,
+                onClearAll = vm::clearRecents,
+                onShareRecent = { if (!it.isFolder) shareItem(shareableOf(it)) },
+                onSaveRecent = { if (!it.isFolder) saveItem(shareableOf(it)) },
+            )
+        }
+    }
+
+    @Composable
+    private fun WideLayout(session: DocumentSession?, onSwitcher: () -> Unit, onSplitPick: () -> Unit) {
+        val colors = Odv.colors
+        val split = vm.split
+        Row(Modifier.fillMaxSize()) {
+            // The list makes room when two documents share the screen.
+            if (split == null || session == null) {
+                Box(Modifier.width(LIST_PANE_DP.dp).fillMaxHeight()) { ListPane() }
+                androidx.compose.material3.VerticalDivider(color = colors.line)
+            }
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                if (session != null) {
+                    ViewerScreen(
+                        session = session,
+                        proseSize = (16f * vm.proseScale).sp,
+                        codeSize = (13.5f * vm.codeScale).sp,
+                        actions = remember(session) { actions(session) { onSwitcher() } },
+                        split = SplitControls(
+                            inSplit = split != null,
+                            onSplitSame = vm::splitSameDocument,
+                            onSplitOther = onSplitPick,
+                            onCloseSplit = vm::closeSplit,
+                        ),
+                    )
+                } else {
+                    Box(Modifier.fillMaxSize().background(colors.paper), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.wide_empty), color = colors.ink2, fontSize = 16.sp)
+                    }
+                }
+            }
+            if (split != null && session != null) {
+                androidx.compose.material3.VerticalDivider(color = colors.line)
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    ViewerScreen(
+                        session = split,
+                        proseSize = (16f * vm.proseScale).sp,
+                        codeSize = (13.5f * vm.codeScale).sp,
+                        actions = remember(split) { splitActions(split, onSplitPick) },
+                        split = SplitControls(true, {}, onSplitPick, vm::closeSplit),
+                    )
+                }
+            }
+        }
+        BackHandler(enabled = session != null || vm.folder != null) {
+            when {
+                split?.searchOpen == true -> split.closeSearch()
+                split != null -> vm.closeSplit()
+                session?.searchOpen == true -> session.closeSearch()
+                session != null -> leaveViewer(session)
+                vm.folder?.filter?.isNotEmpty() == true -> vm.folder?.filter = ""
+                vm.folder?.up() == true -> Unit
+                else -> vm.closeFolder()
+            }
+        }
+    }
+
+    /** The second pane's actions: back closes the split, the title picks another document. */
+    private fun splitActions(split: DocumentSession, onPick: () -> Unit): ViewerActions {
+        val base = actions(split) { onPick() }
+        return object : ViewerActions by base {
+            override fun back() = vm.closeSplit()
         }
     }
 
@@ -367,6 +488,10 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        /** Window width from which the list and the document sit side by side (expanded size class). */
+        const val WIDE_DP = 840
+        const val LIST_PANE_DP = 360
+
         /** Binder transactions above ~1 MB fail; stay well under. */
         const val MAX_CLIP_CHARS = 400_000
     }
@@ -378,29 +503,33 @@ private fun QuickSwitcher(
     recents: List<RecentEntry>,
     currentKey: String?,
     onTab: (AppViewModel.OpenTab) -> Unit,
-    onCloseTab: (AppViewModel.OpenTab) -> Unit,
+    onCloseTab: ((AppViewModel.OpenTab) -> Unit)?,
     onPick: (RecentEntry) -> Unit,
-    onAllRecents: () -> Unit,
-    onOpenFile: () -> Unit,
+    onAllRecents: (() -> Unit)?,
+    onOpenFile: (() -> Unit)?,
+    title: String? = null,
 ) {
     val colors = Odv.colors
     Column(Modifier.navigationBarsPadding().padding(bottom = 16.dp)) {
         LazyColumn(Modifier.weight(1f, fill = false).padding(horizontal = 8.dp)) {
-            item {
+            if (title != null) item {
+                Text(title, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.ink)
+            }
+            if (tabs.isNotEmpty()) item {
                 SwitcherHeader(stringResource(R.string.open_documents))
             }
             items(tabs, key = { "tab:" + it.key }) { tab ->
                 val entry = RecentEntry(tab.key, tab.name, tab.mimeType, -1, 0, persisted = true, location = null)
                 RecentRow(
                     entry, current = tab.key == currentKey, onClick = { onTab(tab) },
-                    trailing = {
+                    trailing = if (onCloseTab == null) null else ({
                         androidx.compose.material3.IconButton(onClick = { onCloseTab(tab) }) {
                             androidx.compose.material3.Icon(
                                 androidx.compose.material.icons.Icons.Filled.Close,
                                 stringResource(R.string.close_document, tab.name), tint = colors.ink2,
                             )
                         }
-                    },
+                    }),
                     showMeta = false,
                 )
             }
@@ -411,7 +540,7 @@ private fun QuickSwitcher(
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (onAllRecents != null && onOpenFile != null) Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onAllRecents, modifier = Modifier.weight(1f).height(48.dp)) {
                 Text(stringResource(R.string.all_recents), color = colors.ink)
             }

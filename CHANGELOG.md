@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.6.0] - 2026-11-24
+
+### Added
+- Wide screens (tablets, open foldables, wide landscape, from 840 dp): the start screen or the opened folder stays on the left,
+  the document on the right.
+- Split view on wide screens: the same document formatted beside its source, or another document (a tab or a recent file)
+  beside the current one. Back closes the split. Phones keep the single-pane layout.
+
 ## [0.5.0] - 2026-11-24
 
 ### Added

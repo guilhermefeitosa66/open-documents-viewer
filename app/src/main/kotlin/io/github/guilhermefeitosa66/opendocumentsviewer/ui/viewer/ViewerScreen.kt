@@ -94,12 +94,21 @@ interface ViewerActions {
     fun onFirstContent()
 }
 
+/** Split view controls, offered only on wide screens. */
+class SplitControls(
+    val inSplit: Boolean,
+    val onSplitSame: () -> Unit,
+    val onSplitOther: () -> Unit,
+    val onCloseSplit: () -> Unit,
+)
+
 @Composable
 fun ViewerScreen(
     session: DocumentSession,
     proseSize: TextUnit,
     codeSize: TextUnit,
     actions: ViewerActions,
+    split: SplitControls? = null,
 ) {
     val colors = Odv.colors
     var showInfo by remember { mutableStateOf(false) }
@@ -109,7 +118,7 @@ fun ViewerScreen(
     val fontSize = if (prose) proseSize else codeSize
 
     Column(Modifier.fillMaxSize().background(colors.paper)) {
-        if (session.searchOpen) SearchBar(session) else TopBar(session, actions, onInfo = { showInfo = true })
+        if (session.searchOpen) SearchBar(session) else TopBar(session, actions, split, onInfo = { showInfo = true })
         HorizontalDivider(color = colors.line)
         Box(
             Modifier
@@ -210,7 +219,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
 }
 
 @Composable
-private fun TopBar(session: DocumentSession, actions: ViewerActions, onInfo: () -> Unit) {
+private fun TopBar(session: DocumentSession, actions: ViewerActions, split: SplitControls?, onInfo: () -> Unit) {
     val colors = Odv.colors
     val doc = session.doc
     var menu by remember { mutableStateOf(false) }
@@ -283,6 +292,17 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, onInfo: () 
                             text = { Text(stringResource(if (session.lineNumbers) R.string.hide_line_numbers else R.string.show_line_numbers)) },
                             onClick = { menu = false; session.lineNumbers = !session.lineNumbers },
                         )
+                    }
+                    if (split != null) {
+                        HorizontalDivider(color = Odv.colors.line)
+                        if (split.inSplit) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.close_split)) }, onClick = { menu = false; split.onCloseSplit() })
+                        } else {
+                            if (session.hasToggle) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.split_same)) }, onClick = { menu = false; split.onSplitSame() })
+                            }
+                            DropdownMenuItem(text = { Text(stringResource(R.string.split_other)) }, onClick = { menu = false; split.onSplitOther() })
+                        }
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })
                 }

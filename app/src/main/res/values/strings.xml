@@ -115,4 +115,9 @@
     <string name="open_link_confirm">Open</string>
     <string name="open_documents">Open documents</string>
     <string name="close_document">Close %1$s</string>
+    <string name="split_same">Split: formatted and source</string>
+    <string name="split_other">Split with another document…</string>
+    <string name="close_split">Close split view</string>
+    <string name="split_pick_title">Show beside this one</string>
+    <string name="wide_empty">Pick a document on the left.</string>
 </resources>

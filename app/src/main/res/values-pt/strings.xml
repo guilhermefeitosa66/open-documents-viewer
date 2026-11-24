@@ -114,4 +114,9 @@
     <string name="open_link_confirm">Abrir</string>
     <string name="open_documents">Documentos abertos</string>
     <string name="close_document">Fechar %1$s</string>
+    <string name="split_same">Dividir: formatado e fonte</string>
+    <string name="split_other">Dividir com outro documento…</string>
+    <string name="close_split">Fechar tela dividida</string>
+    <string name="split_pick_title">Mostrar ao lado deste</string>
+    <string name="wide_empty">Escolha um documento à esquerda.</string>
 </resources>
