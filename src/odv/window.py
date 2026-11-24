@@ -267,6 +267,8 @@ class Window(Adw.ApplicationWindow):
         add("focus-other-pane", self.focus_other_pane, ("<Control>k",))
         add("preferences", self.show_preferences, ("<Control>comma",))
         add("search-folder", self.search_folder, ("<Control><Shift>f",))
+        add("quick-open", self.quick_open, ("<Control>p",))
+        add("command-palette", self.command_palette, ("<Control><Shift>p",))
         self.split_action = add("split", self.toggle_split, ("<Control>backslash",), state=False)
         self.get_application().set_accels_for_action("win.show-help-overlay", ["<Control>question"])
         self.set_help_overlay(_shortcuts_window())
@@ -422,6 +424,53 @@ class Window(Adw.ApplicationWindow):
         recents.add(path)
         self._update_stack()
 
+    def quick_open(self):
+        from odv.palette import PaletteDialog, file_items
+
+        if not self.folder:
+            self.choose_files()
+            return
+        root = self.folder
+        dialog = PaletteDialog(_("Go to file"), loader=lambda: file_items(root, self.open_path))
+        dialog.present(self)
+        return dialog
+
+    def command_palette(self):
+        from odv import theme, themes
+        from odv.palette import Item, PaletteDialog
+
+        def act(name):
+            return lambda: self.activate_action(name, None)
+
+        doc = self.active_pane.current_doc() if self.active_pane else None
+        items = [
+            Item(_("Open File…"), "Ctrl+O", act("win.open-file")),
+            Item(_("Open Folder…"), "Ctrl+Shift+O", act("win.open-folder")),
+            Item(_("Go to file"), "Ctrl+P", act("win.quick-open")),
+            Item(_("Find"), "Ctrl+F", act("win.find")),
+            Item(_("Search in folder"), "Ctrl+Shift+F", act("win.search-folder")),
+            Item(_("Formatted / source"), "Ctrl+E", act("win.toggle-mode")),
+            Item(_("Split View"), "Ctrl+\\", act("win.split")),
+            Item(_("Other pane"), "Ctrl+K", act("win.focus-other-pane")),
+            Item(_("Show folder"), "F9", act("win.toggle-sidebar")),
+            Item(_("Reload"), "Ctrl+R", act("win.reload")),
+            Item(_("Close tab"), "Ctrl+W", act("win.close-tab")),
+            Item(_("Preferences"), "Ctrl+,", act("win.preferences")),
+            Item(_("Keyboard Shortcuts"), "Ctrl+?", act("win.show-help-overlay")),
+            Item(_("New window"), "Ctrl+N", act("app.new-window")),
+            Item(_("Quit"), "Ctrl+Q", act("app.quit")),
+        ]
+        if doc is None:
+            items = [i for i in items if i.detail not in ("Ctrl+F", "Ctrl+E", "Ctrl+R", "Ctrl+W")]
+        names = [(themes.DEFAULT_ID, "libre-apps")] + [(t["id"], t["name"]) for t in themes.catalogue()]
+        for tid, name in names:
+            items.append(Item(_("Theme: {name}").format(name=name), "", lambda t=tid: theme.set_theme(t)))
+        items.append(Item(_("Background picture: on/off"), "",
+                          lambda: theme.set_background(not theme.background_enabled())))
+        dialog = PaletteDialog(_("Run a command"), items=items)
+        dialog.present(self)
+        return dialog
+
     def search_folder(self):
         if not self.folder:
             return
@@ -562,6 +611,7 @@ def _shortcuts_window():
         _("View"): [("<Control>e", _("Formatted / source")), ("<Control>f", _("Find")),
                     ("<Control>backslash", _("Split View")), ("<Control>k", _("Other pane")),
                     ("F9", _("Show folder")), ("<Control><Shift>f", _("Search in folder")),
+                    ("<Control>p", _("Go to file")), ("<Control><Shift>p", _("Run a command")),
                     ("<Control>comma", _("Preferences")),
                     ("<Control>Page_Down", _("Next tab")), ("<Control>Page_Up", _("Previous tab"))],
     }

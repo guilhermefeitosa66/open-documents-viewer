@@ -363,3 +363,30 @@ def test_folder_search_cancel(tmp_path):
     _tree(tmp_path)
     with pytest.raises(foldersearch.Cancelled):
         foldersearch.search(str(tmp_path), "needle", cancelled=lambda: True)
+
+
+# -- fuzzy --------------------------------------------------------------------
+
+from odv import fuzzy  # noqa: E402
+
+FILES = ["src/odv/window.py", "src/odv/views/markdown.py", "README.md", "tests/test_gui.py",
+         "packaging/deb/build.sh", "src/odv/mdrender.py", "CHANGELOG.md"]
+
+
+@pytest.mark.parametrize("query,best", [
+    ("win", "src/odv/window.py"),
+    ("mdr", "src/odv/mdrender.py"),
+    ("readme", "README.md"),
+    ("tgui", "tests/test_gui.py"),
+    ("deb b", "packaging/deb/build.sh"),
+    ("views mark", "src/odv/views/markdown.py"),
+])
+def test_fuzzy_best_match(query, best):
+    assert fuzzy.rank(query, FILES)[0] == best
+
+
+def test_fuzzy_needs_order_and_limits():
+    assert fuzzy.score("xyz", "src/odv/window.py") is None
+    assert fuzzy.score("wodniw", "window") is None
+    assert fuzzy.rank("", FILES) == FILES[:50]
+    assert len(fuzzy.rank("o", FILES * 30, limit=10)) == 10

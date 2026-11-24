@@ -112,6 +112,16 @@ CATALOG: dict[str, dict[str, str]] = {
     "{hits} matches in {files} files (showing the first ones).": {
         "pt": "{hits} resultados em {files} arquivos (mostrando os primeiros).",
         "es": "{hits} resultados en {files} archivos (mostrando los primeros)."},
+    # quick open / command palette
+    "Go to file": {"pt": "Ir para arquivo", "es": "Ir a archivo"},
+    "Run a command": {"pt": "Executar um comando", "es": "Ejecutar un comando"},
+    "Listing files…": {"pt": "Listando arquivos…", "es": "Listando archivos…"},
+    "{n} items": {"pt": "{n} itens", "es": "{n} elementos"},
+    "New window": {"pt": "Nova janela", "es": "Nueva ventana"},
+    "Quit": {"pt": "Sair", "es": "Salir"},
+    "Theme: {name}": {"pt": "Tema: {name}", "es": "Tema: {name}"},
+    "Background picture: on/off": {"pt": "Imagem de fundo: ligar/desligar",
+                                   "es": "Imagen de fondo: activar/desactivar"},
     # preferences
     "Appearance": {"pt": "Aparência", "es": "Apariencia"},
     "Theme": {"pt": "Tema", "es": "Tema"},

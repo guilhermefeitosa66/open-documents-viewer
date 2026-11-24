@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.4.0 (2026-11-24)
+
+- Added: go to file (Ctrl+P) with fuzzy search over the open folder.
+- Added: command palette (Ctrl+Shift+P) with every action, theme and the background switch.
+
 ## 0.3.0 (2026-11-24)
 
 - Added: find in CSV/TSV tables (Ctrl+F), fast on files with millions of rows.

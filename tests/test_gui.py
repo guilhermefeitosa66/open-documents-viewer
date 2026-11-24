@@ -402,3 +402,41 @@ def test_search_in_folder_opens_at_the_line(tmp_path):
     assert r["targets"] == [None, (str(tmp_path / "docs" / "guide.md"), 5)]
     assert r["doc"] == ("guide.md", "source")
     assert r["selected"] == (5, "magic")
+
+
+def test_quick_open_and_command_palette(tmp_path):
+    tmp_path = tmp_path / "project"
+    tmp_path.mkdir()
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "parser.py").write_text("x = 1\n")
+    (tmp_path / "README.md").write_text("# hi\n")
+
+    def scenario(win, r):
+        from odv import theme
+
+        win.open_folder(str(tmp_path))
+        dialog = win.quick_open()
+        yield 0.6
+        r["count"] = dialog.status.get_label()
+        dialog.entry.set_text("prs")
+        yield 0.4
+        first = dialog.list.get_row_at_index(0)
+        r["first"] = first._item.label if first else None
+        dialog.entry.emit("activate")
+        yield 1.0
+        r["opened"] = win.active_pane.current_doc().name
+        palette = win.command_palette()
+        palette.entry.set_text("theme drac")
+        yield 0.4
+        r["command"] = palette.list.get_row_at_index(0)._item.label
+        palette.entry.emit("activate")
+        yield 0.5
+        r["theme"] = theme.theme_id()
+        theme.set_theme("libre-apps")
+
+    r = run_app(scenario)
+    assert r["count"] == "2 items"
+    assert r["first"] == "parser.py"
+    assert r["opened"] == "parser.py"
+    assert r["command"] == "Theme: Dracula"
+    assert r["theme"] == "dracula"

@@ -27,6 +27,14 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.4.0" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Added: go to file (Ctrl+P) with fuzzy search over the open folder.</li>
+        <li>Added: command palette (Ctrl+Shift+P) with every action, theme and the background switch.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-11-24">
       <description>
         <ul>
