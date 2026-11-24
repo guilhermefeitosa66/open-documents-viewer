@@ -138,4 +138,9 @@
     <string name="show_as_text">Show as indented text</string>
     <string name="show_as_tree">Show as tree</string>
     <string name="sort_column">Sort by this column</string>
+    <string name="encoding_menu">Encoding…</string>
+    <string name="encoding_title">Text encoding</string>
+    <string name="encoding_auto">Detect automatically</string>
+    <string name="info_line_endings">Line endings</string>
+    <string name="line_endings_mixed">Mixed</string>
 </resources>

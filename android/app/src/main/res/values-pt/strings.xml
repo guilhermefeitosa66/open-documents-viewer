@@ -137,4 +137,9 @@
     <string name="show_as_text">Ver como texto indentado</string>
     <string name="show_as_tree">Ver como árvore</string>
     <string name="sort_column">Ordenar por esta coluna</string>
+    <string name="encoding_menu">Codificação…</string>
+    <string name="encoding_title">Codificação do texto</string>
+    <string name="encoding_auto">Detectar automaticamente</string>
+    <string name="info_line_endings">Fim de linha</string>
+    <string name="line_endings_mixed">Misto</string>
 </resources>

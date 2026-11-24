@@ -125,6 +125,7 @@ fun ViewerScreen(
 ) {
     val colors = Odv.colors
     var showInfo by remember { mutableStateOf(false) }
+    var showEncoding by remember { mutableStateOf(false) }
     val doc = session.doc
     val prose = session.mode == ViewMode.FORMATTED && (session.kind == DocumentKind.MARKDOWN || session.kind == DocumentKind.HTML || session.kind == DocumentKind.RTF || session.kind == DocumentKind.NOTEBOOK) ||
         session.mode == ViewMode.SOURCE && session.kind == DocumentKind.PLAIN && session.wrap
@@ -136,7 +137,7 @@ fun ViewerScreen(
             SearchBar(session)
             HorizontalDivider(color = colors.line)
         } else if (!reading.fullScreen) {
-            TopBar(session, actions, split, onInfo = { showInfo = true })
+            TopBar(session, actions, split, onInfo = { showInfo = true }, onEncoding = { showEncoding = true })
             HorizontalDivider(color = colors.line)
         }
         Box(
@@ -166,6 +167,7 @@ fun ViewerScreen(
     }
 
     if (showInfo && doc != null) InfoDialog(doc, session, onDismiss = { showInfo = false })
+    if (showEncoding && doc != null) EncodingDialog(doc, session, onDismiss = { showEncoding = false })
 }
 
 @Composable
@@ -281,7 +283,7 @@ private fun Content(session: DocumentSession, fontSize: TextUnit, actions: Viewe
 }
 
 @Composable
-private fun TopBar(session: DocumentSession, actions: ViewerActions, split: SplitControls?, onInfo: () -> Unit) {
+private fun TopBar(session: DocumentSession, actions: ViewerActions, split: SplitControls?, onInfo: () -> Unit, onEncoding: () -> Unit) {
     val colors = Odv.colors
     val doc = session.doc
     var menu by remember { mutableStateOf(false) }
@@ -383,6 +385,9 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                         )
                     }
                     DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
+                    if (doc.uri != null && doc.bytes == null) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.encoding_menu)) }, onClick = { menu = false; onEncoding() })
+                    }
                     DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })
                 }
             }
@@ -598,9 +603,49 @@ private fun InfoDialog(doc: LoadedDocument, session: DocumentSession, onDismiss:
                 if (doc.bytes == null) {
                     session.source?.let { line(R.string.info_lines, it.index.lineCount.toString()) }
                     line(R.string.info_encoding, doc.charset)
+                    val endings = remember(doc) { io.github.guilhermefeitosa66.opendocumentsviewer.document.TextDecoder.lineEndings(doc.text) }
+                    if (endings.isNotEmpty()) {
+                        line(R.string.info_line_endings, if (endings == "Mixed") stringResource(R.string.line_endings_mixed) else endings)
+                    }
                 }
                 doc.location?.let { line(R.string.info_location, it) }
                 doc.mimeType?.let { line(R.string.info_mime, it) }
+            }
+        },
+    )
+}
+
+/** "Encoding…": read the file again with another encoding, or detect it again. */
+@Composable
+private fun EncodingDialog(doc: LoadedDocument, session: DocumentSession, onDismiss: () -> Unit) {
+    val colors = Odv.colors
+    val choices = remember { io.github.guilhermefeitosa66.opendocumentsviewer.document.TextDecoder.CHOICES }
+    val current = session.charsetOverride
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        title = { Text(stringResource(R.string.encoding_title)) },
+        text = {
+            androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                val options = listOf<String?>(null) + choices
+                items(options.size) { i ->
+                    val cs = options[i]
+                    val selected = cs == current
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onDismiss(); if (!selected) session.reencode(cs) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        androidx.compose.material3.RadioButton(selected = selected, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            if (cs == null) stringResource(R.string.encoding_auto) + (if (current == null) " · ${doc.charset}" else "") else cs,
+                            fontSize = 15.sp, color = colors.ink,
+                        )
+                    }
+                }
             }
         },
     )

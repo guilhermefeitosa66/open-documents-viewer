@@ -204,7 +204,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             )
             addTab(OpenTab(key, entry?.name ?: uri.lastPathSegment?.substringAfterLast('/').orEmpty(), mimeHint, folderDocumentId, external))
             activate(key, s)
-            s.start({ loader.load(uri, mimeHint) }) { doc ->
+            s.start({ loader.load(uri, mimeHint, s.charsetOverride) }) { doc ->
                 renameTab(key, doc.name, doc.mimeType)
                 remember(doc, s, persisted || entry?.persisted == true)
             }
@@ -267,7 +267,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val t = DocumentSession(recentKey = null, external = false, initialFormatted = true, initialWrap = null, initialPosition = ViewPosition())
         split = t
         if (shared != null) t.startWithText(shared) {}
-        else t.start({ loader.load(Uri.parse(key), mimeType) }) {}
+        else t.start({ loader.load(Uri.parse(key), mimeType, t.charsetOverride) }) {}
     }
 
     fun closeSplit() {
@@ -287,7 +287,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             viewModelScope.launch {
                 val (size, modified) = withContext(Dispatchers.IO) { loader.stamp(uri) }
                 val changed = (size >= 0 && doc.size >= 0 && size != doc.size) || (modified > 0 && doc.modified > 0 && modified != doc.modified)
-                if (changed) s.reload { loader.load(uri, doc.mimeType) }
+                if (changed) s.reload { loader.load(uri, doc.mimeType, s.charsetOverride) }
             }
         }
     }

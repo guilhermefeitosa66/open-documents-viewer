@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.18.0] - 2026-11-24
+
+### Added
+- Encodings: UTF-16 without a byte order mark is recognized, and UTF-32 files with one. "Encoding…" in the menu reads
+  the file again with another encoding (UTF-8/16/32, Western, Central European, Cyrillic, Greek, Turkish, Hebrew,
+  Arabic, Baltic, Vietnamese, Thai, Japanese, Chinese, Korean...) or goes back to detecting it; the position is kept.
+- File information shows the line endings (LF, CRLF, CR or mixed).
+
 ## [0.17.0] - 2026-11-24
 
 ### Added

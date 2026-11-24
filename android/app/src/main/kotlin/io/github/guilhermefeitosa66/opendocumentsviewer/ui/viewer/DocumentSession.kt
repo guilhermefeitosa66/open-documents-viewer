@@ -171,7 +171,20 @@ class DocumentSession(
 
     val matchesByItem: Map<Int, List<Match>> by derivedStateOf { matches.groupBy { it.item } }
 
+    /** Encoding picked by the user in "Encoding…" (Java charset name); null = detected. Read by the loader. */
+    var charsetOverride by mutableStateOf<String?>(null)
+        private set
+    private var loader: (suspend () -> Result<LoadedDocument>)? = null
+
+    /** Reads the file again with [charset] (null: detect it again). Position is kept. */
+    fun reencode(charset: String?) {
+        val l = loader ?: return
+        charsetOverride = charset
+        reload(l)
+    }
+
     fun start(loader: suspend () -> Result<LoadedDocument>, onShown: (LoadedDocument) -> Unit) {
+        this.loader = loader
         scope.launch {
             val result = withContext(Dispatchers.IO) { loader() }
             val doc = result.getOrElse {

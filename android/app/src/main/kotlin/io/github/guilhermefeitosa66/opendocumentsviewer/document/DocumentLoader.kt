@@ -115,7 +115,8 @@ class DocumentLoader(private val context: Context) {
         }
     }
 
-    fun load(uri: Uri, mimeHint: String?): Result<LoadedDocument> {
+    /** [charset]: an encoding the user picked ("Encoding…"), or null to detect it. */
+    fun load(uri: Uri, mimeHint: String?, charset: String? = null): Result<LoadedDocument> {
         val meta = meta(uri)
         fun failure(f: LoadFailure): Result<LoadedDocument> = Result.failure(LoadException(f, meta.name))
         val stream: InputStream = try {
@@ -148,7 +149,7 @@ class DocumentLoader(private val context: Context) {
         } catch (e: Exception) {
             return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
         }
-        val decoded = TextDecoder.decode(bytes, length)
+        val decoded = if (charset != null) TextDecoder.decodeAs(bytes, length, charset) else TextDecoder.decode(bytes, length)
         if (decoded !is Decoded.Text) return failure(LoadFailure.Binary)
         val mime = meta.mimeType ?: mimeHint
         return Result.success(
