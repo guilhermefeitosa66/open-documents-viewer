@@ -3,7 +3,7 @@ ARGS ?=
 TEST_IMAGE = odv-test
 DOCKER_X = docker run --rm -e GTK_A11Y=none -e PYTHONDONTWRITEBYTECODE=1 -v $(CURDIR):/work $(TEST_IMAGE) bash -c
 
-.PHONY: run test bench screenshots deb appimage flatpak packages clean test-image
+.PHONY: run test bench bench-files screenshots deb appimage flatpak packages clean test-image
 
 run:
 	PYTHONPATH=src $(PY) -m odv $(ARGS)
@@ -16,6 +16,9 @@ test: test-image
 
 bench: test-image
 	$(DOCKER_X) 'Xvfb :55 -screen 0 1400x900x24 -nolisten tcp 2>/dev/null & sleep 1; DISPLAY=:55 dbus-run-session -- python3 tools/bench.py -n 7 $(ARGS) 2>&1 | grep median; kill %1'
+
+bench-files: test-image
+	$(DOCKER_X) 'Xvfb :55 -screen 0 1400x900x24 -nolisten tcp 2>/dev/null & sleep 1; DISPLAY=:55 dbus-run-session -- python3 tools/bench_families.py $(ARGS); kill %1'
 
 deb:
 	./packaging/build.sh deb

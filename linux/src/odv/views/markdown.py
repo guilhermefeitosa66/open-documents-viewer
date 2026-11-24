@@ -95,6 +95,7 @@ class MarkdownView(Gtk.ScrolledWindow):
         self._link_starts = [link.start for link in doc.links]
         ops = doc.ops
         state = {"i": 0}
+        known = set()  # tag combinations already made: _ensure_tag costs a GObject call per tag
 
         def apply_some(deadline_us):
             b = self.buffer
@@ -103,9 +104,12 @@ class MarkdownView(Gtk.ScrolledWindow):
                 state["i"] += 1
                 end = b.get_end_iter()
                 if op[0] == "text":
-                    for tag in op[2]:
-                        self._ensure_tag(tag)
-                    b.insert_with_tags_by_name(end, op[1], *op[2])
+                    tags = op[2] if type(op[2]) is tuple else tuple(op[2])
+                    if tags not in known:
+                        for tag in tags:
+                            self._ensure_tag(tag)
+                        known.add(tags)
+                    b.insert_with_tags_by_name(end, op[1], *tags)
                 elif op[0] == "hr":
                     self._add_child(end, self._hr())
                 elif op[0] == "table":

@@ -468,20 +468,15 @@ def test_outline_panel(tmp_path):
         win.show_outline()
         yield 0.3
         panel = win.outline_panel
-        rows = []
-        i = 0
-        while (row := panel.list.get_row_at_index(i)) is not None:
-            rows.append(row._entry.title)
-            i += 1
-        r["rows"] = rows
+        r["rows"] = panel.rows()
         doc = win.active_pane.current_doc()
-        panel._on_row(None, panel.list.get_row_at_index(6))  # Section 6
+        panel.activate(6)  # Section 6
         yield 0.6
         r["formatted_pos"] = doc.outline_position()
-        r["selected"] = panel.list.get_selected_row().get_index() if panel.list.get_selected_row() else None
+        r["selected"] = panel.selected()
         doc.set_mode("source")
         yield 0.8
-        panel._on_row(None, panel.list.get_row_at_index(3))  # Section 3
+        panel.activate(3)  # Section 3
         yield 0.6
         r["source_pos"] = doc.outline_position()
 

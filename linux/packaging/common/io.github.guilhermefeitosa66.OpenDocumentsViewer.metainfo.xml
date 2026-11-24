@@ -28,6 +28,13 @@
     <binary>open-documents-viewer</binary>
   </provides>
   <releases>
+    <release version="0.35.2" date="2026-11-24">
+      <description>
+        <ul>
+        <li>Fixed: documents with thousands of headings, slides or bookmarks no longer stall the window while the outline panel fills (it builds only the visible rows now); Markdown and other rich documents apply their styles faster. make bench-files measures opening time per file family.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.35.1" date="2026-11-24">
       <description>
         <ul>

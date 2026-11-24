@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.35.2 (2026-11-24)
+
+- Fixed: documents with thousands of headings, slides or bookmarks no longer stall the window while the outline panel fills (it builds only the visible rows now); Markdown and other rich documents apply their styles faster. make bench-files measures opening time per file family.
+
 ## 0.35.1 (2026-11-24)
 
 - Changed: README with the table of supported formats and new screenshots, store and package descriptions that mention PDF and office files, F5 in the shortcuts window.
