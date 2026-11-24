@@ -9,6 +9,7 @@ RICH = {
     "html": "odv.formats.htmlrender",
     "rtf": "odv.formats.rtfrender",
     "notebook": "odv.formats.ipynb",
+    "ebook": "odv.formats.epub",
 }
 
 

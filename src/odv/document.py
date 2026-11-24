@@ -64,6 +64,7 @@ class DocumentPage(Gtk.Box):
         self._anchor = anchor
         self.forced_encoding = encoding
         self._position_timer = 0
+        self._save_timer = 0
         self._ready: set[str] = set()
         self._monitor = None
         self._change_timer = 0
@@ -123,6 +124,8 @@ class DocumentPage(Gtk.Box):
             self._loaded_sent = True
             after_next_paint(self, lambda: self.emit("loaded"))
             self._watch()
+            if self.kind.kind == "ebook" and not self._anchor and not self._restore_scroll:
+                GLib.timeout_add(60, self._restore_position)
             if self._anchor:
                 GLib.timeout_add(60, lambda: (self.go_to_anchor(self._anchor), False)[1])
             if self._restore_scroll:
@@ -227,9 +230,31 @@ class DocumentPage(Gtk.Box):
         return index
 
     def _on_scrolled(self, _adj):
+        if self.kind.kind == "ebook" and self._loaded_sent:
+            if self._save_timer:
+                GLib.source_remove(self._save_timer)
+            self._save_timer = GLib.timeout_add(800, self._save_position)
         if not self._outline or self._position_timer:
             return
         self._position_timer = GLib.timeout_add(120, self._emit_position)
+
+    def _save_position(self):
+        self._save_timer = 0
+        view = self.views.get("formatted")
+        if view is not None and hasattr(view, "top_offset") and not self.closed:
+            from odv import positions
+
+            positions.put(self.path, view.top_offset())
+        return False
+
+    def _restore_position(self):
+        from odv import positions
+
+        offset = positions.get(self.path)
+        view = self.views.get("formatted")
+        if offset and view is not None and hasattr(view, "scroll_to_offset"):
+            view.scroll_to_offset(offset)
+        return False
 
     def _emit_position(self):
         self._position_timer = 0
@@ -347,6 +372,10 @@ class DocumentPage(Gtk.Box):
         self._reading = True
 
         def work():
+            if self.kind.binary:  # EPUB: the format reads the file itself
+                from odv.formats import build_rich
+
+                return None, build_rich(self.kind.kind, None, self.path)
             tf = read_text(self.path, encoding=self.forced_encoding)
             doc = None
             if self.kind.rich:  # parsed even for the source view: the outline
@@ -571,6 +600,9 @@ class DocumentPage(Gtk.Box):
                             encoding=encoding or self.forced_encoding)
 
     def shutdown(self) -> None:
+        if self._save_timer:
+            GLib.source_remove(self._save_timer)
+            self._save_position()
         self.closed = True
         if self._position_timer:
             GLib.source_remove(self._position_timer)

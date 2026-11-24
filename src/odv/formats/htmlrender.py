@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 
 from odv.mdrender import BULLETS, Doc, Heading, Link, Table, slugify
 
-SKIP = {"script", "style", "head", "noscript", "template", "iframe", "object", "embed", "svg", "math",
+SKIP = {"script", "style", "head", "noscript", "template", "iframe", "object", "embed", "math",
         "canvas", "select", "button", "textarea", "video", "audio", "map", "form"}
 BLOCK = {"p", "div", "section", "article", "main", "header", "footer", "nav", "aside", "figure",
          "figcaption", "address", "details", "summary", "dl", "dt", "dd", "fieldset", "legend",
@@ -26,8 +26,9 @@ _WS = re.compile(r"[ \t\r\n\f]+")
 
 
 class _HtmlBuilder(HTMLParser):
-    def __init__(self):
+    def __init__(self, resolve_image=None):
         super().__init__(convert_charrefs=True)
+        self.resolve_image = resolve_image  # src -> bytes or None; never fetches from the network
         self.doc = Doc()
         self.block: list[str] = []  # block tags in effect (stack, with markers for pops)
         self.stack: list[tuple[str, list]] = []  # open elements: (tag, what to undo on close)
@@ -140,9 +141,18 @@ class _HtmlBuilder(HTMLParser):
         elif tag in INLINE_STYLE:
             self.inline.append(INLINE_STYLE[tag])
             undo.append("inline")
-        elif tag == "img":
-            alt = (a.get("alt") or "").strip()
-            self.emit(f"[image: {alt}]" if alt else "[image]", ("dim",))
+        elif tag in ("img", "image"):
+            src = a.get("src") or a.get("xlink:href") or a.get("href") or ""
+            data = self.resolve_image(src) if self.resolve_image and src else None
+            if data:
+                self.newline()
+                self.doc.ops.append(("image", data))
+                self.doc.length += 1
+                self.last = "x"
+                self.emit("\n")
+            else:
+                alt = (a.get("alt") or "").strip()
+                self.emit(f"[image: {alt}]" if alt else "[image]", ("dim",))
         elif tag == "table":
             self.newline()
             self.table = {"rows": [], "row": None, "cell": None, "header": [], "head": False, "align": [],
@@ -286,8 +296,35 @@ class _HtmlBuilder(HTMLParser):
                     self.widget(("table", Table(t["header"], t["rows"], t["align"])))
 
 
-def build(text: str, path: str = "") -> Doc:
-    builder = _HtmlBuilder()
+def local_images(doc_path: str):
+    """Resolve <img src> to bytes for files next to the document; remote
+    addresses (and anything outside the file system) are never loaded."""
+    import os
+    from urllib.parse import unquote, urlparse
+
+    base = os.path.dirname(os.path.abspath(doc_path))
+
+    def resolve(src):
+        parsed = urlparse(src)
+        if parsed.scheme not in ("", "file") or parsed.netloc:
+            return None
+        target = unquote(parsed.path)
+        target = target if os.path.isabs(target) else os.path.join(base, target)
+        try:
+            if os.path.getsize(target) > 32 * 1024 * 1024:
+                return None
+            with open(target, "rb") as f:
+                return f.read()
+        except OSError:
+            return None
+
+    return resolve
+
+
+def build(text: str, path: str = "", resolve_image=None) -> Doc:
+    if resolve_image is None and path:
+        resolve_image = local_images(path)
+    builder = _HtmlBuilder(resolve_image)
     builder.feed(text)
     builder.close()
     while builder.stack:

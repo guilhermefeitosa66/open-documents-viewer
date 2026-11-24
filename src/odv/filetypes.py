@@ -167,7 +167,7 @@ class Kind:
     @property
     def rich(self) -> bool:
         """Shown formatted by the rich-text view (odv.formats.RICH)."""
-        return self.kind in ("markdown", "html", "rtf", "notebook")
+        return self.kind in ("markdown", "html", "rtf", "notebook", "ebook")
 
     @property
     def has_formatted(self) -> bool:
@@ -176,7 +176,12 @@ class Kind:
     @property
     def has_source(self) -> bool:
         """Raster images have no text to show; SVG does (its XML)."""
-        return self.kind != "image" or self.lang == "xml"
+        return (self.kind != "image" or self.lang == "xml") and not self.binary
+
+    @property
+    def binary(self) -> bool:
+        """Read from the file itself, not as text (EPUB is a zip)."""
+        return self.kind == "ebook" and self.lang is None
 
     @property
     def formatted_label(self) -> str:
@@ -206,6 +211,10 @@ def classify(path: str) -> Kind:
         return Kind("rtf", None, wrap=True)
     if ext == ".ipynb":
         return Kind("notebook", "json")
+    if ext == ".epub":
+        return Kind("ebook", None)
+    if ext == ".fb2":
+        return Kind("ebook", "xml")
     if ext in TREE_EXT:
         return Kind("tree", TREE_EXT[ext][1], delimiter=TREE_EXT[ext][0])
     if ext in IMAGE_EXT:
@@ -223,7 +232,7 @@ def classify(path: str) -> Kind:
 def sidebar_class(name: str) -> str:
     """The colour class of a file's dot in the folder tree."""
     ext = _ext(name)
-    if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb"):
+    if ext in MARKDOWN_EXT or ext in HTML_EXT or ext in (".rtf", ".ipynb", ".epub", ".fb2"):
         return "markdown"
     if ext in DELIMITED_EXT or ext in IMAGE_EXT:
         return "data"

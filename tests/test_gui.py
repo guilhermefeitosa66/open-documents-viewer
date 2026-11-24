@@ -885,3 +885,34 @@ def test_reopen_with_encoding(tmp_path):
     r = run_app(scenario)
     assert r["before"] == "ação" and r["props"] == ("utf-8", "CRLF")
     assert r["after"] == ("aÃ§Ã£o", "cp1252", 1)
+
+
+def test_epub_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from books import make_epub
+
+    book = str(make_epub(tmp_path / "book.epub"))
+
+    def scenario(win, r):
+        win.open_path(book)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        r["first"] = (doc.mode, doc.has_source, win.active_pane.mode_switch.get_visible())
+        r["outline"] = [e.title for e in doc.outline()]
+        doc.views["formatted"].follow("#OEBPS/text/c2.xhtml#scene")
+        yield 1.3
+        r["section"] = doc.outline()[doc.outline_position()].title
+        win.close_tab()
+        yield 0.3
+        win.open_path(book)  # reopens where it was left
+        yield from settle(win)
+        yield 1.3
+        doc2 = win.active_pane.current_doc()
+        r["reopened"] = doc2.outline()[doc2.outline_position()].title
+
+    r = run_app(scenario)
+    assert r["first"] == ("formatted", False, False)
+    assert r["outline"] == ["One (from the nav)", "Two (from the nav)", "Scene"]
+    assert r["section"] == "Scene" and r["reopened"] == "Scene"

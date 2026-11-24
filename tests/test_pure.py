@@ -678,3 +678,44 @@ def test_forced_encoding_and_line_endings(tmp_path):
     import codecs
 
     assert all(codecs.lookup(codec) for codec, _ in textio.ENCODINGS)
+
+
+# -- e-books --------------------------------------------------------------------------
+
+from odv.formats import epub  # noqa: E402
+from books import make_epub, make_fb2  # noqa: E402
+
+
+def test_epub3(tmp_path):
+    doc = epub.build(None, str(make_epub(tmp_path / "b.epub")))
+    text = _flat(doc)
+    assert text.index("Chapter One") < text.index("Chapter Two") < text.index("The end.")
+    assert [op[0] for op in doc.ops].count("image") == 1
+    assert [(h.level, h.title) for h in doc.outline] == [(1, "One (from the nav)"), (1, "Two (from the nav)"),
+                                                         (2, "Scene")]
+    link = doc.links[0]
+    assert link.href == "#OEBPS/text/c2.xhtml#scene"
+    assert doc.headings["oebps/text/c2.xhtml#scene"] == doc.outline[2].offset
+
+
+def test_epub2_ncx_drm_and_fb2(tmp_path):
+    doc = epub.build(None, str(make_epub(tmp_path / "b2.epub", version=2)))
+    assert [h.title for h in doc.outline] == ["One (from the NCX)", "Two (from the NCX)"]
+    with pytest.raises(epub.EpubError, match="DRM"):
+        epub.build(None, str(make_epub(tmp_path / "drm.epub", drm=True)))
+    with pytest.raises(epub.EpubError):
+        epub.build(None, str(tmp_path / "missing.epub"))
+    fb = epub.build(None, str(make_fb2(tmp_path / "b.fb2")))
+    text = _flat(fb)
+    assert "Hidden metadata" not in text and "Some words and more." in text
+    assert [(h.level, h.title) for h in fb.outline] == [(2, "Part One"), (3, "Inner")]
+    assert [op[0] for op in fb.ops].count("image") == 1
+
+
+def test_positions(tmp_path, monkeypatch):
+    from odv import positions
+
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path))
+    assert positions.get("/x/book.epub") is None
+    positions.put("/x/book.epub", 1234)
+    assert positions.get("/x/book.epub") == 1234

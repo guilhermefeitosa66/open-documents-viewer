@@ -2,6 +2,12 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.18.0 (2026-11-24)
+
+- Added: EPUB 2 and 3 books (without DRM): chapters in reading order, images, links between chapters and the book's own table of contents as the outline; the reading position is remembered.
+- Added: FictionBook (.fb2) books, with their embedded images.
+- Added: HTML files show their local images (remote ones are never loaded).
+
 ## 0.17.0 (2026-11-24)
 
 - Added: Reopen with Encoding (tab menu and command palette) with 23 encodings, from UTF-16 to Shift_JIS and Windows-1251.
