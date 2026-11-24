@@ -28,6 +28,8 @@ enum class DocumentKind(val hasFormattedView: Boolean, val prose: Boolean) {
     FB2(hasFormattedView = true, prose = true),
     /** Word 2007+ (.docx/.docm/.dotx/.dotm): kept as bytes; plain text is the source view. */
     DOCX(hasFormattedView = true, prose = true),
+    /** OpenDocument text (.odt/.ott/.fodt): same model as DOCX. */
+    ODT(hasFormattedView = true, prose = true),
     /** E-mail message (.eml): headers, body and attachments. */
     EMAIL(hasFormattedView = true, prose = true),
     /** Contacts (.vcf). */
@@ -61,6 +63,7 @@ object DocumentTypes {
         }
         if (ext == "epub") return DocumentType(DocumentKind.EPUB, Languages.HTML, "EPUB")
         if (ext in setOf("docx", "docm", "dotx", "dotm")) return DocumentType(DocumentKind.DOCX, null, "DOCX")
+        if (ext in setOf("odt", "ott", "fodt")) return DocumentType(DocumentKind.ODT, null, "ODT")
         if (ext == "eml" || ext == "mht" || ext == "mhtml") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (ext == "vcf" || ext == "vcard") return DocumentType(DocumentKind.VCARD, null, "VCF")
         if (ext == "ics" || ext == "ical" || ext == "ifb") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")
@@ -87,6 +90,9 @@ object DocumentTypes {
             m == "application/vnd.ms-word.document.macroenabled.12" ||
             m == "application/vnd.openxmlformats-officedocument.wordprocessingml.template"
         ) return DocumentType(DocumentKind.DOCX, null, "DOCX")
+        if (m == "application/vnd.oasis.opendocument.text" || m == "application/vnd.oasis.opendocument.text-template" ||
+            m == "application/vnd.oasis.opendocument.text-flat-xml"
+        ) return DocumentType(DocumentKind.ODT, null, "ODT")
         if (m == "message/rfc822") return DocumentType(DocumentKind.EMAIL, null, "EML")
         if (m == "text/vcard" || m == "text/x-vcard" || m == "text/directory") return DocumentType(DocumentKind.VCARD, null, "VCF")
         if (m == "text/calendar") return DocumentType(DocumentKind.ICALENDAR, null, "ICS")

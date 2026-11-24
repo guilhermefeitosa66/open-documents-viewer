@@ -402,6 +402,7 @@ private fun subtitle(session: DocumentSession): String {
     parts += if (doc.type.kind == DocumentKind.SVG || doc.type.kind == DocumentKind.HTML || doc.type.kind == DocumentKind.RTF ||
         doc.type.kind == DocumentKind.EPUB || doc.type.kind == DocumentKind.FB2) doc.type.label
         else if (doc.type.kind == DocumentKind.DOCX) "Word"
+        else if (doc.type.kind == DocumentKind.ODT) "OpenDocument"
         else if (doc.type.kind == DocumentKind.EMAIL) stringResource(R.string.kind_email)
         else if (doc.type.kind == DocumentKind.VCARD) stringResource(R.string.kind_contacts)
         else if (doc.type.kind == DocumentKind.ICALENDAR) stringResource(R.string.kind_calendar)
@@ -416,7 +417,7 @@ private fun subtitle(session: DocumentSession): String {
     }
     if (session.showsPicture || doc.type.kind == DocumentKind.IMAGE) {
         session.imageSize?.let { parts += "${it.width} × ${it.height}" }
-    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX) {
+    } else if (doc.type.kind != DocumentKind.EPUB && doc.type.kind != DocumentKind.DOCX && doc.type.kind != DocumentKind.ODT) {
         session.source?.let { parts += pluralStringResource(R.plurals.lines, it.index.lineCount, it.index.lineCount) }
     }
     doc.location?.let { parts += it }

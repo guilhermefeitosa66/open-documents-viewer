@@ -247,7 +247,7 @@ object DocxModel {
             val ilvl = attr(child(numPr, "w:ilvl"), "val")?.toIntOrNull() ?: 0
             val level = headingLevel(styleId, pPr)
 
-            val inline = Inline()
+            val inline = InlineBuilder()
             val runs = RunWalker(this, rels, inline, base)
             for (c in p.children()) runs.node(c)
             for ((name) in runs.bookmarks) anchors.putIfAbsent(name, out.size)
@@ -298,7 +298,7 @@ object DocxModel {
         }
 
         fun cellText(tc: Element, rels: Map<String, Pair<String, Boolean>>): InlineText {
-            val inline = Inline()
+            val inline = InlineBuilder()
             var firstPara = true
             fun walk(container: Element) {
                 for (e in container.children()) {
@@ -331,7 +331,7 @@ object DocxModel {
             for ((id, n) in footnotes) {
                 val note = byId[id] ?: continue
                 anchors["fn-$n"] = out.size
-                val inline = Inline()
+                val inline = InlineBuilder()
                 inline.append("$n. ", null)
                 var firstPara = true
                 for (p in note.getElementsByTag("w:p")) {
@@ -350,29 +350,7 @@ object DocxModel {
             if (halfPoints > 0) sizes[halfPoints] = (sizes[halfPoints] ?: 0) + chars
         }
 
-        /** Sizes become relative to the size most text uses (like RTF). */
-        fun scaleSizes(blocks: List<MdBlock>): List<MdBlock> {
-            val body = sizes.maxByOrNull { it.value }?.key ?: return blocks
-            fun fix(t: InlineText): InlineText {
-                if (t.spans.none { it.style == InlineStyle.SIZE }) return t
-                return t.copy(spans = t.spans.mapNotNull { s ->
-                    if (s.style != InlineStyle.SIZE) s else {
-                        val r = (s.scale / body).coerceIn(0.6f, 2.4f)
-                        if (r in 0.92f..1.08f) null else s.copy(scale = r)
-                    }
-                })
-            }
-            return blocks.map { b ->
-                when (b) {
-                    is MdBlock.Paragraph -> b.copy(content = fix(b.content))
-                    is MdBlock.ListItem -> b.copy(content = fix(b.content))
-                    // Headings have their own size.
-                    is MdBlock.Heading -> b.copy(content = b.content.copy(spans = b.content.spans.filter { it.style != InlineStyle.SIZE }))
-                    is MdBlock.Table -> b.copy(header = b.header.map(::fix), rows = b.rows.map { r -> r.map(::fix) })
-                    else -> b
-                }
-            }
-        }
+        fun scaleSizes(blocks: List<MdBlock>): List<MdBlock> = OfficeText.scaleSizes(blocks, sizes)
     }
 
     private sealed interface Piece {
@@ -385,7 +363,7 @@ object DocxModel {
     private class RunWalker(
         val r: Reader,
         val rels: Map<String, Pair<String, Boolean>>,
-        var inline: Inline,
+        var inline: InlineBuilder,
         val base: RunProps,
         val picturesAsText: Boolean = false,
     ) {
@@ -406,7 +384,7 @@ object DocxModel {
         private fun flush() {
             val t = inline.build()
             if (t.text.isNotEmpty()) pieces += Piece.Text(t)
-            inline = Inline()
+            inline = InlineBuilder()
         }
 
         fun node(e: Element) {
@@ -506,46 +484,6 @@ object DocxModel {
             flush()
             pieces += Piece.Picture(ZipFiles.IMAGE_SCHEME + target, alt)
         }
-    }
-
-    /** Builds an [InlineText] piece by piece. */
-    private class Inline {
-        private val sb = StringBuilder()
-        private val spans = ArrayList<InlineSpan>()
-
-        fun append(s: String, style: InlineSpan?) {
-            val start = sb.length
-            sb.append(s)
-            style?.let { spans += it.copy(start = start, end = sb.length) }
-        }
-
-        fun appendStyled(s: String, styles: List<InlineSpan>) {
-            val start = sb.length
-            sb.append(s)
-            for (st in styles) {
-                // Merge with the previous span of the same look (runs split by spell checking...).
-                val prev = spans.lastOrNull { it.style == st.style && it.end == start && it.url == st.url && it.color == st.color && it.scale == st.scale }
-                if (prev != null) spans[spans.lastIndexOf(prev)] = prev.copy(end = sb.length)
-                else spans += st.copy(start = start, end = sb.length)
-            }
-        }
-
-        fun build() = InlineText(sb.toString(), spans.toList())
-    }
-
-    private fun InlineText.trimmed(): InlineText {
-        val lead = text.length - text.trimStart().length
-        val end = text.trimEnd().length
-        if (lead == 0 && end == text.length) return this
-        if (end <= lead) return InlineText("")
-        return InlineText(
-            text.substring(lead, end),
-            spans.mapNotNull { s ->
-                val a = (s.start - lead).coerceIn(0, end - lead)
-                val b = (s.end - lead).coerceIn(0, end - lead)
-                if (b > a) s.copy(start = a, end = b) else null
-            },
-        )
     }
 
     internal fun format(n: Int, fmt: String): String = when (fmt) {

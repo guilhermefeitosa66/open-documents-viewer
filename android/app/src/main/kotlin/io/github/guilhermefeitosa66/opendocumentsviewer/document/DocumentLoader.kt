@@ -173,16 +173,17 @@ class DocumentLoader(private val context: Context) {
                 )
             )
         }
-        if (earlyType.kind == DocumentKind.DOCX) {
+        if (earlyType.kind == DocumentKind.DOCX || earlyType.kind == DocumentKind.ODT) {
             val read = try { stream.use { readUpTo(it, MAX_IMAGE_BYTES) } } catch (e: Exception) {
                 return failure(LoadFailure.Other(e.message ?: e.javaClass.simpleName))
             }
             if (read.truncated) return failure(LoadFailure.Other("document larger than ${MAX_IMAGE_BYTES / (1024 * 1024)} MB"))
             val bytes = read.bytes.copyOf(read.length)
             val parsed = try {
-                io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.parse(bytes)
+                if (earlyType.kind == DocumentKind.ODT) io.github.guilhermefeitosa66.opendocumentsviewer.markdown.OdtModel.parse(bytes)
+                else io.github.guilhermefeitosa66.opendocumentsviewer.markdown.DocxModel.parse(bytes)
             } catch (e: Exception) {
-                return failure(LoadFailure.Other("DOCX: " + (e.message ?: e.javaClass.simpleName)))
+                return failure(LoadFailure.Other(earlyType.label + ": " + (e.message ?: e.javaClass.simpleName)))
             }
             return Result.success(
                 LoadedDocument(

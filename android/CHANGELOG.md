@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.22.0] - 2026-11-24
+
+### Added
+- OpenDocument text (.odt, .ott and flat .fodt from LibreOffice Writer), with the same reach as Word documents:
+  headings, character styles (bold, italic, underline, strikethrough, colors, sizes, monospaced fonts), alignment,
+  numbered and bulleted lists, tables with merged cells, pictures, links and bookmarks, footnotes, header and
+  footer, page breaks. Deleted tracked changes are left out.
+
 ## [0.21.0] - 2026-11-24
 
 ### Added
