@@ -922,3 +922,47 @@ def test_xls_reader(tmp_path):
     assert sh.col_widths[0] == 20
     assert wb.styles[sh.rows[0][0].style].bold
     reader.close()
+
+
+# -- presentations ------------------------------------------------------------------------
+def test_pptx_reader(tmp_path):
+    from office import make_pptx
+    from odv.filetypes import classify
+    from odv.formats.presentations import open_presentation
+
+    assert classify("deck.pptx").kind == "presentation" and classify("show.ppsx").kind == "presentation"
+    pres = open_presentation(str(make_pptx(tmp_path / "deck.pptx")))
+    assert (pres.width, pres.height) == (9144000, 6858000)
+    assert [(s.title, s.hidden) for s in pres.slides] == [("Quarterly Review", False), ("Results", False),
+                                                           ("Backup", True)]
+    title, body = pres.slides[0].shapes
+    # the title takes its position and centring from the layout, its size from the master
+    assert (title.x, title.y) == (685800, 2130425) and title.paragraphs[0].align == "center"
+    assert title.paragraphs[0].runs[0].size == 40 and body.paragraphs[0].bullet is None
+    assert body.paragraphs[0].runs[0].text == "Hello & welcome"
+    assert title.paragraphs[0].runs[0].font == "DejaVu Serif" and body.paragraphs[0].runs[0].font == "DejaVu Sans"
+    s2 = pres.slides[1]
+    assert s2.background == "FFF5E0" and s2.notes == "Mention the north."
+    kinds = [s.kind for s in s2.shapes]
+    assert kinds == ["rect", "rect", "roundRect", "image", "table", "ellipse"]
+    bullets = s2.shapes[1].paragraphs
+    assert [(p.bullet, p.level) for p in bullets] == [("•", 0), ("•", 1), ("1.", 0), ("2.", 0)]
+    assert bullets[1].runs[0].italic and bullets[1].runs[0].size == 20
+    assert bullets[3].runs[0].underline and bullets[3].runs[0].color == "FF0000"
+    box = s2.shapes[2]
+    assert box.fill == "883C20" and box.line == "000000" and box.anchor == "middle" and box.paragraphs[0].runs[0].bold
+    assert s2.shapes[3].image.startswith(b"\x89PNG")
+    assert [["".join(r.text for p in c for r in p.runs) for c in row] for row in s2.shapes[4].rows] == [
+        ["Region", "Sales"], ["North", "42"]]
+    dot = s2.shapes[5]  # inside a group scaled by half
+    assert (dot.x, dot.y, dot.w, dot.h) == (7500000, 3800000, 500000, 500000)
+    assert "North" in s2.text()
+
+
+def test_pptx_broken(tmp_path):
+    from odv.formats import pptx
+
+    bad = tmp_path / "bad.pptx"
+    bad.write_bytes(b"not a zip")
+    with pytest.raises(pptx.PptxError):
+        pptx.build(str(bad))

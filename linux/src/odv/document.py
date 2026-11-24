@@ -361,6 +361,8 @@ class DocumentPage(Gtk.Box):
             self._build_image()
         elif mode == "formatted" and self.kind.kind == "spreadsheet":
             self._build_sheet()
+        elif mode == "formatted" and self.kind.kind == "presentation":
+            self._build_slides()
         elif mode == "formatted" and self.kind.kind == "tree" and self._text is not None:
             self._build_tree()
         elif self._text is not None:
@@ -480,6 +482,31 @@ class DocumentPage(Gtk.Box):
         if line:
             self._goto = (line, None, True)
 
+    def _build_slides(self):
+        from odv.formats.presentations import open_presentation
+        from odv.views.slides import SlidesView
+
+        view = SlidesView(self.path, open_presentation)
+
+        def loaded(v):
+            self._set_outline(v.outline())
+            self._first_content()
+            self._loaded()
+
+        view.connect("loaded", loaded)
+        view.connect("position-changed", lambda v: self.emit("position-changed"))
+        view.connect("failed", lambda v, msg: self._status(_("Could not open this file"), msg,
+                                                            "dialog-warning-symbolic"))
+        self._add_view("formatted", view)
+        GLib.idle_add(lambda: (view.grab_focus(), False)[1])
+
+    def present(self) -> bool:
+        view = self.views.get("formatted")
+        if view is not None and hasattr(view, "present"):
+            view.present()
+            return True
+        return False
+
     def _build_sheet(self):
         from odv.formats.spreadsheets import open_workbook
         from odv.views.sheet import SheetView
@@ -575,7 +602,8 @@ class DocumentPage(Gtk.Box):
     def find(self, forward: bool, from_selection_start: bool = False) -> bool:
         needle = self.search_entry.get_text()
         view = self.views.get(self.mode)
-        if view is not None and (hasattr(view, "reveal") or hasattr(view, "set_current")):  # tree, sheet
+        if view is not None and (hasattr(view, "reveal") or hasattr(view, "set_current")
+                                 or hasattr(view, "present")):  # tree, sheet, slides
             if not needle:
                 self._set_found(True)
                 return False

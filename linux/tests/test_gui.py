@@ -1125,3 +1125,40 @@ def test_xls_file(tmp_path):
 
     r = run_app(scenario)
     assert r["tabs"] == ["Sales"] and r["rows"] == [0, 1, 3, 4]
+
+
+def test_pptx_file(tmp_path):
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    from office import make_pptx
+
+    path = str(make_pptx(tmp_path / "deck.pptx"))
+
+    def scenario(win, r):
+        win.open_path(path)
+        yield from settle(win)
+        doc = win.active_pane.current_doc()
+        view = doc.views["formatted"]
+        r["state"] = (doc.mode, view.counter.get_label(), len(view.visible))
+        r["outline"] = [h.title for h in view.outline()]
+        view.step(1)
+        r["second"] = (view.counter.get_label(), view.notes.get_label())
+        doc.start_search()
+        doc.search_entry.set_text("quarterly")
+        yield 0.4
+        r["found"] = view.position
+        win.present_or_reload()
+        yield 0.5
+        r["presenting"] = view._presenter is not None
+        view.step(1)
+        view.shutdown()
+        yield 0.3
+        r["closed"] = view._presenter is None
+
+    r = run_app(scenario)
+    assert r["state"] == ("formatted", "1 / 2", 2)  # the hidden slide is skipped
+    assert r["outline"] == ["Quarterly Review", "Results"]
+    assert r["second"] == ("2 / 2", "Mention the north.")
+    assert r["found"] == 0
+    assert r["presenting"] and r["closed"]

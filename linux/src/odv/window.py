@@ -309,7 +309,8 @@ class Window(Adw.ApplicationWindow):
         add("close-tab", self.close_tab, ("<Control>w",))
         add("toggle-mode", self.toggle_mode, ("<Control>e",))
         add("find", self.find, ("<Control>f",))
-        add("reload", self.reload, ("<Control>r", "F5"))
+        add("reload", self.reload, ("<Control>r",))
+        add("present-or-reload", self.present_or_reload, ("F5",))
         add("toggle-sidebar", self.toggle_sidebar, ("F9",))
         add("next-tab", lambda: self._cycle(1), ("<Control>Page_Down", "<Control>Tab"))
         add("prev-tab", lambda: self._cycle(-1), ("<Control>Page_Up", "<Control><Shift>Tab"))
@@ -790,6 +791,13 @@ class Window(Adw.ApplicationWindow):
         from odv.preferences import PreferencesDialog
 
         PreferencesDialog().present_for(self)
+
+    def present_or_reload(self):
+        """F5: present a presentation, reload anything else."""
+        doc = self.active_pane.current_doc() if self.active_pane else None
+        if doc is not None and doc.present():
+            return
+        self.reload()
 
     def toggle_sidebar(self):
         self.split_view.set_show_sidebar(not self.split_view.get_show_sidebar())

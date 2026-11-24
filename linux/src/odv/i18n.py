@@ -265,6 +265,17 @@ CATALOG: dict[str, dict[str, str]] = {
     "Sheet": {"pt": "Planilha", "es": "Hoja"},
     "This workbook has no visible sheets.": {"pt": "Esta pasta de trabalho não tem planilhas visíveis.",
                                              "es": "Este libro no tiene hojas visibles."},
+    # presentations
+    "Slides": {"pt": "Slides", "es": "Diapositivas"},
+    "Previous slide": {"pt": "Slide anterior", "es": "Diapositiva anterior"},
+    "Next slide": {"pt": "Próximo slide", "es": "Diapositiva siguiente"},
+    "Notes": {"pt": "Notas", "es": "Notas"},
+    "Present (F5)": {"pt": "Apresentar (F5)", "es": "Presentar (F5)"},
+    "No notes for this slide.": {"pt": "Este slide não tem notas.", "es": "Esta diapositiva no tiene notas."},
+    "This presentation has no slides.": {"pt": "Esta apresentação não tem slides.",
+                                         "es": "Esta presentación no tiene diapositivas."},
+    "Slide {n}": {"pt": "Slide {n}", "es": "Diapositiva {n}"},
+    "Presentation": {"pt": "Apresentação", "es": "Presentación"},
     # about
     "A fast, read-only viewer for Markdown, text, code and data files.": {
         "pt": "Um visualizador rápido, só de leitura, para Markdown, texto, código e dados.",

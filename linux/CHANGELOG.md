@@ -2,6 +2,10 @@
 
 All notable changes to this project. Versions follow semantic versioning.
 
+## 0.27.0 (2026-11-24)
+
+- Added: PowerPoint presentations (.pptx, .ppsx, .potx), read-only: slides drawn with their backgrounds, shapes, text (theme fonts and colours, bullets, numbering), pictures, groups and simple tables; thumbnails, keyboard navigation, speaker notes, find, an outline of slide titles and a full-screen presentation mode (F5; Ctrl+R still reloads). Hidden slides are skipped.
+
 ## 0.26.0 (2026-11-24)
 
 - Added: Excel 97–2003 workbooks (.xls), read-only, in the sheet view: values with their number and date formats, styles, merges, widths and hidden rows, columns and sheets.

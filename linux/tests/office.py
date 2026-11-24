@@ -251,3 +251,135 @@ def make_xls(path):
     ws.col(0).width = 20 * 256
     wb.save(str(path))
     return path
+
+
+PNS = ('xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" '
+       'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+       'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"')
+RELS = '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+RT = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/"
+
+
+def _rels(*items):
+    return RELS + "".join(f'<Relationship Id="{i}" Type="{RT}{t}" Target="{target}"/>'
+                          for i, t, target in items) + "</Relationships>"
+
+
+def _ph_sp(kind, idx=None, xfrm="", body="<a:p/>", lst=""):
+    idx_attr = f' idx="{idx}"' if idx is not None else ""
+    return (f'<p:sp><p:nvSpPr><p:cNvPr id="2" name="{kind}"/><p:cNvSpPr/><p:nvPr><p:ph type="{kind}"{idx_attr}/>'
+            f'</p:nvPr></p:nvSpPr><p:spPr>{xfrm}</p:spPr><p:txBody><a:bodyPr/><a:lstStyle>{lst}</a:lstStyle>'
+            f'{body}</p:txBody></p:sp>')
+
+
+def _xfrm(x, y, w, h):
+    return f'<a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{w}" cy="{h}"/></a:xfrm>'
+
+
+def make_pptx(path):
+    """Three slides (one hidden): a title slide inheriting from the layout,
+    a slide with bullets, a shape, a picture, a table and notes."""
+    tree = '<p:cSld>{bg}<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>' \
+           '<p:grpSpPr/>{shapes}</p:spTree></p:cSld>'
+    master = (f'<?xml version="1.0"?><p:sldMaster {PNS}>'
+              + tree.format(bg='<p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>',
+                            shapes=_ph_sp("title", xfrm=_xfrm(457200, 274638, 8229600, 1143000))
+                            + _ph_sp("body", 1, xfrm=_xfrm(457200, 1600200, 8229600, 4525963)))
+              + '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" '
+                'accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" '
+                'folHlink="folHlink"/>'
+              '<p:txStyles><p:titleStyle><a:lvl1pPr><a:defRPr sz="4000"/></a:lvl1pPr></p:titleStyle>'
+              '<p:bodyStyle><a:lvl1pPr><a:defRPr sz="2400"/></a:lvl1pPr><a:lvl2pPr><a:defRPr sz="2000"/></a:lvl2pPr>'
+              '</p:bodyStyle></p:txStyles></p:sldMaster>')
+    layout = (f'<?xml version="1.0"?><p:sldLayout {PNS}>'
+              + tree.format(bg="", shapes=_ph_sp("ctrTitle", xfrm=_xfrm(685800, 2130425, 7772400, 1470025),
+                                                 lst='<a:lvl1pPr algn="ctr"/>')
+                            + _ph_sp("body", 1))
+              + "</p:sldLayout>")
+    theme = ('<?xml version="1.0"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+             'name="T"><a:themeElements><a:clrScheme name="T"><a:dk1><a:sysClr val="windowText" lastClr="000000"/>'
+             '</a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1F497D"/></a:dk2>'
+             '<a:lt2><a:srgbClr val="EEECE1"/></a:lt2><a:accent1><a:srgbClr val="B5502B"/></a:accent1>'
+             '</a:clrScheme><a:fontScheme name="T"><a:majorFont><a:latin typeface="DejaVu Serif"/></a:majorFont>'
+             '<a:minorFont><a:latin typeface="DejaVu Sans"/></a:minorFont></a:fontScheme></a:themeElements></a:theme>')
+    run = '<a:r><a:rPr lang="en-US"{attrs}/><a:t>{text}</a:t></a:r>'
+    slide1 = (f'<?xml version="1.0"?><p:sld {PNS}>'
+              + tree.format(bg="", shapes=_ph_sp("ctrTitle", body=f'<a:p>{run.format(attrs="", text="Quarterly Review")}</a:p>')
+                            + _ph_sp("body", 1, body=f'<a:p><a:pPr><a:buNone/></a:pPr>'
+                                     f'{run.format(attrs="", text="Hello &amp; welcome")}</a:p>'))
+              + "</p:sld>")
+    table = ('<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="6" name="t"/><p:cNvGraphicFramePr/><p:nvPr/>'
+             '</p:nvGraphicFramePr><p:xfrm><a:off x="457200" y="4800600"/><a:ext cx="4000000" cy="740000"/></p:xfrm>'
+             '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl>'
+             '<a:tblGrid><a:gridCol w="2000000"/><a:gridCol w="2000000"/></a:tblGrid>'
+             '<a:tr h="370000"><a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:t>Region</a:t></a:r></a:p></a:txBody></a:tc>'
+             '<a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:t>Sales</a:t></a:r></a:p></a:txBody></a:tc></a:tr>'
+             '<a:tr h="370000"><a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:t>North</a:t></a:r></a:p></a:txBody></a:tc>'
+             '<a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:t>42</a:t></a:r></a:p></a:txBody></a:tc></a:tr>'
+             '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>')
+    shape = ('<p:sp><p:nvSpPr><p:cNvPr id="4" name="box"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>'
+             + _xfrm(5000000, 1600200, 3000000, 1500000)
+             + '<a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom><a:solidFill><a:schemeClr val="accent1">'
+               '<a:lumMod val="75000"/></a:schemeClr></a:solidFill><a:ln w="25400"><a:solidFill>'
+               '<a:srgbClr val="000000"/></a:solidFill></a:ln></p:spPr><p:txBody><a:bodyPr anchor="ctr"/><a:p>'
+               '<a:pPr algn="ctr"/>' + run.format(attrs=' b="1" sz="2000"', text="Callout") + '</a:p></p:txBody></p:sp>')
+    pic = ('<p:pic><p:nvPicPr><p:cNvPr id="5" name="pic"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr><p:blipFill>'
+           '<a:blip r:embed="rImg"/></p:blipFill><p:spPr>' + _xfrm(5000000, 3300000, 1000000, 1000000)
+           + '</p:spPr></p:pic>')
+    group = ('<p:grpSp><p:nvGrpSpPr><p:cNvPr id="7" name="g"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr>'
+             '<a:xfrm><a:off x="7000000" y="3300000"/><a:ext cx="1000000" cy="1000000"/>'
+             '<a:chOff x="0" y="0"/><a:chExt cx="2000000" cy="2000000"/></a:xfrm></p:grpSpPr>'
+             '<p:sp><p:nvSpPr><p:cNvPr id="8" name="dot"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr>'
+             + _xfrm(1000000, 1000000, 1000000, 1000000)
+             + '<a:prstGeom prst="ellipse"/><a:solidFill><a:srgbClr val="00AA00"/></a:solidFill></p:spPr></p:sp>'
+             '</p:grpSp>')
+    bullets = ('<a:p>' + run.format(attrs="", text="First point") + '</a:p>'
+               '<a:p><a:pPr lvl="1"/>' + run.format(attrs=' i="1"', text="Detail") + '</a:p>'
+               '<a:p><a:pPr><a:buAutoNum type="arabicPeriod"/></a:pPr>' + run.format(attrs="", text="One") + '</a:p>'
+               '<a:p><a:pPr><a:buAutoNum type="arabicPeriod"/></a:pPr>'
+               + run.format(attrs=' u="sng"><a:solidFill><a:srgbClr val="FF0000"/></a:solidFill></a:rPr>'
+                            '<a:t>Two</a:t></a:r><a:r><a:rPr', text=" red") + '</a:p>')
+    slide2 = (f'<?xml version="1.0"?><p:sld {PNS}>'
+              + tree.format(bg='<p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFF5E0"/></a:solidFill></p:bgPr></p:bg>',
+                            shapes=_ph_sp("title", body=f'<a:p>{run.format(attrs="", text="Results")}</a:p>')
+                            + _ph_sp("body", 1, xfrm=_xfrm(457200, 1600200, 4400000, 3000000), body=bullets)
+                            + shape + pic + table + group)
+              + "</p:sld>")
+    slide3 = (f'<?xml version="1.0"?><p:sld {PNS} show="0">'
+              + tree.format(bg="", shapes=_ph_sp("title", body=f'<a:p>{run.format(attrs="", text="Backup")}</a:p>'))
+              + "</p:sld>")
+    notes = (f'<?xml version="1.0"?><p:notes {PNS}>'
+             + tree.format(bg="", shapes=_ph_sp("sldImg") + _ph_sp("body", 1, body='<a:p><a:r><a:t>Mention the '
+                                                                                   'north.</a:t></a:r></a:p>'))
+             + "</p:notes>")
+    presentation = (f'<?xml version="1.0"?><p:presentation {PNS}><p:sldMasterIdLst><p:sldMasterId id="2147483648" '
+                    'r:id="rM"/></p:sldMasterIdLst><p:sldIdLst><p:sldId id="256" r:id="rS1"/>'
+                    '<p:sldId id="257" r:id="rS2"/><p:sldId id="258" r:id="rS3"/></p:sldIdLst>'
+                    '<p:sldSz cx="9144000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>')
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/'
+                   'package/2006/content-types"/>')
+        z.writestr("ppt/presentation.xml", presentation)
+        z.writestr("ppt/_rels/presentation.xml.rels", _rels(("rM", "slideMaster", "slideMasters/slideMaster1.xml"),
+                                                            ("rS1", "slide", "slides/slide1.xml"),
+                                                            ("rS2", "slide", "slides/slide2.xml"),
+                                                            ("rS3", "slide", "slides/slide3.xml")))
+        z.writestr("ppt/slideMasters/slideMaster1.xml", master)
+        z.writestr("ppt/slideMasters/_rels/slideMaster1.xml.rels", _rels(("rT", "theme", "../theme/theme1.xml"),
+                                                                         ("rL", "slideLayout",
+                                                                          "../slideLayouts/slideLayout1.xml")))
+        z.writestr("ppt/theme/theme1.xml", theme)
+        z.writestr("ppt/slideLayouts/slideLayout1.xml", layout)
+        z.writestr("ppt/slideLayouts/_rels/slideLayout1.xml.rels",
+                   _rels(("rM", "slideMaster", "../slideMasters/slideMaster1.xml")))
+        lay = ("rL", "slideLayout", "../slideLayouts/slideLayout1.xml")
+        z.writestr("ppt/slides/slide1.xml", slide1)
+        z.writestr("ppt/slides/_rels/slide1.xml.rels", _rels(lay))
+        z.writestr("ppt/slides/slide2.xml", slide2)
+        z.writestr("ppt/slides/_rels/slide2.xml.rels", _rels(lay, ("rImg", "image", "../media/image1.png"),
+                                                             ("rN", "notesSlide", "../notesSlides/notesSlide2.xml")))
+        z.writestr("ppt/slides/slide3.xml", slide3)
+        z.writestr("ppt/slides/_rels/slide3.xml.rels", _rels(lay))
+        z.writestr("ppt/notesSlides/notesSlide2.xml", notes)
+        z.writestr("ppt/media/image1.png", PNG)
+    return path
