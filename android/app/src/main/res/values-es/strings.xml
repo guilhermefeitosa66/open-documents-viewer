@@ -20,7 +20,7 @@
     <string name="ok">OK</string>
     <string name="source_code">Código fuente</string>
     <string name="about_version">Versión %1$s</string>
-    <string name="about_body">Un visor de documentos de texto rápido, sin conexión y de solo lectura. Sin anuncios, sin cuenta, sin red. Parte de libre-apps.</string>
+    <string name="about_body">Un visor de documentos de texto rápido, sin conexión y de solo lectura. Sin anuncios, sin cuenta, sin telemetría. La red solo se usa para ver si hay una versión nueva (se puede desactivar en Ajustes). Parte de libre-apps.</string>
     <string name="about_licenses">Licencia Apache 2.0. Usa commonmark-java (BSD-2-Clause), jsoup (MIT), AndroidSVG (Apache 2.0), snakeyaml-engine (Apache 2.0), PDFium (BSD-3-Clause / Apache 2.0, with the licenses of its parts in the app), JetBrains Mono (SIL OFL 1.1), Jetpack Compose y AndroidX (Apache 2.0).</string>
     <string name="back">Atrás</string>
     <string name="switch_document">Cambiar de documento</string>
@@ -193,4 +193,10 @@
     <string name="copy">Copiar</string>
     <string name="open_in_pdf_viewer">Abrir en Open PDF Viewer</string>
     <string name="about_site">Página en libre-apps.org</string>
+    <string name="updates_section">Actualizaciones</string>
+    <string name="update_check">Avisar cuando haya una versión nueva</string>
+    <string name="update_check_desc">Consulta GitHub al abrir la app. Es el único momento en que la app usa la red.</string>
+    <string name="update_available">Salió la versión %1$s</string>
+    <string name="update_view">Ver</string>
+    <string name="update_not_now">Ahora no</string>
 </resources>

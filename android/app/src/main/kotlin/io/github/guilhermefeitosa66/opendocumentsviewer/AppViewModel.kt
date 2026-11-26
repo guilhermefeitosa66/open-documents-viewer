@@ -72,6 +72,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putBoolean(KEY_LIMIT_WIDTH, on).apply()
     }
 
+    /** "A new version is out" (Settings switch, on by default); checked once per process from the home screen. */
+    val updates = io.github.guilhermefeitosa66.opendocumentsviewer.update.UpdateStore.create(app)
+
+    fun checkForUpdate() {
+        updates.checkOnce(viewModelScope)
+    }
+
     fun selectTheme(id: String) {
         themeId = id
         prefs.edit().putString(KEY_THEME, id).apply()

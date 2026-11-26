@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -200,6 +201,8 @@ class MainActivity : ComponentActivity() {
                 onKeepScreenOn = vm::changeKeepScreenOn,
                 limitWidth = vm.limitWidth,
                 onLimitWidth = vm::changeLimitWidth,
+                updateCheck = vm.updates.enabled.collectAsState().value,
+                onUpdateCheck = vm.updates::setEnabled,
             )
             BackHandler { vm.settingsOpen = false }
         } else if (session == null && vm.folder != null) {
@@ -229,6 +232,9 @@ class MainActivity : ComponentActivity() {
                 onClearAll = vm::clearRecents,
                 onShareRecent = { if (!it.isFolder) shareItem(shareableOf(it)) },
                 onSaveRecent = { if (!it.isFolder) saveItem(shareableOf(it)) },
+                update = updateBanner(),
+                onUpdateView = ::openRelease,
+                onUpdateDismiss = vm.updates::dismiss,
             )
         } else {
             val base = 16f
@@ -338,6 +344,9 @@ class MainActivity : ComponentActivity() {
                 onClearAll = vm::clearRecents,
                 onShareRecent = { if (!it.isFolder) shareItem(shareableOf(it)) },
                 onSaveRecent = { if (!it.isFolder) saveItem(shareableOf(it)) },
+                update = updateBanner(),
+                onUpdateView = ::openRelease,
+                onUpdateDismiss = vm.updates::dismiss,
             )
         }
     }
@@ -416,6 +425,24 @@ class MainActivity : ComponentActivity() {
             finish()
         } else {
             vm.closeSession()
+        }
+    }
+
+    /** The release shown on the home screen, or null; asks for the check the first time home shows. */
+    @Composable
+    private fun updateBanner(): io.github.guilhermefeitosa66.opendocumentsviewer.update.Release? {
+        // After the first frame, off the main thread: never on the path that opens a document.
+        LaunchedEffect(Unit) { vm.checkForUpdate() }
+        val state = vm.updates.state.collectAsState().value
+        val dismissed = vm.updates.dismissed.collectAsState().value
+        return (state as? io.github.guilhermefeitosa66.opendocumentsviewer.update.UpdateState.Available)?.release?.takeUnless { dismissed }
+    }
+
+    private fun openRelease(release: io.github.guilhermefeitosa66.opendocumentsviewer.update.Release) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.url)))
+        } catch (_: Exception) {
+            vm.message = R.string.error_no_app_for_link
         }
     }
 

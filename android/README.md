@@ -1,8 +1,13 @@
 # Open Documents Viewer (Android)
 
 A fast, offline, read-only viewer for documents: text, code and data, office files, e-books and PDF. Part of
-[libre-apps](https://libre-apps.org). No ads, no account, no network permission, no telemetry. Nothing is ever edited:
+[libre-apps](https://libre-apps.org). No ads, no account, no telemetry. Nothing is ever edited:
 "Open with another app" hands the file to an editor.
+
+**Network.** The app's only network access is the "new version" check: when the app opens, it asks GitHub's
+releases API (`api.github.com`) once for the latest Android release and, if it is newer, shows a quiet notice on the
+home screen. It sends nothing about you or your files. It is on by default; turn it off in Settings → Updates.
+Documents never leave the device.
 
 ## Formats
 

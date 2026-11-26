@@ -3,6 +3,7 @@ package io.github.guilhermefeitosa66.opendocumentsviewer.ui.home
 import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,6 +90,10 @@ fun HomeScreen(
     onSettings: () -> Unit,
     /** Asset of the theme's background image, or null for a plain color. */
     background: String?,
+    /** A newer release to mention, or null. */
+    update: io.github.guilhermefeitosa66.opendocumentsviewer.update.Release? = null,
+    onUpdateView: (io.github.guilhermefeitosa66.opendocumentsviewer.update.Release) -> Unit = {},
+    onUpdateDismiss: () -> Unit = {},
 ) {
     val colors = Odv.colors
     var menu by remember { mutableStateOf(false) }
@@ -149,6 +154,8 @@ fun HomeScreen(
                 Text(stringResource(R.string.open_folder), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
             }
         }
+
+        update?.let { UpdateBanner(it, onView = { onUpdateView(it) }, onDismiss = onUpdateDismiss) }
 
         if (loaded && recents.isEmpty()) {
             EmptyState(Modifier.weight(1f), veil)
@@ -338,5 +345,24 @@ private fun RecentMenu(
             }
             DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_recents)) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { open = false; onRemove(entry) })
         }
+    }
+}
+
+/** A quiet line under the open buttons: a newer version is out. */
+@Composable
+private fun UpdateBanner(release: io.github.guilhermefeitosa66.opendocumentsviewer.update.Release, onView: () -> Unit, onDismiss: () -> Unit) {
+    val colors = Odv.colors
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(16.dp)).background(colors.card).border(1.dp, colors.line, RoundedCornerShape(16.dp))
+            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.update_available, release.version),
+            fontSize = 14.sp, color = colors.ink, modifier = Modifier.weight(1f),
+        )
+        androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_not_now), color = colors.ink2) }
+        androidx.compose.material3.TextButton(onClick = onView) { Text(stringResource(R.string.update_view), color = colors.accentInk, fontWeight = FontWeight.SemiBold) }
     }
 }

@@ -64,6 +64,8 @@ fun SettingsScreen(
     onKeepScreenOn: (Boolean) -> Unit = {},
     limitWidth: Boolean = true,
     onLimitWidth: (Boolean) -> Unit = {},
+    updateCheck: Boolean = true,
+    onUpdateCheck: (Boolean) -> Unit = {},
 ) {
     val colors = Odv.colors
     val selected = Themes.byId(themeId)
@@ -122,6 +124,10 @@ fun SettingsScreen(
             SectionTitle(stringResource(R.string.reading_section))
             SwitchRow(stringResource(R.string.keep_screen_on), stringResource(R.string.keep_screen_on_desc), keepScreenOn, onKeepScreenOn)
             SwitchRow(stringResource(R.string.limit_width), stringResource(R.string.limit_width_desc), limitWidth, onLimitWidth)
+
+            Spacer(Modifier.height(20.dp))
+            SectionTitle(stringResource(R.string.updates_section))
+            SwitchRow(stringResource(R.string.update_check), stringResource(R.string.update_check_desc), updateCheck, onUpdateCheck)
         }
     }
 }

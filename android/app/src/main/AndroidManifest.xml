@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- No permissions at all: files come through the Storage Access Framework or from the
-         app that shares them, and nothing ever goes to the network. -->
+    <!-- Files come through the Storage Access Framework or from the app that shares them. The
+         network is only used for the optional "new version" check (one request to GitHub's
+         releases API when the app opens; Settings turns it off). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Only to offer "Open in Open PDF Viewer" when that app (same author) is installed. -->
     <queries>

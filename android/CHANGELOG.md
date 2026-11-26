@@ -2,6 +2,17 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.35.0] - 2026-11-25
+
+### Added
+- New version notice: when the app opens, it asks GitHub once for the latest Android release (`android-v*` tag) and,
+  if it is newer, shows a quiet notice on the home screen with "View" (opens the release page) and "Not now" (hidden
+  until the next start). On by default; Settings → Updates → "Tell me when a new version is out" turns it off. It runs
+  after the first frame, never on the path that opens a document, and fails silently (8 s timeout).
+
+### Changed
+- The app now declares the `INTERNET` permission, used only by that check. Documents never leave the device.
+
 ## [0.34.0] - 2026-11-25
 
 ### Changed
