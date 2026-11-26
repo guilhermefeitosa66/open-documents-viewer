@@ -23,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -111,10 +113,10 @@ fun HomeScreen(
                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more_options)) }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     if (recents.isNotEmpty()) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.clear_recents)) }, onClick = { menu = false; confirmClear = true })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.clear_recents)) }, leadingIcon = { Icon(Icons.Outlined.ClearAll, null) }, onClick = { menu = false; confirmClear = true })
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.settings)) }, onClick = { menu = false; onSettings() })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.about)) }, onClick = { menu = false; about = true })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.settings)) }, leadingIcon = { Icon(Icons.Outlined.Settings, null) }, onClick = { menu = false; onSettings() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.about)) }, leadingIcon = { Icon(Icons.Outlined.Info, null) }, onClick = { menu = false; about = true })
                 }
             }
         }
@@ -331,10 +333,10 @@ private fun RecentMenu(
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             if (!entry.isFolder) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { open = false; onShare(entry) })
-                DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { open = false; onSave(entry) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }, onClick = { open = false; onShare(entry) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, leadingIcon = { Icon(Icons.Outlined.SaveAlt, null) }, onClick = { open = false; onSave(entry) })
             }
-            DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_recents)) }, onClick = { open = false; onRemove(entry) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.remove_from_recents)) }, leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) }, onClick = { open = false; onRemove(entry) })
         }
     }
 }

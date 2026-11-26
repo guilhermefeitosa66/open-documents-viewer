@@ -24,6 +24,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
@@ -88,15 +90,16 @@ fun FolderScreen(folder: FolderSession, onBack: () -> Unit, onOpenFile: (FolderE
             Box {
                 IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more_options)) }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    SortItem(R.string.sort_by_name, folder.sort == SortOrder.NAME) { folder.sort = SortOrder.NAME; menu = false }
-                    SortItem(R.string.sort_by_date, folder.sort == SortOrder.MODIFIED) { folder.sort = SortOrder.MODIFIED; menu = false }
-                    SortItem(R.string.sort_by_size, folder.sort == SortOrder.SIZE) { folder.sort = SortOrder.SIZE; menu = false }
+                    SortItem(R.string.sort_by_name, folder.sort == SortOrder.NAME, Icons.Outlined.SortByAlpha) { folder.sort = SortOrder.NAME; menu = false }
+                    SortItem(R.string.sort_by_date, folder.sort == SortOrder.MODIFIED, Icons.Outlined.Schedule) { folder.sort = SortOrder.MODIFIED; menu = false }
+                    SortItem(R.string.sort_by_size, folder.sort == SortOrder.SIZE, Icons.Outlined.DataUsage) { folder.sort = SortOrder.SIZE; menu = false }
                     HorizontalDivider(color = colors.line)
                     DropdownMenuItem(
                         text = { Text(stringResource(if (folder.showHidden) R.string.hide_hidden_files else R.string.show_hidden_files)) },
+                        leadingIcon = { Icon(if (folder.showHidden) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility, null) },
                         onClick = { folder.showHidden = !folder.showHidden; menu = false },
                     )
-                    DropdownMenuItem(text = { Text(stringResource(R.string.refresh)) }, onClick = { folder.refresh(); menu = false })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.refresh)) }, leadingIcon = { Icon(Icons.Outlined.Refresh, null) }, onClick = { folder.refresh(); menu = false })
                 }
             }
         }
@@ -154,9 +157,10 @@ fun FolderScreen(folder: FolderSession, onBack: () -> Unit, onOpenFile: (FolderE
 }
 
 @Composable
-private fun SortItem(label: Int, selected: Boolean, onClick: () -> Unit) {
+private fun SortItem(label: Int, selected: Boolean, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     DropdownMenuItem(
         text = { Text(stringResource(label), fontWeight = if (selected) FontWeight.Bold else null) },
+        leadingIcon = { Icon(icon, null) },
         onClick = onClick,
         trailingIcon = if (selected) ({ Icon(painterResource(R.drawable.ic_check), null, tint = Odv.colors.accent, modifier = Modifier.size(18.dp)) }) else null,
     )

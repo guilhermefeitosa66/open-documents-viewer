@@ -2,6 +2,11 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.34.0] - 2026-11-25
+
+### Changed
+- Every menu item has an icon: the document "⋮" menu, the home and recent-file menus, and the folder menu (sort, hidden files, refresh). Icons from Material Icons (extended set, Apache-2.0); R8 keeps only the ones used.
+
 ## [0.33.0] - 2026-11-25
 
 ### Added

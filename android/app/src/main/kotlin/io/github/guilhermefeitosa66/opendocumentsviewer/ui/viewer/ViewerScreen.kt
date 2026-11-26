@@ -25,6 +25,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
@@ -393,54 +395,56 @@ private fun TopBar(session: DocumentSession, actions: ViewerActions, split: Spli
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     if (doc.type.kind != DocumentKind.IMAGE) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.copy_all)) }, onClick = { menu = false; actions.copyAll(doc) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.copy_all)) }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }, onClick = { menu = false; actions.copyAll(doc) })
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = { menu = false; actions.share(doc) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }, onClick = { menu = false; actions.share(doc) })
                     if (doc.uri != null && doc.bytes == null && doc.text.length <= FileTransfer.SHARE_AS_TEXT_MAX_CHARS) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.share_as_text)) }, onClick = { menu = false; actions.shareAsText(doc) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.share_as_text)) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.ShortText, null) }, onClick = { menu = false; actions.shareAsText(doc) })
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, onClick = { menu = false; actions.saveCopy(doc) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.save_copy)) }, leadingIcon = { Icon(Icons.Outlined.SaveAlt, null) }, onClick = { menu = false; actions.saveCopy(doc) })
                     if (doc.uri != null) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.open_with)) }, onClick = { menu = false; actions.openWith(doc) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.open_with)) }, leadingIcon = { Icon(Icons.AutoMirrored.Outlined.OpenInNew, null) }, onClick = { menu = false; actions.openWith(doc) })
                     }
                     if (session.mode == ViewMode.SOURCE || session.formatted is Formatted.Json) {
                         DropdownMenuItem(
                             text = { Text(stringResource(if (session.lineNumbers) R.string.hide_line_numbers else R.string.show_line_numbers)) },
+                            leadingIcon = { Icon(Icons.Outlined.FormatListNumbered, null) },
                             onClick = { menu = false; session.lineNumbers = !session.lineNumbers },
                         )
                     }
                     if (split != null) {
                         HorizontalDivider(color = Odv.colors.line)
                         if (split.inSplit) {
-                            DropdownMenuItem(text = { Text(stringResource(R.string.close_split)) }, onClick = { menu = false; split.onCloseSplit() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.close_split)) }, leadingIcon = { Icon(Icons.Outlined.CloseFullscreen, null) }, onClick = { menu = false; split.onCloseSplit() })
                         } else {
                             if (session.hasToggle) {
-                                DropdownMenuItem(text = { Text(stringResource(R.string.split_same)) }, onClick = { menu = false; split.onSplitSame() })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.split_same)) }, leadingIcon = { Icon(Icons.Outlined.VerticalSplit, null) }, onClick = { menu = false; split.onSplitSame() })
                             }
-                            DropdownMenuItem(text = { Text(stringResource(R.string.split_other)) }, onClick = { menu = false; split.onSplitOther() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.split_other)) }, leadingIcon = { Icon(Icons.Outlined.ViewColumn, null) }, onClick = { menu = false; split.onSplitOther() })
                         }
                     }
                     if (session.kind == DocumentKind.JSON && session.formatted is Formatted.Tree && session.mode == ViewMode.FORMATTED) {
                         DropdownMenuItem(
                             text = { Text(stringResource(if (session.jsonAsText) R.string.show_as_tree else R.string.show_as_text)) },
+                            leadingIcon = { Icon(if (session.jsonAsText) Icons.Outlined.AccountTree else Icons.Outlined.DataObject, null) },
                             onClick = { menu = false; session.showJsonAsText(!session.jsonAsText) },
                         )
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, onClick = { menu = false; reading.onFullScreen(true) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.full_screen)) }, leadingIcon = { Icon(Icons.Outlined.Fullscreen, null) }, onClick = { menu = false; reading.onFullScreen(true) })
                     if (doc.uri != null && doc.bytes == null && doc.type.kind != DocumentKind.PDF) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.encoding_menu)) }, onClick = { menu = false; onEncoding() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.encoding_menu)) }, leadingIcon = { Icon(Icons.Outlined.Translate, null) }, onClick = { menu = false; onEncoding() })
                     }
                     if (doc.type.kind == DocumentKind.PDF && doc.uri != null && actions.pdfViewerPackage != null) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.open_in_pdf_viewer)) }, onClick = { menu = false; actions.openInPdfViewer(doc) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.open_in_pdf_viewer)) }, leadingIcon = { Icon(Icons.Outlined.PictureAsPdf, null) }, onClick = { menu = false; actions.openInPdfViewer(doc) })
                     }
                     if (session.formatted is Formatted.Pdf && session.mode == ViewMode.FORMATTED) {
                         HorizontalDivider(color = Odv.colors.line)
-                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_go_to_page)) }, onClick = { menu = false; goToPage = true })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_pages)) }, onClick = { menu = false; session.pdfGrid = !session.pdfGrid })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_width)) }, onClick = { menu = false; session.pdfZoom = 1f })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_page)) }, onClick = { menu = false; session.pdfFitPage() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_go_to_page)) }, leadingIcon = { Icon(Icons.Outlined.Pin, null) }, onClick = { menu = false; goToPage = true })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_pages)) }, leadingIcon = { Icon(Icons.Outlined.GridView, null) }, onClick = { menu = false; session.pdfGrid = !session.pdfGrid })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_width)) }, leadingIcon = { Icon(Icons.Outlined.SettingsEthernet, null) }, onClick = { menu = false; session.pdfZoom = 1f })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.pdf_fit_page)) }, leadingIcon = { Icon(Icons.Outlined.FitScreen, null) }, onClick = { menu = false; session.pdfFitPage() })
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, onClick = { menu = false; onInfo() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.file_info)) }, leadingIcon = { Icon(Icons.Outlined.Info, null) }, onClick = { menu = false; onInfo() })
                 }
             }
         }
