@@ -306,6 +306,9 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 Text(stringResource(R.string.about_version, BuildInfo.versionName()), color = colors.ink2, fontSize = 14.sp)
                 Text(stringResource(R.string.about_body), fontSize = 14.sp, color = colors.ink)
                 Text(stringResource(R.string.about_licenses), fontSize = 12.sp, lineHeight = 17.sp, color = colors.ink2)
+                TextButton(onClick = { uri.openUri("https://libre-apps.org/open-documents-viewer/") }) {
+                    Text(stringResource(R.string.about_site))
+                }
             }
         },
     )

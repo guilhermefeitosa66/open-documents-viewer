@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Open Documents Viewer</string>
-    <string name="app_label">Open Docs</string>
+    <string name="app_label">Open Docs Viewer</string>
     <string name="home_title">Documents</string>
     <string name="more_options">More options</string>
     <string name="clear_recents">Clear recent files</string>
@@ -193,4 +193,5 @@
     <string name="pdf_fit_page">Fit page</string>
     <string name="copy">Copy</string>
     <string name="open_in_pdf_viewer">Open in Open PDF Viewer</string>
+    <string name="about_site">Website: libre-apps.org</string>
 </resources>

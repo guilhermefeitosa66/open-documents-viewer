@@ -2,6 +2,14 @@
 
 All notable changes to this project. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.33.0] - 2026-11-25
+
+### Added
+- About links to the app page on libre-apps.org.
+
+### Changed
+- The launcher name is now "Open Docs Viewer" instead of "Open Docs", so it does not read as an office suite.
+
 ## [0.32.3] - 2026-11-24
 
 ### Fixed
